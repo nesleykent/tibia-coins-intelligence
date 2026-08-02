@@ -76,6 +76,23 @@ Present every material finding in this order:
 3. **Technical evidence** — method, sample, effect size, uncertainty,
    validation, diagnostics, limitations, and source.
 
+The player layer is the default visible layer. Never require the reader to
+understand a statistical or financial term in order to understand the finding.
+When a technical term is useful, show a plain-language label first and place
+the technical name in supporting text or an expandable layer.
+
+Examples:
+
+- “How different world prices are” before “cross-world dispersion”;
+- “error on later dates the model never saw” before “holdout RMSE”;
+- “using today’s price as the future estimate” before “random walk”;
+- “strongest 10% of price gaps” before “top decile”;
+- “likely range, not a guaranteed target” before “80% forecast interval”;
+- “price compared with the other worlds” before “relative deviation.”
+
+Use [design/player_explanation_system.md](design/player_explanation_system.md)
+as the canonical translation and page-review checklist.
+
 For each result, answer:
 
 1. What was observed?

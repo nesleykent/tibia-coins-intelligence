@@ -558,7 +558,7 @@ HTML = r"""<!doctype html>
     <main class="main">
       <section id="view-overview" class="view">
         <div class="view-header">
-          <div><h1>Tibia Coins Intelligence</h1><p class="view-intro">Explore price, relative value, forecasts and the economic mechanics connecting 93 Tibia worlds.</p></div>
+          <div><h1>Tibia Coins Intelligence</h1><p class="view-intro">See what one Tibia Coin costs in GP, compare your world with the others, and understand what the evidence supports before buying or selling.</p></div>
           <div class="filters" aria-label="Overview filters">
             <div class="field"><label for="overviewWorld">World</label><select id="overviewWorld"></select></div>
             <div class="field wide"><label>Date range</label><div class="date-pair"><input id="overviewStart" type="date" aria-label="Start date"><input id="overviewEnd" type="date" aria-label="End date"></div></div>
@@ -568,10 +568,10 @@ HTML = r"""<!doctype html>
           <div class="metric"><span class="metric-label" id="metricPriceLabel">Market index</span><strong id="metricPrice" class="metric-value">—</strong><span id="metricPriceMeta" class="metric-meta">GP per TC</span></div>
           <div class="metric"><span class="metric-label">Worlds</span><strong id="metricWorlds" class="metric-value">—</strong><span class="metric-meta">tracked</span></div>
           <div class="metric"><span class="metric-label">Median price</span><strong id="metricMedian" class="metric-value">—</strong><span class="metric-meta">GP per TC</span></div>
-          <div class="metric"><span class="metric-label">Dispersion</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">cross-world log SD</span></div>
+          <div class="metric"><span class="metric-label">Difference between worlds</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">how spread out world prices are</span></div>
         </div>
         <article class="panel chart-panel">
-          <div class="panel-heading"><div><h2 id="overviewChartTitle">Market index and dispersion</h2><p id="overviewChartNote">Tap, focus or move across the chart to inspect a date.</p></div><div id="overviewLegend" class="legend"></div></div>
+          <div class="panel-heading"><div><h2 id="overviewChartTitle">Typical TC price and differences between worlds</h2><p id="overviewChartNote">The solid line is the combined market price. The dashed line shows whether world prices are close together or far apart. Tap, focus or move across the chart to inspect a date.</p></div><div id="overviewLegend" class="legend"></div></div>
           <div class="chart-wrap"><svg id="overviewChart" class="chart" role="img" aria-labelledby="overviewChartTitle"></svg><div id="overviewTooltip" class="chart-tooltip"></div></div>
         </article>
         <article class="panel thesis">
@@ -591,7 +591,7 @@ HTML = r"""<!doctype html>
           <aside class="panel signal">
             <div class="signal-block"><h2>Signal summary</h2><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
             <div class="signal-block"><h3>Level forecast</h3><span class="signal-value">No edge</span></div>
-            <p class="signal-note">Relative position is forecastable; the common price level is not. Signals outside the estimated friction band deserve attention, not automatic execution.</p>
+            <p class="signal-note">The model can sometimes identify a world moving back toward the others, but it cannot reliably predict whether TC prices everywhere will rise or fall. A large gap deserves investigation, not an automatic trade.</p>
           </aside>
         </div>
       </section>
@@ -608,7 +608,7 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-forecasts" class="view" hidden>
-        <div class="view-header"><div><h1>Forecasts</h1><p class="view-intro">Scenario ranges describe uncertainty around the level; the actionable model predicts relative convergence only.</p></div>
+        <div class="view-header"><div><h1>Forecasts</h1><p class="view-intro">The shaded range shows plausible future prices, not a guaranteed target. The useful signal compares a world with the others; it does not reliably predict whether TC prices everywhere will rise or fall.</p></div>
           <div class="filters"><div class="field"><label for="forecastWorld">World</label><select id="forecastWorld"></select></div><div class="field"><label>Horizon</label><div id="forecastHorizon" class="segmented"><button class="segment" data-horizon="2w">2 weeks</button><button class="segment active" data-horizon="1m">1 month</button><button class="segment" data-horizon="3m">3 months</button><button class="segment" data-horizon="6m">6 months</button></div></div></div>
         </div>
         <div class="forecast-grid">
@@ -628,8 +628,8 @@ HTML = r"""<!doctype html>
           </div>
         </div>
         <div class="metric-rail" aria-label="Model comparison summary">
-          <div class="metric"><span class="metric-label">General holdout RMSE</span><strong id="modelGeneralRmse" class="metric-value">—</strong><span class="metric-meta">lower is better</span></div>
-          <div class="metric"><span class="metric-label">Specific holdout RMSE</span><strong id="modelSpecificRmse" class="metric-value">—</strong><span class="metric-meta">same untouched dates</span></div>
+          <div class="metric"><span class="metric-label">General model error</span><strong id="modelGeneralRmse" class="metric-value">—</strong><span class="metric-meta">later unseen dates · lower is better · RMSE</span></div>
+          <div class="metric"><span class="metric-label">Similar-world model error</span><strong id="modelSpecificRmse" class="metric-value">—</strong><span class="metric-meta">same later unseen dates · RMSE</span></div>
           <div class="metric"><span class="metric-label">Holdout winner</span><strong id="modelWinner" class="metric-value">—</strong><span id="modelWinnerMeta" class="metric-meta"></span></div>
           <div class="metric"><span class="metric-label">Specific models</span><strong id="modelCount" class="metric-value">—</strong><span class="metric-meta">PvP types never mixed</span></div>
         </div>
@@ -669,17 +669,17 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-strategy" class="view" hidden>
-        <div class="view-header"><div><h1>Strategy</h1><p class="view-intro">Test the strongest cross-world convergence signals after transaction cost, with training and untouched holdout evidence separated.</p></div>
+        <div class="view-header"><div><h1>Strategy</h1><p class="view-intro">See what happened when trading only the strongest 10% of price gaps after Market costs. Results from later dates the rule never saw are shown separately from the period used to build it.</p></div>
           <div id="strategyHorizon" class="segmented"><button class="segment active" data-days="7">7 days</button><button class="segment" data-days="30">30 days</button><button class="segment" data-days="91">91 days</button></div>
         </div>
         <div class="strategy-grid">
-          <article class="panel"><div class="panel-heading"><div><h2>Net return after cost</h2><p>Top-decile raw convergence gap.</p></div></div><div id="strategyBars" class="bar-area"></div></article>
+          <article class="panel"><div class="panel-heading"><div><h2>Return left after Market costs</h2><p>Strongest 10% of price gaps between worlds.</p></div></div><div id="strategyBars" class="bar-area"></div></article>
           <aside id="strategyEvidence" class="panel evidence"></aside>
         </div>
         <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>How to read the signal</h2><p>What the evidence permits—and what it does not.</p></div></div><div class="signal" style="grid-template-columns:repeat(3,1fr)">
-          <div class="signal-block"><h3>Use</h3><p class="signal-note">Rank worlds by their raw gap to the cross-world mean and act only on the strongest decile outside the friction band.</p></div>
-          <div class="signal-block"><h3>Do not use</h3><p class="signal-note">Do not issue a directional call on the common Tibia Coin price level; fifteen model classes fail to beat a random walk.</p></div>
-          <div class="signal-block"><h3>Binding constraint</h3><p class="signal-note">Market depth limits deployable size. The opportunity is relative, conditional and capacity-constrained.</p></div>
+          <div class="signal-block"><h3>Use</h3><p class="signal-note">Compare each world with the typical price across worlds. Investigate only the strongest 10% of gaps that are large enough to cover Market costs.</p></div>
+          <div class="signal-block"><h3>Do not use</h3><p class="signal-note">Do not use this to predict whether TC prices everywhere will rise or fall. Fifteen model types could not improve on using today’s price as the central estimate.</p></div>
+          <div class="signal-block"><h3>What limits trade size</h3><p class="signal-note">The Market may not have enough offers to use a large amount of GP without waiting or changing the price. A promising percentage return does not mean unlimited profit.</p></div>
         </div></article>
       </section>
 
@@ -982,7 +982,7 @@ function renderOverview(){
     $("#metricWorlds").textContent=fmt.format(data.meta.worlds);
     $("#metricMedian").textContent=`${fmt.format(median)} GP`;
     $("#metricDispersion").textContent=`${num(latestIndex.disp_pct).toFixed(1)}%`;
-    $("#overviewChartTitle").textContent="Market index and dispersion";
+    $("#overviewChartTitle").textContent="Typical TC price and differences between worlds";
   }else{
     const item=worldMap.get(world)||{},first=rows[0]||{},last=rows[rows.length-1]||{};
     const selectedPrices=rows.map(row=>num(row.price_gp)).filter(Boolean).sort((a,b)=>a-b);
@@ -1035,7 +1035,7 @@ function renderOverviewChart(rows=overviewRows(),world=$("#overviewWorld").value
     }
   }
   $("#overviewLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${world==="all"?"Chain-linked index":escapeHtml(world)+" price"}</span>`+
-    (world==="all"?`<span class="legend-item"><i class="legend-line dashed"></i>Cross-world dispersion</span>`:"");
+    (world==="all"?`<span class="legend-item"><i class="legend-line dashed"></i>Difference between world prices</span>`:"");
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
   const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":"Interactive time-series chart"});
   const inspect=index=>{
@@ -1364,14 +1364,14 @@ function renderStrategy(){
   $$("#strategyHorizon .segment").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===selectedStrategyHorizon));
   const rows=data.strategy.filter(row=>num(row.horizon)===selectedStrategyHorizon);
   const max=Math.max(1,...rows.map(row=>num(row.net_pct)));
-  $("#strategyBars").innerHTML=rows.map(row=>`<div class="bar-row"><strong>${row.period==="train"?"Training":"Holdout"}</strong><div class="bar-track"><div class="bar-fill ${row.period==="holdout"?"gold":""}" style="width:${Math.max(0,num(row.net_pct)/max*100)}%"></div></div><strong class="positive">${signed(row.net_pct)}</strong></div>`).join("");
+  $("#strategyBars").innerHTML=rows.map(row=>`<div class="bar-row"><strong>${row.period==="train"?"Period used to build the rule":"Later unseen dates"}</strong><div class="bar-track"><div class="bar-fill ${row.period==="holdout"?"gold":""}" style="width:${Math.max(0,num(row.net_pct)/max*100)}%"></div></div><strong class="positive">${signed(row.net_pct)}</strong></div>`).join("");
   const holdout=rows.find(row=>row.period==="holdout")||{},train=rows.find(row=>row.period==="train")||{};
-  const caution=num(holdout.n_effective)<10?`Only ${fmt.format(holdout.n_effective)} independent window${num(holdout.n_effective)===1?"":"s"}: this horizon is descriptive, not decision-grade.`:
-    `${fmt.format(holdout.n_effective)} independent holdout windows support this comparison.`;
+  const caution=num(holdout.n_effective)<10?`Only ${fmt.format(holdout.n_effective)} independent later-date test window${num(holdout.n_effective)===1?"":"s"}: there is too little evidence to use this horizon for a decision.`:
+    `${fmt.format(holdout.n_effective)} independent later-date test windows support this comparison.`;
   $("#strategyEvidence").innerHTML=`<h2>${selectedStrategyHorizon}-day evidence</h2>
-    <div class="fact"><span>Holdout net</span><strong class="positive">${signed(holdout.net_pct)}</strong></div>
+    <div class="fact"><span>Net return on later unseen dates</span><strong class="positive">${signed(holdout.net_pct)}</strong></div>
     <div class="fact"><span>Profitable signals</span><strong>${pct1.format(num(holdout.share_profitable))}</strong></div>
-    <div class="fact"><span>Effective holdout N</span><strong>${fmt.format(holdout.n_effective)}</strong></div>
+    <div class="fact"><span>Independent test windows</span><strong>${fmt.format(holdout.n_effective)}</strong></div>
     <div class="fact"><span>Training cutoff</span><strong>${num(train.cutoff_pct).toFixed(1)}% gap</strong></div>
     <div class="evidence-callout">${caution}</div>`;
 }
