@@ -69,11 +69,34 @@ def load_hub_meta() -> dict:
     if not path.exists():
         return {}
     raw = path.read_text(encoding="utf-8", errors="replace")
-    m = re.search(r'"meta"\s*:\s*(\{.*?\})\s*,\s*"marketIndex"', raw, re.S)
-    if not m:
+    # Balance the braces rather than anchoring on whatever key follows: the payload's key
+    # order is an implementation detail of the builder, and anchoring on it made this parser
+    # fail silently the first time a new dataset was inserted ahead of "marketIndex".
+    i = raw.find('"meta":')
+    if i < 0:
         return {}
+    start = raw.find("{", i)
+    depth, j, in_str, esc = 0, start, False, False
+    while j < len(raw):
+        ch = raw[j]
+        if in_str:
+            if esc:
+                esc = False
+            elif ch == "\\":
+                esc = True
+            elif ch == '"':
+                in_str = False
+        elif ch == '"':
+            in_str = True
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                break
+        j += 1
     try:
-        return json.loads(m.group(1))
+        return json.loads(raw[start:j + 1])
     except json.JSONDecodeError:
         return {}
 
@@ -139,7 +162,7 @@ FACTS = [
      "kind": "number", "tol": 0.15,
      "pattern": r"(\d+\.\d) times (?:more|the coins|larger)",
      "why": "the Char Bazaar moves an order of magnitude more coins than the Market"},
-    {"key": "emission_channel", "scope": ("pdf", "hub", "gold_report"),
+    {"key": "emission_channel", "meta": "emissionVerdict", "scope": ("pdf", "hub", "gold_report"),
      "value": "rejected",
      "kind": "phrase",
      "topic": r"gold (?:production|emission)[^.]{0,60}(?:not supported|rejected|eliminated)",

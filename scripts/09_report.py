@@ -849,6 +849,9 @@ doc.addPageTemplates([PageTemplate(id="cover", frames=[frameC], onPage=_page_cov
                       PageTemplate(id="verdict", frames=[frameC], onPage=_page_verdict,
                                    pagesize=A4)])
 
+import sys as _sys
+_sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import narrative
 exec(open(pathlib.Path(__file__).parent / "09_sections.py").read())
 
 # multiBuild: the table of contents needs a second pass to resolve page numbers.

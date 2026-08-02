@@ -13,6 +13,8 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
+import narrative
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 P = ROOT / "data" / "processed"
@@ -51,54 +53,20 @@ def figure_topic(key: str) -> str:
     return "Strategy"
 
 
-def _headline_facts() -> dict:
-    """The claims the PDF and this page must agree on, read from the shared results."""
-    fund = json.loads((P / "fundamentals_results.json").read_text())
-    res = json.loads((P / "results.json").read_text())
-    grid = pd.DataFrame(fund["strategy"]["grid"])
-    hold = pd.DataFrame(fund["strategy"]["holdout"]["rows"])
+def _shared_narrative() -> dict:
+    """The claims both artifacts publish, defined once in narrative.py.
 
-    def cell(h, col):
-        row = grid[(grid.horizon == h) & (grid.decile == grid.decile.max())
-                   & (grid.cost_basis == "above the fee cap")]
-        return float(row[col].iloc[0])
-
-    def ho(h, col):
-        return float(hold[(hold.horizon == h) & (hold.period == "holdout")][col].iloc[0])
-
-    pages = 0
-    pdf = ROOT / "reports" / "tibia_coin_market_report.pdf"
-    if pdf.exists():
-        try:
-            from pypdf import PdfReader
-            pages = len(PdfReader(str(pdf)).pages)
-        except Exception:
-            pages = 0
+    Every figure the page states comes from here rather than from the markup, so the site
+    cannot fall behind the report when a pipeline stage re-runs.
+    """
     return {
-        "verdict": "buy relative, not directional",
-        "confidence": 78,
-        "reportPages": pages,
-        "bandThresholdPct": res["advanced"]["tar"]["threshold_pct"],
-        "actionGapPct": fund["scenarios"]["levels"]["arb_act_gap_pct"],
-        "lotSize": res["fees"]["lot_size"],
-        "feeCapLotTc": res["fees"]["cap_binds_at_lot_tc"],
-        "roundTripPct": res["fees"]["roundtrip_largest_decile_pct"],
-        "strategyNet7": cell(7, "net_pct"),
-        "strategyNet30": cell(30, "net_pct"),
-        "strategyWin30": cell(30, "share_profitable"),
-        "holdoutNet7": ho(7, "net_pct"),
-        "holdoutT7": ho(7, "t_newey_west"),
-        "holdoutWindows7": int(ho(7, "n_effective")),
-        "holdoutWindows30": int(ho(30, "n_effective")),
-        "holdoutWindows91": int(ho(91, "n_effective")),
-        "episodesPerMonth": fund["strategy"]["occurrence"]["episodes_per_month"],
-        "capacityGpPerMonth": fund["strategy"]["capacity"]["gp_per_month"],
-        "bazaarOverMarket": res["venues"]["market_size"]["bazaar_over_market"],
-        "marketTcYear": res["venues"]["market_size"]["market_tc_year"],
-        "bazaarTcYear": res["venues"]["market_size"]["bazaar_tc_year"],
-        "tcPerWorldDay": fund["participants"]["executable"][
-            "median_executed_per_world_day_tc"],
-        "emissionVerdict": "rejected",
+        **narrative.facts(),
+        "claims": [
+            {"key": c.key, "heading": c.heading, "text": c.text, "section": c.section,
+             "interactive": c.interactive,
+             "tiles": [{"label": t.label, "value": t.value, "note": t.note} for t in c.tiles]}
+            for c in narrative.claims()
+        ],
     }
 
 
@@ -260,8 +228,18 @@ def build_payload() -> dict:
             # The report and this page publish the same claims, so they read them from the
             # same place. Anything hardcoded in the markup below drifts the moment a stage
             # re-runs; scripts/46_verify_artifacts.py fails the build when they disagree.
-            **_headline_facts(),
+            **_shared_narrative(),
         },
+        "strategyGrid": records(
+            P / "strategy_grid.csv",
+            ["horizon", "decile", "cost_basis", "n", "mean_abs_dev_pct", "gross_pct",
+             "cost_pct", "net_pct", "share_profitable"],
+        ),
+        "strategyHoldout": records(
+            P / "strategy_holdout.csv",
+            ["horizon", "period", "n", "n_effective", "net_pct", "t_newey_west",
+             "share_profitable"],
+        ),
         "marketIndex": market_index,
         "worlds": worlds,
         "worldSeries": world_series,
@@ -456,9 +434,13 @@ HTML = r"""<!doctype html>
       .split,.world-layout,.forecast-grid,.model-grid,.strategy-grid{grid-template-columns:1fr}
       .signal{grid-template-columns:1fr 1fr}.emission-frame{height:1150px}
     }
-    .thesis-verdict{margin:0 0 10px;font-size:19px;line-height:1.3}
+    .thesis{margin-top:16px;padding:22px 24px 24px}
+    .thesis>.panel-heading{padding:0 0 16px;margin-bottom:18px;border-bottom:1px solid var(--line-soft)}
+    .thesis-verdict{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 10px;
+      margin:0 0 20px;padding-bottom:18px;border-bottom:1px solid var(--line-soft);
+      font-size:19px;line-height:1.3}
     .thesis-verdict strong{text-transform:capitalize}
-    .thesis-confidence{margin-left:9px;font-size:13px;color:var(--muted);font-weight:500}
+    .thesis-confidence{font-size:13px;color:var(--muted);font-weight:500}
     .thesis-body{margin:0 0 16px;max-width:78ch;color:var(--muted);line-height:1.55}
     .thesis-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
       border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
@@ -468,6 +450,25 @@ HTML = r"""<!doctype html>
     .thesis-fact small{font-size:11px;color:var(--muted);line-height:1.35}
     .thesis-note{margin:14px 0 0;font-size:12.5px;color:var(--muted);max-width:82ch;line-height:1.5}
     @media(max-width:1100px){.thesis-grid{grid-template-columns:repeat(2,1fr)}}
+    .claim-list{display:grid;gap:18px}
+    .claim{border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;
+      background:var(--card);box-shadow:0 1px 2px rgb(14 28 59 / 3%)}
+    .claim-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+    .claim-head h3{margin:0;font-size:15px}
+    .claim-ref{font-size:11px;color:var(--muted);white-space:nowrap}
+    .claim-text{margin:8px 0 16px;color:var(--muted);font-size:14px;line-height:1.6;max-width:82ch}
+    .claim-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .claim-tiles .thesis-fact{min-height:96px;border:1px solid var(--line-soft);
+      border-radius:7px;padding:13px 14px;background:var(--surface-soft)}
+    .claim-open{margin-top:16px;min-height:40px}
+    .claim-drawer{margin-top:20px;border:1px solid var(--line);border-radius:var(--radius);
+      padding:18px 20px;background:var(--surface-soft)}
+    .drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+    .drawer-head h3{margin:0;font-size:15px}
+    .drawer-note{margin:0 0 12px;font-size:12.5px;color:var(--muted);max-width:82ch;line-height:1.5}
+    .grid-table td{text-align:right;font-variant-numeric:tabular-nums}
+    .grid-table td:first-child{text-align:left;color:var(--muted)}
+    @media(max-width:1100px){.claim-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media(max-width:760px){
       .app{display:block}.sidebar{position:sticky;height:auto;border-right:0;border-bottom:1px solid var(--line);
         padding:0;top:0}.brand{padding:14px 16px 10px}.brand-mark{font-size:21px}.brand-name{font-size:15px}
@@ -490,12 +491,21 @@ HTML = r"""<!doctype html>
         font-weight:750}.data-table td:first-child{grid-column:1/-1;font-size:15px}
       .library-tools{grid-template-columns:1fr 1fr}.library-tools input{grid-column:1/-1}
       .model-levels{grid-template-columns:1fr}
+      .thesis{padding:18px}
+      .thesis>.panel-heading{margin-bottom:16px}
+      .claim{padding:16px}
+      .claim-head{align-items:start}
       .library-grid{grid-template-columns:1fr}.modal-body{grid-template-columns:1fr}
       .emission-frame{height:1250px}.footer{display:block}.footer span{display:block;margin-top:5px}
     }
     @media(max-width:430px){
       .filters{grid-template-columns:1fr}.field.wide{grid-column:auto}.date-pair{grid-template-columns:1fr}
       .metric-rail{grid-template-columns:1fr 1fr}.signal{grid-template-columns:1fr}
+      .thesis{padding:14px}
+      .claim-list{gap:14px}.claim{padding:14px}
+      .claim-head{display:block}.claim-ref{display:block;margin-top:5px}
+      .claim-tiles{grid-template-columns:1fr;gap:8px}
+      .claim-tiles .thesis-fact{min-height:0}
       .library-tools{grid-template-columns:1fr}.library-tools input{grid-column:auto}
       .chart{height:270px}.emission-frame{height:1350px}
     }
@@ -565,47 +575,13 @@ HTML = r"""<!doctype html>
           <div class="chart-wrap"><svg id="overviewChart" class="chart" role="img" aria-labelledby="overviewChartTitle"></svg><div id="overviewTooltip" class="chart-tooltip"></div></div>
         </article>
         <article class="panel thesis">
-          <div class="panel-heading"><div><h2>The verdict, and why</h2><p>The same claims the
-            report makes, read from the same results files. Nothing here is written by hand.</p></div></div>
+          <div class="panel-heading"><div><h2>The verdict, and why</h2><p>Every claim below is
+            defined once in <code>scripts/narrative.py</code> and rendered into both the report
+            and this page. Nothing here is written by hand twice.</p></div></div>
           <p class="thesis-verdict"><strong id="verdictLine">—</strong>
             <span class="thesis-confidence" id="verdictConfidence">—</span></p>
-          <p class="thesis-body">The gold price of a Tibia Coin is an exchange rate, not an asset
-            price. Coin supply is perfectly elastic at a money price CipSoft fixes, neither leg
-            pays a yield, and the Market fee holds a band open around every relation in the
-            market. That model — not a preference for efficient markets — is why the level does
-            not forecast, and why the one edge that exists only clears its cost at the strongest
-            signals held long enough. Coins are a currency, not an asset: holding more than you
-            intend to spend is an uncompensated position.</p>
-          <div class="thesis-grid">
-            <div class="thesis-fact"><span>Friction band</span><strong id="factBand">—</strong>
-              <small>estimated from prices, no fee supplied</small></div>
-            <div class="thesis-fact"><span>Act across worlds past</span><strong id="factAction">—</strong>
-              <small>below this the round trip eats the edge</small></div>
-            <div class="thesis-fact"><span>Minimum viable order</span><strong id="factLot">—</strong>
-              <small>where the fee cap binds</small></div>
-            <div class="thesis-fact"><span>Round trip at that size</span><strong id="factRoundTrip">—</strong>
-              <small>against 4.00% below it</small></div>
-            <div class="thesis-fact"><span>Net at 30 days</span><strong id="factNet30">—</strong>
-              <small>strongest decile, after cost</small></div>
-            <div class="thesis-fact"><span>Wins</span><strong id="factWin30">—</strong>
-              <small>of 30-day occasions</small></div>
-            <div class="thesis-fact"><span>Opportunities</span><strong id="factEpisodes">—</strong>
-              <small>distinct episodes, not one standing gap</small></div>
-            <div class="thesis-fact"><span>Capacity</span><strong id="factCapacity">—</strong>
-              <small>the binding constraint, not conviction</small></div>
-            <div class="thesis-fact"><span>Independent windows</span><strong id="factWindows">—</strong>
-              <small>holdout at 7 · 30 · 91 days</small></div>
-            <div class="thesis-fact"><span>Char Bazaar vs Market</span><strong id="factVenue">—</strong>
-              <small>the priced venue is the smaller one</small></div>
-            <div class="thesis-fact"><span>Cleared per world-day</span><strong id="factFlow">—</strong>
-              <small>coins, converted at the 25-coin lot</small></div>
-            <div class="thesis-fact"><span>Gold production channel</span><strong>Rejected</strong>
-              <small>same null on the GP-emission series</small></div>
-          </div>
-          <p class="thesis-note">The quarterly strategy figures are the largest and the least
-            supported: the holdout holds a single independent window at 91 days. A dispersion
-            regime filter was proposed and rejected — it fails to improve selection and does not
-            replicate within periods.</p>
+          <div id="claimList" class="claim-list"></div>
+          <div id="claimDrawer" class="claim-drawer" hidden></div>
         </article>
         <div class="split">
           <article class="panel">
@@ -880,33 +856,80 @@ function showView(view,push=true){
 }
 
 function renderHeadline(){
-  // Every figure below comes from data.meta, which the builder reads from the same results
-  // files the PDF reads. Nothing here is written by hand, so the page cannot drift from the
-  // report when a pipeline stage re-runs.
+  // Claims come from data.meta.claims, which the builder reads from narrative.py - the same
+  // objects the PDF renders as labelled paragraphs. Adding a finding there makes it appear
+  // in both artifacts; there is no second place to update.
   const m=data.meta;
   const el=(id,txt)=>{const n=$("#"+id);if(n)n.textContent=txt;};
+  el("verdictLine",m.verdict);
+  el("verdictConfidence",`${m.confidence}/100 confidence`);
   el("signalNet",`${signed(m.holdoutNet7,2)} net`);
   el("signalNote",`7-day true holdout · t = ${Number(m.holdoutT7).toFixed(1)} · `+
                   `${m.holdoutWindows7} independent windows`);
-  el("verdictLine",m.verdict);
-  el("verdictConfidence",`${m.confidence}/100 confidence`);
-  el("factBand",`${Number(m.bandThresholdPct).toFixed(2)}%`);
-  el("factAction",`${Number(m.actionGapPct).toFixed(0)}%`);
-  el("factLot",`${fmt.format(m.feeCapLotTc)} TC`);
-  el("factRoundTrip",`${Number(m.roundTripPct).toFixed(2)}%`);
-  el("factNet30",`${signed(m.strategyNet30,2)}`);
-  el("factWin30",`${Math.round(m.strategyWin30*100)}%`);
-  el("factEpisodes",`${Number(m.episodesPerMonth).toFixed(1)} / month`);
-  // A capacity estimate built on ~6 episodes a month does not support nine significant
-  // figures; round it to the precision the underlying count can carry.
-  const cap=Number(m.capacityGpPerMonth);
-  el("factCapacity",cap>=1e6?`${(cap/1e6).toFixed(0)}M GP / month`:
-                    `${fmt.format(Math.round(cap))} GP / month`);
-  el("factVenue",`${Number(m.bazaarOverMarket).toFixed(1)}×`);
-  el("factFlow",`${fmt.format(m.tcPerWorldDay)} TC`);
-  el("factWindows",`${m.holdoutWindows7} · ${m.holdoutWindows30} · ${m.holdoutWindows91}`);
   const link=$("#reportLink");
   if(link&&m.reportPages)link.textContent=`Read the ${m.reportPages}-page report`;
+
+  const host=$("#claimList");
+  if(!host)return;
+  host.innerHTML=(m.claims||[]).map(c=>`
+    <section class="claim" data-claim="${escapeHtml(c.key)}">
+      <div class="claim-head">
+        <h3>${escapeHtml(c.heading)}</h3>
+        <span class="claim-ref">Report §${escapeHtml(c.section)}</span>
+      </div>
+      <p class="claim-text">${escapeHtml(c.text)}</p>
+      <div class="claim-tiles">${c.tiles.map(t=>`
+        <div class="thesis-fact"><span>${escapeHtml(t.label)}</span>
+          <strong>${escapeHtml(t.value)}</strong><small>${escapeHtml(t.note)}</small></div>`).join("")}</div>
+      ${c.interactive?`<button class="claim-open button" data-open="${escapeHtml(c.interactive)}">Explore the data</button>`:""}
+    </section>`).join("");
+  host.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{
+    openClaimView(b.getAttribute("data-open"));
+  }));
+}
+
+// The two views a claim can open. Both read the same arrays the report's tables were built
+// from, so a reader can check a stated number against the grid it came from.
+function openClaimView(kind){
+  const host=$("#claimDrawer");if(!host)return;
+  if(kind==="strategyGrid"){
+    const rows=(data.strategyGrid||[]).filter(r=>r.cost_basis==="above the fee cap");
+    const horizons=[...new Set(rows.map(r=>+r.horizon))].sort((a,b)=>a-b);
+    const deciles=[...new Set(rows.map(r=>+r.decile))].sort((a,b)=>a-b);
+    const at=(h,d)=>rows.find(r=>+r.horizon===h&&+r.decile===d);
+    const vals=rows.map(r=>+r.net_pct);
+    const lo=Math.min(...vals),hi=Math.max(...vals);
+    const shade=v=>{const t=(v-lo)/((hi-lo)||1);
+      return v>=0?`rgba(37,99,235,${(0.10+0.55*t).toFixed(3)})`:`rgba(220,38,38,${(0.10+0.45*(1-t)).toFixed(3)})`;};
+    host.innerHTML=`<div class="drawer-head"><h3>Net return after cost, by signal strength and holding period</h3>
+      <button class="button ghost" id="claimClose">Close</button></div>
+      <p class="drawer-note">Decile 10 is the widest gap. Every cell is the mean net return after the
+        cheapest documented round trip of ${Number(data.meta.roundTripPct).toFixed(2)}%. The report
+        states the decile-10 row; the rest is here so it can be checked in context.</p>
+      <div class="table-wrap"><table class="data-table grid-table"><thead><tr><th>Decile</th>
+      ${horizons.map(h=>`<th>${h}d</th>`).join("")}</tr></thead><tbody>
+      ${deciles.map(d=>`<tr><td>${d}${d===10?" · reported":""}</td>${horizons.map(h=>{
+        const c=at(h,d);if(!c)return "<td>—</td>";
+        return `<td style="background:${shade(+c.net_pct)}" title="n=${c.n}, wins ${(100*c.share_profitable).toFixed(0)}%">${signed(+c.net_pct,2)}</td>`;
+      }).join("")}</tr>`).join("")}</tbody></table></div>`;
+  } else if(kind==="holdout"){
+    const rows=data.strategyHoldout||[];
+    host.innerHTML=`<div class="drawer-head"><h3>In sample against a true holdout</h3>
+      <button class="button ghost" id="claimClose">Close</button></div>
+      <p class="drawer-note">Only the decile cutoff crosses the split. The last column is the
+        holdout length divided by the holding period, because daily observations of an h-day
+        return share h−1 days of data.</p>
+      <div class="table-wrap"><table class="data-table"><thead><tr><th>Horizon</th><th>Period</th>
+      <th>Net of cost</th><th>t (NW)</th><th>Wins</th><th>Independent windows</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td>${r.horizon} days</td><td>${r.period}</td>
+        <td>${signed(+r.net_pct,2)}</td><td>${(+r.t_newey_west).toFixed(1)}</td>
+        <td>${(100*r.share_profitable).toFixed(0)}%</td>
+        <td>${r.n_effective}</td></tr>`).join("")}</tbody></table></div>`;
+  } else { host.innerHTML=""; host.hidden=true; return; }
+  host.hidden=false;
+  host.scrollIntoView({behavior:"smooth",block:"nearest"});
+  const close=$("#claimClose");
+  if(close)close.addEventListener("click",()=>{host.hidden=true;host.innerHTML="";});
 }
 
 function renderAll(){

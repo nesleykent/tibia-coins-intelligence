@@ -4516,7 +4516,17 @@ bullets([
     "Predicted, and the only one of these that the report expected to go the other way.",
 ])
 
-h3("7.6.4 The thesis, and what would falsify it")
+h3("7.6.4 The claims this report and the site both make")
+para(tag("judg") + "<b>The findings below are published in two places, and they are written "
+     "once.</b> Each is defined in <font face='Courier'>scripts/narrative.py</font> with its "
+     "own numbers read from the results files, then rendered here as a paragraph and on the "
+     "interactive site as a card with the data behind it. Neither artifact restates the other, "
+     "so neither can fall behind it.")
+for _c in narrative.claims():
+    para(tag(_c.label) + f"<b>{_c.heading}.</b> {_c.text}")
+story.append(PageBreak())
+
+h3("7.6.5 The thesis, and what would falsify it")
 para(tag("judg") + f"<b>A Tibia Coin is a currency, not an asset.</b> That is the claim, and it "
      f"is meant to be contestable. Its content is that holding coins beyond what you intend to "
      f"spend is an uncompensated position: expected return zero at every horizon tested, "
