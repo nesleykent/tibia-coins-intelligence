@@ -505,7 +505,7 @@ HTML = r"""<!doctype html>
   "use strict";
   const EMBEDDED = __DATA__;
   const SCHEMA = EMBEDDED.schema;
-  const COLORS = { direct: "#2467c9", potential: "#bc643f", realized: "#d39418", tcPrice: "#7c3aed" };
+  const COLORS = { direct: "#2467c9", potential: "#bc643f", realized: "#d39418", tcPrice: "#a0185a" };
   const SERIES = {
     direct: { label: "Direct GP drops", color: COLORS.direct, dash: "" },
     potential: { label: "Potential GP maximum", color: COLORS.potential, dash: "8 6" },
@@ -855,7 +855,7 @@ HTML = r"""<!doctype html>
         return `${command} ${x(index).toFixed(2)} ${yPrice(row.tcPrice).toFixed(2)}`;
       }).filter(Boolean).join(" ");
       addSVG(svg, "path", {
-        d: pricePath, fill: "none", stroke: COLORS.tcPrice, "stroke-width": 2.8,
+        d: pricePath, fill: "none", stroke: COLORS.tcPrice, "stroke-width": 3.2,
         "stroke-linecap": "round", "stroke-linejoin": "round",
         "vector-effect": "non-scaling-stroke"
       });
