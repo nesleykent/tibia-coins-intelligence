@@ -334,6 +334,8 @@ def oos_models(data: pd.DataFrame) -> pd.DataFrame:
                     "test_n": int(test_mask.sum()),
                     "random_walk_rmse": baseline_rmse,
                     "model_rmse": rmse,
+                    # NOTE: a FRACTION despite the name - 0.0017 is 0.17%, not 0.0017%.
+                    # Format with "%" rather than multiplying, or the figure reads 100x small.
                     "rmse_improvement_pct": 1 - rmse / baseline_rmse,
                     "model_mae": float(np.mean(np.abs(y_test - prediction))),
                     "direction_accuracy": float(
