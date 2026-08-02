@@ -129,6 +129,9 @@ def main() -> None:
     assert 'data-mode="price">Price (GP)</button>' in html
     assert 'data-mode="return">Return (%)</button>' in html
     assert "Actual daily market price in GP per Tibia Coin." in html
+    assert "comparisonDates=[...new Set(data.worldSeries.map(row=>row.date))].sort()" in html
+    assert "missing history is left blank" in html
+    assert "const linePath=key=>" in html
     assert "each series is rebased to 100" not in html
     assert "Interactive rebased world comparison" not in html
     assert "reports/intelligence_hub.html" in entry

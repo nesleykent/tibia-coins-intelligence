@@ -758,6 +758,7 @@ const shortDate = new Intl.DateTimeFormat("en-US",{month:"short",year:"2-digit",
 let data = structuredClone(EMBEDDED);
 let worldMap = new Map();
 let seriesMap = new Map();
+let comparisonDates = [];
 let predictionMap = new Map();
 let specificPredictionMap = new Map();
 let modelRegistryMap = new Map();
@@ -790,6 +791,7 @@ function rebuildIndexes(){
     seriesMap.get(row.world).push(row);
   }
   for(const rows of seriesMap.values())rows.sort((a,b)=>a.date.localeCompare(b.date));
+  comparisonDates=[...new Set(data.worldSeries.map(row=>row.date))].sort();
   predictionMap=new Map(data.predictions.map(row=>[row.world,row]));
   specificPredictionMap=new Map(data.specificPredictions.map(row=>[row.world,row]));
   modelRegistryMap=new Map(data.modelRegistry.map(row=>[row.world,row]));
@@ -1045,38 +1047,47 @@ function commonSeries(worldA,worldB){
   const a=seriesMap.get(worldA)||[],b=seriesMap.get(worldB)||[];
   const aMap=new Map(a.map(row=>[row.date,row]));
   const bMap=new Map(b.map(row=>[row.date,row]));
-  const dates=[...aMap.keys()].filter(item=>bMap.has(item)).sort();
-  if(!dates.length)return[];
-  const a0=num(aMap.get(dates[0]).price_gp),b0=num(bMap.get(dates[0]).price_gp);
-  return dates.map(item=>{const aPrice=num(aMap.get(item).price_gp),bPrice=num(bMap.get(item).price_gp);return{date:item,aPrice,bPrice,aReturn:(aPrice/a0-1)*100,bReturn:(bPrice/b0-1)*100}});
+  const a0=a.length?num(a[0].price_gp):null,b0=b.length?num(b[0].price_gp):null;
+  return comparisonDates.map(item=>{
+    const aPrice=aMap.has(item)?num(aMap.get(item).price_gp):null;
+    const bPrice=bMap.has(item)?num(bMap.get(item).price_gp):null;
+    return{date:item,aPrice,bPrice,
+      aReturn:aPrice!==null&&a0?(aPrice/a0-1)*100:null,
+      bReturn:bPrice!==null&&b0?(bPrice/b0-1)*100:null};
+  });
 }
 
 function renderWorldChart(){
   const worldA=$("#worldA").value,worldB=$("#worldB").value,rows=commonSeries(worldA,worldB);
   $$("#worldChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedWorldChartMode));
+  const fixedWindow=`${dateFmt.format(date(comparisonDates[0]))} to ${dateFmt.format(date(comparisonDates[comparisonDates.length-1]))}`;
   $("#worldChartDescription").textContent=selectedWorldChartMode==="price"
-    ?"Actual daily market price in GP per Tibia Coin."
-    :"Percentage gain or loss from the first shared date; 0% means no change.";
+    ?`Actual daily market price in GP per Tibia Coin. Fixed window: ${fixedWindow}; missing history is left blank.`
+    :`Percentage gain or loss from each world's first observation. Fixed window: ${fixedWindow}; 0% means no change.`;
   $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
   drawTwoSeries($("#worldChart"),$("#worldTooltip"),rows,{a:worldA,b:worldB},selectedWorldChartMode);
 }
 
 function drawTwoSeries(svg,tooltip,rows,labels,mode){
   svg.innerHTML="";
-  if(!rows.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No overlapping observations");return}
+  if(!rows.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No observations for this selection");return}
   const width=Math.max(320,svg.clientWidth||900),height=340,m={top:22,right:18,bottom:42,left:58},iw=width-m.left-m.right,ih=height-m.top-m.bottom;
   const aKey=mode==="return"?"aReturn":"aPrice",bKey=mode==="return"?"bReturn":"bPrice";
-  const values=rows.flatMap(row=>[row[aKey],row[bKey]]),rawLow=Math.min(...values),rawHigh=Math.max(...values),padding=Math.max((rawHigh-rawLow)*.08,mode==="return"?1:100);
+  const values=rows.flatMap(row=>[row[aKey],row[bKey]]).filter(Number.isFinite);
+  if(!values.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No observations for this selection");return}
+  const rawLow=Math.min(...values),rawHigh=Math.max(...values),padding=Math.max((rawHigh-rawLow)*.08,mode==="return"?1:100);
   const low=rawLow-padding,high=rawHigh+padding;
   const x=i=>m.left+i/(rows.length-1||1)*iw,y=value=>m.top+ih-(value-low)/(high-low||1)*ih;
   svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
   for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},mode==="return"?`${v>=0?"+":""}${v.toFixed(0)}%`:fmt.format(Math.round(v)))}
   for(const index of uniqueIndexes(Math.min(width<600?4:7,rows.length),rows.length))addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},shortDate.format(date(rows[index].date)));
   if(mode==="return"&&low<0&&high>0)addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:y(0),y2:y(0),stroke:"#647087","stroke-dasharray":"4 4"});
-  for(const [key,color] of [[aKey,COLORS.blue],[bKey,COLORS.gold]])addSvg(svg,"path",{d:rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)}`).join(" "),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
+  const linePath=key=>{let d="",open=false;rows.forEach((row,i)=>{if(!Number.isFinite(row[key])){open=false;return}d+=`${open?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)} `;open=true});return d.trim()};
+  for(const [key,color] of [[aKey,COLORS.blue],[bKey,COLORS.gold]])addSvg(svg,"path",{d:linePath(key),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
   const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive world comparison by ${mode==="return"?"percentage return":"actual GP price"}`});
-  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${escapeHtml(labels.a)}: ${fmt.format(row.aPrice)} GP · ${signed(row.aReturn,1)} since start<br>${escapeHtml(labels.b)}: ${fmt.format(row.bPrice)} GP · ${signed(row.bReturn,1)} since start`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
+  const reading=(price,ret)=>price===null?"No observation":`${fmt.format(price)} GP · ${signed(ret,1)} since start`;
+  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${escapeHtml(labels.a)}: ${reading(row.aPrice,row.aReturn)}<br>${escapeHtml(labels.b)}: ${reading(row.bPrice,row.bReturn)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
   capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
