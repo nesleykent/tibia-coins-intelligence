@@ -3,6 +3,10 @@
 A quantitative study of the gold-denominated Tibia Coin market across 93 game worlds, built
 from public data and rendered to a single PDF.
 
+**Living product and research plan:** [`PROJECT_PLAN.md`](PROJECT_PLAN.md) — verified current
+state, ordered site backlog, analytical gaps, missing data, and definitions of done shared by
+all agents.
+
 **Interactive workspace:** `reports/intelligence_hub.html` — seven connected areas for market
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.

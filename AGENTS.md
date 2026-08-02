@@ -4,6 +4,28 @@ This file is the shared operating contract for every coding or research agent
 working in this repository. Product quality is measured by analytical rigor,
 decision usefulness, clarity for different audiences, and reproducibility.
 
+## Planning source of truth
+
+Read [PROJECT_PLAN.md](PROJECT_PLAN.md) before starting material work. It is the
+shared source of truth for current product status, analytical gaps, priorities,
+dependencies, and completion criteria.
+
+- Work from the highest-priority unblocked item unless the user asks otherwise.
+- Give each material change a plan ID and keep its scope narrow.
+- Before implementation, verify that the stated gap still exists in the current
+  code, data, and rendered artifact.
+- When finishing work, update the item status, evidence, tests, remaining risk,
+  and `Last reviewed` date in the same commit.
+- Add newly discovered gaps to the plan. Do not hide them in chat, commit
+  messages, or code comments only.
+- A feature is not complete merely because code exists; it must satisfy the
+  item’s definition of done and the repository verifiers.
+- If two agents work concurrently, claim an item by marking it `IN PROGRESS`
+  with the agent and date before editing. Do not start an already claimed item
+  without coordinating.
+- Do not rewrite verified findings as backlog. Separate missing product
+  communication, missing analysis, missing data, and optional enhancement.
+
 ## Product mission
 
 Build the definitive evidence-based investment research product for the Tibia
@@ -185,4 +207,3 @@ Recommended report flow:
 - Synchronize the completed commit with GitHub.
 - Before pushing, confirm that the commit contains only intended files and does
   not overwrite a collaborator’s newer work.
-
