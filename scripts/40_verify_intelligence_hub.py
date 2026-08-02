@@ -31,6 +31,10 @@ def main() -> None:
     panel = pd.read_csv(P / "panel_daily.csv")
     index = pd.read_csv(P / "market_index.csv")
     predictions = pd.read_csv(P / "latest_predictions.csv")
+    specific_predictions = pd.read_csv(P / "latest_specific_predictions.csv")
+    model_registry = pd.read_csv(P / "specific_model_registry.csv")
+    model_comparison = pd.read_csv(P / "specific_model_comparison.csv")
+    model_sensitivity = pd.read_csv(P / "specific_model_sensitivity.csv")
     forecasts = pd.read_csv(P / "forecasts_sa.csv")
     strategy = pd.read_csv(P / "strategy_holdout.csv")
     figures = json.loads((ROOT / "figures" / "manifest.json").read_text())
@@ -42,13 +46,31 @@ def main() -> None:
     valid_index = index.index_valid.astype(bool) & index.ew_price.notna()
     assert len(payload["marketIndex"]) == valid_index.sum()
     assert len(payload["predictions"]) == len(predictions)
+    assert len(payload["specificPredictions"]) == len(specific_predictions)
+    assert len(payload["modelRegistry"]) == len(model_registry)
+    assert len(payload["modelComparison"]) == len(model_comparison)
+    assert len(payload["modelSensitivity"]) == len(model_sensitivity)
     assert len(payload["forecasts"]) == len(forecasts)
     assert len(payload["strategy"]) == len(strategy)
     assert len(payload["figures"]) == len(figures) == 34
     assert {row["world"] for row in payload["worlds"]} == set(worlds.world)
     assert {row["world"] for row in payload["predictions"]} == set(predictions.world)
+    assert {row["world"] for row in payload["specificPredictions"]} == set(
+        specific_predictions.world
+    )
+    assert {row["world"] for row in payload["modelRegistry"]} == set(
+        model_registry.world
+    )
 
-    for view in ("overview", "worlds", "forecasts", "strategy", "emission", "library"):
+    for view in (
+        "overview",
+        "worlds",
+        "forecasts",
+        "models",
+        "strategy",
+        "emission",
+        "library",
+    ):
         assert f'id="view-{view}"' in html
         assert f'data-view="{view}"' in html
 
@@ -57,6 +79,9 @@ def main() -> None:
         "function renderOverviewChart(",
         "function renderWorldChart(",
         "function renderForecastChart(",
+        "function renderModels(",
+        "function renderModelChart(",
+        "function renderModelDetail(",
         "function renderStrategy(",
         "function renderLibrary(",
         "function openExhibit(",
@@ -72,6 +97,10 @@ def main() -> None:
         "../data/processed/panel_daily.csv",
         "../data/processed/forecasts_sa.csv",
         "../data/processed/latest_predictions.csv",
+        "../data/processed/latest_specific_predictions.csv",
+        "../data/processed/specific_model_registry.csv",
+        "../data/processed/specific_model_comparison.csv",
+        "../data/processed/specific_model_sensitivity.csv",
         "../data/processed/strategy_holdout.csv",
     ):
         assert source in html, f"missing live data source: {source}"
@@ -90,6 +119,7 @@ def main() -> None:
     print(
         f"[INTELLIGENCE VERIFY] passed: {len(worlds)} worlds, "
         f"{panel.price_gp.notna().sum():,} price rows, {len(predictions)} predictions, "
+        f"{model_registry.group_id.nunique()} specific models, "
         f"{len(forecasts)} scenario forecasts, {len(figures)} interactive exhibits"
     )
 

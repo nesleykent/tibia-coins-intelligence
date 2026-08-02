@@ -1,0 +1,21 @@
+group_id,group_level,model_pvp_type,model_battleye_color,model_region,model_worlds,low_sample_warning,candidate_estimator,n_train,n_validation,validation_rmse_pct,selected
+open-pvp__green__all-regions,pvp_battleye,Open PvP,green,,9,False,ridge,1585,472,2.1585645598825565,False
+open-pvp__green__all-regions,pvp_battleye,Open PvP,green,,9,False,random_forest,1585,472,2.1435068615810042,True
+open-pvp__green__south-america,pvp_battleye_region,Open PvP,green,South America,5,False,ridge,987,600,1.3748321132914576,True
+open-pvp__green__south-america,pvp_battleye_region,Open PvP,green,South America,5,False,random_forest,987,600,1.4293175080777374,False
+open-pvp__yellow__all-regions,pvp_battleye,Open PvP,yellow,,14,False,ridge,4466,956,1.324661435051705,True
+open-pvp__yellow__all-regions,pvp_battleye,Open PvP,yellow,,14,False,random_forest,4466,956,1.3332560919771757,False
+open-pvp__yellow__north-america,pvp_battleye_region,Open PvP,yellow,North America,6,False,ridge,1543,720,1.3772793985094682,False
+open-pvp__yellow__north-america,pvp_battleye_region,Open PvP,yellow,North America,6,False,random_forest,1543,720,1.373675941072383,True
+optional-pvp__green__all-regions,pvp_battleye,Optional PvP,green,,10,False,ridge,1418,592,2.1249095173001624,True
+optional-pvp__green__all-regions,pvp_battleye,Optional PvP,green,,10,False,random_forest,1418,592,2.243278347973689,False
+optional-pvp__green__south-america,pvp_battleye_region,Optional PvP,green,South America,5,False,ridge,761,598,2.402589967744595,False
+optional-pvp__green__south-america,pvp_battleye_region,Optional PvP,green,South America,5,False,random_forest,761,598,2.0383683674360706,True
+optional-pvp__yellow__europe,pvp_battleye_region,Optional PvP,yellow,Europe,6,False,ridge,2247,720,1.5572141560875796,False
+optional-pvp__yellow__europe,pvp_battleye_region,Optional PvP,yellow,Europe,6,False,random_forest,2247,720,1.5413046565094684,True
+optional-pvp__yellow__north-america,pvp_battleye_region,Optional PvP,yellow,North America,7,False,ridge,2541,840,1.881245827277721,True
+optional-pvp__yellow__north-america,pvp_battleye_region,Optional PvP,yellow,North America,7,False,random_forest,2541,840,1.900451232113207,False
+optional-pvp__yellow__south-america,pvp_battleye_region,Optional PvP,yellow,South America,5,False,ridge,988,600,1.5367528050353183,True
+optional-pvp__yellow__south-america,pvp_battleye_region,Optional PvP,yellow,South America,5,False,random_forest,988,600,1.5734275184873086,False
+retro-hardcore-pvp__all-battleye__all-regions,pvp,Retro Hardcore PvP,,,3,True,ridge,53,350,5.349196690284962,True
+retro-open-pvp__all-battleye__all-regions,pvp,Retro Open PvP,,,7,False,ridge,209,826,3.982377643571828,True

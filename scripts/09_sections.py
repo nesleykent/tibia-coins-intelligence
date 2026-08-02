@@ -60,6 +60,11 @@ STD = pd.DataFrame(STA["delayed_entry"])
 BTS = FD["scenario_backtest"]
 BTC = pd.DataFrame(BTS["coverage"])
 LPRED = pd.read_csv(P / "latest_predictions.csv")
+GSM = FD["group_specific_models"]
+GSC = pd.read_csv(P / "specific_model_comparison.csv")
+GSR = pd.read_csv(P / "specific_model_registry.csv")
+GSO = GSC[GSC.scope == "all"].iloc[0]
+GSP = GSC[GSC.scope == "pvp_type"].sort_values("scope_value")
 _IXYRS = (pd.Timestamp(IX['index_end']) - pd.Timestamp(IX['index_start'])).days / 365.25
 _DRIFT_T = IX['cagr_pct'] / (D['ret_sd_ann_pct'] / _IXYRS ** 0.5)
 _YRS_NEEDED = (2 * D['ret_sd_ann_pct'] / IX['cagr_pct']) ** 2
@@ -4023,6 +4028,39 @@ para(tag("judg") + f"<b>The model is an artefact, not a description.</b> It is s
      f"position relative to the market over seven days, and it emits no level forecast at all - "
      f"Section 6.6.2 finds none is supportable, so the artefact refuses rather than obliges.")
 
+h3("7.5.3a General versus group-specific models")
+para(tag("stat") + f"<b>A second production artefact tests whether the mapping should be local "
+     f"to a market segment.</b> It begins with PvP type x BattlEye cohort x region. Segments "
+     f"with fewer than {GSM['preferred_min_worlds']} eligible worlds first pool regions, then "
+     f"pool BattlEye cohorts; PvP types are never mixed. That rule produces "
+     f"{GSM['specific_models']} specific models: "
+     f"{GSM['group_level_worlds'].get('pvp_battleye_region', 0)} worlds keep the exact segment, "
+     f"{GSM['group_level_worlds'].get('pvp_battleye', 0)} use a region-pooled model and "
+     f"{GSM['group_level_worlds'].get('pvp', 0)} use a PvP-only model.")
+para(tag("lim") + f"<b>Segmentation does not improve the aggregate forecast.</b> On the final "
+     f"{int(GSO.n_dates)}-date holdout, the general model's RMSE is "
+     f"{GSO.general_rmse_pct:.3f}% against {GSO.specific_rmse_pct:.3f}% for the specific family. "
+     f"The specific error is {abs(GSO.specific_improvement_pct):.2f}% higher, and the "
+     f"Newey-West comparison rejects equality at p = {GSO.dm_p_specific_vs_general:.3f}. "
+     f"The specific models remain useful as a diagnostic and a current alternative score, but "
+     f"the general model remains the evidence-backed default.")
+table([["Scope", "Worlds", "General RMSE", "Specific RMSE",
+        "Specific improvement", "Holdout winner"]] +
+      [[r.scope_value, int(r.n_worlds), f"{r.general_rmse_pct:.3f}%",
+        f"{r.specific_rmse_pct:.3f}%", f"{r.specific_improvement_pct:+.2f}%",
+        str(r.better_model).title()] for _, r in
+       pd.concat([GSC[GSC.scope == "all"], GSP]).iterrows()],
+      [46 * mm, 16 * mm, 28 * mm, 28 * mm, 32 * mm, AVAIL - 150 * mm],
+      fs=6.8, align=[None, "R", "R", "R", "R", None],
+      caption="General versus hierarchical group-specific seven-day relative-value models. "
+              "Both use the same date split and untouched holdout; lower RMSE is better.")
+para(tag("lim") + f"One forced exception remains visible rather than hidden: Retro Hardcore "
+     f"PvP has only {int(GSR[GSR.pvp_type == 'Retro Hardcore PvP'].model_worlds.max())} eligible "
+     f"worlds globally. Because the hierarchy forbids cross-PvP pooling, that cohort uses a "
+     f"regularised Ridge model and carries a low-sample warning. Full assignments, estimator "
+     f"selection, sensitivity and current predictions are written by "
+     f"<i>scripts/41_group_models.py</i>.")
+
 para(tag("stat") + f"<b>The bands were checked rather than asserted.</b> Walking the "
      f"history and simulating forward from each origin using only the data available at that "
      f"point, {BTS['well_calibrated']} of {BTS['n_tested']} band-horizon pairs cover within ten "
@@ -5081,6 +5119,9 @@ table([["Script", "Purpose"],
        ["28_supply_demand.py", "Direct test of the gold-production channel against demand and behavioural blocks"],
        ["29_scenarios.py", "Block-bootstrap scenarios, probability bands and actionable levels"],
        ["30_model_artifact.py", "Fits, persists and scores the shipped model; run with --predict"],
+       ["41_group_models.py", "Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores"],
+       ["42_verify_group_models.py", "Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family"],
+       ["43_build_group_model_notebook.py", "Builds and executes the reproducible general-versus-specific model notebook"],
        ["31_participants.py", "Demand decomposed by participant type from the order-book size distribution"],
        ["32_scenario_backtest.py", "Walk-forward coverage test of the scenario bands"],
        ["33_strategy.py", "Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; the long-only variant"],
@@ -5498,6 +5539,9 @@ table([["File", "Contents"],
                                       "conformal interval and metadata"],
        ["data/processed/latest_predictions.csv", "Current prediction for every "
                                                  "converged world"],
+       ["data/processed/latest_specific_predictions.csv", "Current general and group-specific predictions for every converged world"],
+       ["data/processed/specific_model_*.csv", "Group registry, estimator selection, sensitivity, holdout comparison and audit predictions"],
+       ["models/specific_models.pkl.gz", "Compressed hierarchical group-specific model family and calibrated intervals"],
        ["reports/gold_emission_dashboard.html", "Interactive world-by-time monetary-emission explorer"],
        ["reports/intelligence_hub.html", "Unified interactive market-intelligence workspace"],
        ["scripts/run_all.py", "Runs every stage in dependency order and verifies the result "

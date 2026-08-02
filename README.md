@@ -3,8 +3,9 @@
 A quantitative study of the gold-denominated Tibia Coin market across 93 game worlds, built
 from public data and rendered to a single PDF.
 
-**Interactive workspace:** `reports/intelligence_hub.html` — six connected areas for market
-overview, worlds, forecasts, strategy, gold emission and all 34 research exhibits.
+**Interactive workspace:** `reports/intelligence_hub.html` — seven connected areas for market
+overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
+34 research exhibits.
 
 **Technical report:** `reports/tibia_coin_market_report.pdf` — 175 pages, 8 chapters,
 34 exhibits, 109 tables, 5 appendices.
@@ -69,6 +70,17 @@ relative position with a conformal interval, and refuses to emit a level forecas
 python scripts/30_model_artifact.py --predict   # writes latest_predictions.csv
 ```
 
+**A segment-specific family ships beside it.** `models/specific_models.pkl.gz` contains 11
+models grouped first by PvP type, then BattlEye cohort and region. Groups below five worlds
+pool locations first and BattlEye cohorts second; PvP types are never mixed. The final untouched
+holdout keeps the general model as the default (1.867% RMSE versus 1.885% specific), while the
+specific scores remain available for diagnosis and comparison:
+
+```bash
+python scripts/41_group_models.py
+python scripts/42_verify_group_models.py
+```
+
 ## Running it
 
 ```bash
@@ -84,10 +96,10 @@ python3 -m http.server 4173
 # then open http://127.0.0.1:4173/
 ```
 
-The workspace automatically refreshes its price, world, forecast, strategy and prediction
-datasets while served over HTTP. It keeps a complete embedded snapshot for direct-file and
-offline use, stores the active view and filters in the URL, embeds the gold-emission explorer,
-and turns every report exhibit into a searchable detail view.
+The workspace automatically refreshes its price, world, forecast, general/specific model,
+strategy and prediction datasets while served over HTTP. It keeps a complete embedded snapshot
+for direct-file and offline use, stores the active view and filters in the URL, embeds the
+gold-emission explorer, and turns every report exhibit into a searchable detail view.
 
 The monetary-emission reconstruction is also available as four audit layers:
 
@@ -146,7 +158,7 @@ forecast cells are printed, that the currency convention holds, and that the fig
 the body text. It exits non-zero on failure, so a broken build cannot pass quietly.
 
 Python 3.14 with pandas, numpy, statsmodels, scipy, arch, matplotlib, reportlab, svglib, pypdf,
-pyarrow and Pillow.
+pyarrow, Pillow, nbformat, nbclient and ipykernel.
 
 ## Sources, and the terms they were used under
 

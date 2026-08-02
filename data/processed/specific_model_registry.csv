@@ -1,0 +1,62 @@
+world,pvp_type,battleye_color,region,group_level,group_id,model_pvp_type,model_battleye_color,model_region,exact_worlds,pvp_battleye_worlds,model_worlds,preferred_min_worlds,low_sample_warning,fallback_reason,assigned_worlds,selected_estimator
+Citra,Open PvP,green,Europe,pvp_battleye,open-pvp__green__all-regions,Open PvP,green,,2,9,9,5,False,Exact segment has 2 worlds; pooled across regions,4,random_forest
+Xyla,Open PvP,green,Europe,pvp_battleye,open-pvp__green__all-regions,Open PvP,green,,2,9,9,5,False,Exact segment has 2 worlds; pooled across regions,4,random_forest
+Quidera,Open PvP,green,North America,pvp_battleye,open-pvp__green__all-regions,Open PvP,green,,2,9,9,5,False,Exact segment has 2 worlds; pooled across regions,4,random_forest
+Xymera,Open PvP,green,North America,pvp_battleye,open-pvp__green__all-regions,Open PvP,green,,2,9,9,5,False,Exact segment has 2 worlds; pooled across regions,4,random_forest
+Honbra,Open PvP,green,South America,pvp_battleye_region,open-pvp__green__south-america,Open PvP,green,South America,5,9,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Jadebra,Open PvP,green,South America,pvp_battleye_region,open-pvp__green__south-america,Open PvP,green,South America,5,9,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Ombra,Open PvP,green,South America,pvp_battleye_region,open-pvp__green__south-america,Open PvP,green,South America,5,9,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Ourobra,Open PvP,green,South America,pvp_battleye_region,open-pvp__green__south-america,Open PvP,green,South America,5,9,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Rasteibra,Open PvP,green,South America,pvp_battleye_region,open-pvp__green__south-america,Open PvP,green,South America,5,9,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Antica,Open PvP,yellow,Europe,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Peloria,Open PvP,yellow,Europe,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Thyria,Open PvP,yellow,Europe,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Vunira,Open PvP,yellow,Europe,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Havera,Open PvP,yellow,North America,pvp_battleye_region,open-pvp__yellow__north-america,Open PvP,yellow,North America,6,14,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Lobera,Open PvP,yellow,North America,pvp_battleye_region,open-pvp__yellow__north-america,Open PvP,yellow,North America,6,14,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Quintera,Open PvP,yellow,North America,pvp_battleye_region,open-pvp__yellow__north-america,Open PvP,yellow,North America,6,14,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Solidera,Open PvP,yellow,North America,pvp_battleye_region,open-pvp__yellow__north-america,Open PvP,yellow,North America,6,14,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Talera,Open PvP,yellow,North America,pvp_battleye_region,open-pvp__yellow__north-america,Open PvP,yellow,North America,6,14,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Wintera,Open PvP,yellow,North America,pvp_battleye_region,open-pvp__yellow__north-america,Open PvP,yellow,North America,6,14,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Ferobra,Open PvP,yellow,South America,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Inabra,Open PvP,yellow,South America,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Quelibra,Open PvP,yellow,South America,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Serdebra,Open PvP,yellow,South America,pvp_battleye,open-pvp__yellow__all-regions,Open PvP,yellow,,4,14,14,5,False,Exact segment has 4 worlds; pooled across regions,8,ridge
+Kalanta,Optional PvP,green,Europe,pvp_battleye,optional-pvp__green__all-regions,Optional PvP,green,,3,10,10,5,False,Exact segment has 3 worlds; pooled across regions,5,ridge
+Karmeya,Optional PvP,green,Europe,pvp_battleye,optional-pvp__green__all-regions,Optional PvP,green,,3,10,10,5,False,Exact segment has 3 worlds; pooled across regions,5,ridge
+Nevia,Optional PvP,green,Europe,pvp_battleye,optional-pvp__green__all-regions,Optional PvP,green,,3,10,10,5,False,Exact segment has 3 worlds; pooled across regions,5,ridge
+Blumera,Optional PvP,green,North America,pvp_battleye,optional-pvp__green__all-regions,Optional PvP,green,,2,10,10,5,False,Exact segment has 2 worlds; pooled across regions,5,ridge
+Yovera,Optional PvP,green,North America,pvp_battleye,optional-pvp__green__all-regions,Optional PvP,green,,2,10,10,5,False,Exact segment has 2 worlds; pooled across regions,5,ridge
+Collabra,Optional PvP,green,South America,pvp_battleye_region,optional-pvp__green__south-america,Optional PvP,green,South America,5,10,5,5,False,Exact segment meets the preferred minimum,5,random_forest
+Descubra,Optional PvP,green,South America,pvp_battleye_region,optional-pvp__green__south-america,Optional PvP,green,South America,5,10,5,5,False,Exact segment meets the preferred minimum,5,random_forest
+Issobra,Optional PvP,green,South America,pvp_battleye_region,optional-pvp__green__south-america,Optional PvP,green,South America,5,10,5,5,False,Exact segment meets the preferred minimum,5,random_forest
+Ustebra,Optional PvP,green,South America,pvp_battleye_region,optional-pvp__green__south-america,Optional PvP,green,South America,5,10,5,5,False,Exact segment meets the preferred minimum,5,random_forest
+Venebra,Optional PvP,green,South America,pvp_battleye_region,optional-pvp__green__south-america,Optional PvP,green,South America,5,10,5,5,False,Exact segment meets the preferred minimum,5,random_forest
+Bona,Optional PvP,yellow,Europe,pvp_battleye_region,optional-pvp__yellow__europe,Optional PvP,yellow,Europe,6,18,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Celesta,Optional PvP,yellow,Europe,pvp_battleye_region,optional-pvp__yellow__europe,Optional PvP,yellow,Europe,6,18,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Harmonia,Optional PvP,yellow,Europe,pvp_battleye_region,optional-pvp__yellow__europe,Optional PvP,yellow,Europe,6,18,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Monza,Optional PvP,yellow,Europe,pvp_battleye_region,optional-pvp__yellow__europe,Optional PvP,yellow,Europe,6,18,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Refugia,Optional PvP,yellow,Europe,pvp_battleye_region,optional-pvp__yellow__europe,Optional PvP,yellow,Europe,6,18,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Secura,Optional PvP,yellow,Europe,pvp_battleye_region,optional-pvp__yellow__europe,Optional PvP,yellow,Europe,6,18,6,5,False,Exact segment meets the preferred minimum,6,random_forest
+Astera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Calmera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Gladera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Luminera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Menera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Nefera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Pacera,Optional PvP,yellow,North America,pvp_battleye_region,optional-pvp__yellow__north-america,Optional PvP,yellow,North America,7,18,7,5,False,Exact segment meets the preferred minimum,7,ridge
+Belobra,Optional PvP,yellow,South America,pvp_battleye_region,optional-pvp__yellow__south-america,Optional PvP,yellow,South America,5,18,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Celebra,Optional PvP,yellow,South America,pvp_battleye_region,optional-pvp__yellow__south-america,Optional PvP,yellow,South America,5,18,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Gentebra,Optional PvP,yellow,South America,pvp_battleye_region,optional-pvp__yellow__south-america,Optional PvP,yellow,South America,5,18,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Kalibra,Optional PvP,yellow,South America,pvp_battleye_region,optional-pvp__yellow__south-america,Optional PvP,yellow,South America,5,18,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Yonabra,Optional PvP,yellow,South America,pvp_battleye_region,optional-pvp__yellow__south-america,Optional PvP,yellow,South America,5,18,5,5,False,Exact segment meets the preferred minimum,5,ridge
+Retalia,Retro Hardcore PvP,green,Europe,pvp,retro-hardcore-pvp__all-battleye__all-regions,Retro Hardcore PvP,,,1,3,3,5,True,PvP × BattlEye segment has 3 worlds; pooled across regions and BattlEye cohorts,3,ridge
+Monstera,Retro Hardcore PvP,green,North America,pvp,retro-hardcore-pvp__all-battleye__all-regions,Retro Hardcore PvP,,,1,3,3,5,True,PvP × BattlEye segment has 3 worlds; pooled across regions and BattlEye cohorts,3,ridge
+Terribra,Retro Hardcore PvP,green,South America,pvp,retro-hardcore-pvp__all-battleye__all-regions,Retro Hardcore PvP,,,1,3,3,5,True,PvP × BattlEye segment has 3 worlds; pooled across regions and BattlEye cohorts,3,ridge
+Eclipta,Retro Open PvP,green,Europe,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,1,4,7,5,False,PvP × BattlEye segment has 4 worlds; pooled across regions and BattlEye cohorts,7,ridge
+Tempestera,Retro Open PvP,green,North America,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,1,4,7,5,False,PvP × BattlEye segment has 4 worlds; pooled across regions and BattlEye cohorts,7,ridge
+Gladibra,Retro Open PvP,green,South America,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,2,4,7,5,False,PvP × BattlEye segment has 4 worlds; pooled across regions and BattlEye cohorts,7,ridge
+Sombra,Retro Open PvP,green,South America,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,2,4,7,5,False,PvP × BattlEye segment has 4 worlds; pooled across regions and BattlEye cohorts,7,ridge
+Epoca,Retro Open PvP,yellow,Europe,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,1,3,7,5,False,PvP × BattlEye segment has 3 worlds; pooled across regions and BattlEye cohorts,7,ridge
+Firmera,Retro Open PvP,yellow,North America,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,1,3,7,5,False,PvP × BattlEye segment has 3 worlds; pooled across regions and BattlEye cohorts,7,ridge
+Lutabra,Retro Open PvP,yellow,South America,pvp,retro-open-pvp__all-battleye__all-regions,Retro Open PvP,,,1,3,7,5,False,PvP × BattlEye segment has 3 worlds; pooled across regions and BattlEye cohorts,7,ridge

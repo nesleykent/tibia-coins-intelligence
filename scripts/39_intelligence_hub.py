@@ -94,6 +94,45 @@ def build_payload() -> dict:
             "predicted_change_pct", "low80_pct", "high80_pct",
         ],
     )
+    specific_predictions = records(
+        P / "latest_specific_predictions.csv",
+        [
+            "world", "as_of", "price_gp", "pvp_type", "battleye_color", "region",
+            "group_level", "group_id", "model_worlds", "low_sample_warning",
+            "fallback_reason", "deviation_pct", "outside_band",
+            "general_predicted_change_pct", "general_low80_pct", "general_high80_pct",
+            "specific_predicted_change_pct", "specific_low80_pct",
+            "specific_high80_pct", "specific_minus_general_pct",
+        ],
+    )
+    model_registry = records(
+        P / "specific_model_registry.csv",
+        [
+            "world", "pvp_type", "battleye_color", "region", "group_level",
+            "group_id", "model_worlds", "assigned_worlds", "preferred_min_worlds",
+            "low_sample_warning", "fallback_reason", "selected_estimator",
+        ],
+    )
+    model_comparison = records(
+        P / "specific_model_comparison.csv",
+        [
+            "scope", "scope_value", "n_test", "n_dates", "n_worlds",
+            "general_rmse_pct", "specific_rmse_pct", "specific_improvement_pct",
+            "general_mae_pct", "specific_mae_pct", "general_r2_oos",
+            "specific_r2_oos", "general_direction_accuracy",
+            "specific_direction_accuracy", "dm_t_specific_vs_general",
+            "dm_p_specific_vs_general", "better_model",
+        ],
+    )
+    model_sensitivity = records(
+        P / "specific_model_sensitivity.csv",
+        [
+            "min_group_worlds", "n_models", "n_exact_worlds",
+            "n_region_pooled_worlds", "n_pvp_pooled_worlds",
+            "general_rmse_pct", "specific_rmse_pct",
+            "specific_improvement_pct",
+        ],
+    )
     strategy = records(
         P / "strategy_holdout.csv",
         [
@@ -127,12 +166,19 @@ def build_payload() -> dict:
             "indexReturn": results["index"]["total_pct"],
             "latestMedian": results["desc"]["price_latest_median"],
             "figureCount": len(figures),
+            "specificModels": int(pd.Series(
+                [row["group_id"] for row in model_registry]
+            ).nunique()),
         },
         "marketIndex": market_index,
         "worlds": worlds,
         "worldSeries": world_series,
         "forecasts": forecasts,
         "predictions": predictions,
+        "specificPredictions": specific_predictions,
+        "modelRegistry": model_registry,
+        "modelComparison": model_comparison,
+        "modelSensitivity": model_sensitivity,
         "strategy": strategy,
         "figures": figures,
     }
@@ -263,6 +309,15 @@ HTML = r"""<!doctype html>
     .forecast-band{padding:11px 0;border-bottom:1px solid var(--line-soft)}
     .forecast-band:last-child{border:0}
     .forecast-band strong{font-size:22px;display:block;margin-top:5px}
+    .model-grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(300px,.75fr);gap:16px}
+    .model-detail{padding:18px;display:grid;gap:13px;align-content:start}
+    .model-levels{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;padding:0 16px 16px}
+    .model-level{border:1px solid var(--line-soft);background:var(--surface-soft);border-radius:7px;
+      padding:13px;font-size:11px;line-height:1.5;color:#3c4961}
+    .model-level strong{display:block;color:var(--ink);font-size:13px;margin-bottom:4px}
+    .model-badge{display:inline-flex;align-items:center;min-height:25px;border-radius:999px;
+      background:var(--blue-soft);color:#0f51d8;padding:0 9px;font-size:10px;font-weight:800}
+    .model-badge.warning{background:var(--gold-soft);color:#765910}
     .strategy-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:16px}
     .bar-area{padding:16px}
     .bar-row{display:grid;grid-template-columns:72px 1fr 72px;gap:12px;align-items:center;margin:20px 0}
@@ -303,7 +358,7 @@ HTML = r"""<!doctype html>
     .mobile-only{display:none}
     @media(max-width:1050px){
       :root{--sidebar:190px}.main{padding:24px 20px 44px}.library-grid{grid-template-columns:repeat(2,1fr)}
-      .split,.world-layout,.forecast-grid,.strategy-grid{grid-template-columns:1fr}
+      .split,.world-layout,.forecast-grid,.model-grid,.strategy-grid{grid-template-columns:1fr}
       .signal{grid-template-columns:1fr 1fr}.emission-frame{height:1150px}
     }
     @media(max-width:760px){
@@ -327,6 +382,7 @@ HTML = r"""<!doctype html>
       .data-table td::before{content:attr(data-label);color:var(--muted);font-size:9px;text-transform:uppercase;
         font-weight:750}.data-table td:first-child{grid-column:1/-1;font-size:15px}
       .library-tools{grid-template-columns:1fr 1fr}.library-tools input{grid-column:1/-1}
+      .model-levels{grid-template-columns:1fr}
       .library-grid{grid-template-columns:1fr}.modal-body{grid-template-columns:1fr}
       .emission-frame{height:1250px}.footer{display:block}.footer span{display:block;margin-top:5px}
     }
@@ -353,6 +409,9 @@ HTML = r"""<!doctype html>
       </button>
       <button class="nav-button" data-view="forecasts">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 5-6 4 3 7-10M17 5h3v3"/></svg>Forecasts
+      </button>
+      <button class="nav-button" data-view="models">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h5v5H4zM15 4h5v5h-5zM10 15h5v5h-5zM6.5 10v2.5H12V15M17.5 9v3.5H12"/></svg>Models
       </button>
       <button class="nav-button" data-view="strategy">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="m14.8 9.2 5-5M16 4h4v4"/></svg>Strategy
@@ -433,6 +492,43 @@ HTML = r"""<!doctype html>
         <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation</th><th>Prediction</th><th>80% interval</th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
       </section>
 
+      <section id="view-models" class="view" hidden>
+        <div class="view-header"><div><h1>General vs specific</h1><p class="view-intro">Compare the shared 61-world model with hierarchical group models defined by PvP, BattlEye cohort and region.</p></div>
+          <div class="filters" aria-label="Specific model filters">
+            <div class="field"><label for="modelPvp">PvP</label><select id="modelPvp"></select></div>
+            <div class="field"><label for="modelBattleye">BattlEye</label><select id="modelBattleye"></select></div>
+            <div class="field"><label for="modelRegion">Region</label><select id="modelRegion"></select></div>
+            <div class="field"><label for="modelWorld">Inspect world</label><select id="modelWorld"></select></div>
+          </div>
+        </div>
+        <div class="metric-rail" aria-label="Model comparison summary">
+          <div class="metric"><span class="metric-label">General holdout RMSE</span><strong id="modelGeneralRmse" class="metric-value">—</strong><span class="metric-meta">lower is better</span></div>
+          <div class="metric"><span class="metric-label">Specific holdout RMSE</span><strong id="modelSpecificRmse" class="metric-value">—</strong><span class="metric-meta">same untouched dates</span></div>
+          <div class="metric"><span class="metric-label">Holdout winner</span><strong id="modelWinner" class="metric-value">—</strong><span id="modelWinnerMeta" class="metric-meta"></span></div>
+          <div class="metric"><span class="metric-label">Specific models</span><strong id="modelCount" class="metric-value">—</strong><span class="metric-meta">PvP types never mixed</span></div>
+        </div>
+        <div class="model-grid">
+          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="modelChartTitle">Holdout error by PvP type</h2><p>General and specific model RMSE; lower bars are better.</p></div><div class="legend"><span class="legend-item"><i class="legend-line"></i>General</span><span class="legend-item"><i class="legend-line" style="border-color:var(--gold)"></i>Specific</span></div></div><div class="chart-wrap"><svg id="modelChart" class="chart" role="img" aria-labelledby="modelChartTitle"></svg></div></article>
+          <aside id="modelDetail" class="panel model-detail"></aside>
+        </div>
+        <article class="panel" style="margin-top:16px">
+          <div class="panel-heading"><div><h2>Pooling hierarchy</h2><p>Five worlds is the preferred minimum; fallback removes dimensions from the bottom up.</p></div><span class="model-badge">PvP always separate</span></div>
+          <div class="model-levels">
+            <div class="model-level"><strong>1 · Exact segment</strong>PvP × BattlEye × region. Used when at least five eligible worlds share all three dimensions.</div>
+            <div class="model-level"><strong>2 · Pool regions</strong>If the exact segment is small, locations are combined while PvP and BattlEye remain fixed.</div>
+            <div class="model-level"><strong>3 · Pool BattlEye</strong>If still small, BattlEye cohorts are combined. PvP is never combined with another PvP type.</div>
+          </div>
+        </article>
+        <article class="panel" style="margin-top:16px">
+          <div class="panel-heading"><div><h2>Current predictions</h2><p id="modelTableCount">Eligible worlds</p></div><div class="table-tools"><input id="modelSearch" type="search" placeholder="Search eligible worlds…" aria-label="Search model predictions"></div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>PvP</th><th>BattlEye</th><th>Region</th><th>General 7d</th><th>Specific 7d</th><th>Difference</th><th>Group level</th></tr></thead><tbody id="modelTable"></tbody></table></div>
+        </article>
+        <article class="panel" style="margin-top:16px">
+          <div class="panel-heading"><div><h2>Minimum-group sensitivity</h2><p>The preferred five-world gate is declared before the final holdout, not selected from it.</p></div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Minimum worlds</th><th>Specific models</th><th>Exact worlds</th><th>Region pooled</th><th>PvP pooled</th><th>General validation RMSE</th><th>Specific validation RMSE</th></tr></thead><tbody id="modelSensitivityTable"></tbody></table></div>
+        </article>
+      </section>
+
       <section id="view-strategy" class="view" hidden>
         <div class="view-header"><div><h1>Strategy</h1><p class="view-intro">Test the strongest cross-world convergence signals after transaction cost, with training and untouched holdout evidence separated.</p></div>
           <div id="strategyHorizon" class="segmented"><button class="segment active" data-days="7">7 days</button><button class="segment" data-days="30">30 days</button><button class="segment" data-days="91">91 days</button></div>
@@ -454,7 +550,7 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-library" class="view" hidden>
-        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Read 174-page report</a></div>
+        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Read 175-page report</a></div>
         <div class="library-tools"><input id="librarySearch" type="search" placeholder="Search titles, topics or notes…" aria-label="Search research library"><select id="libraryTopic" aria-label="Filter research topic"><option value="all">All topics</option></select><button id="clearLibrary" class="button" type="button">Clear filters</button></div>
         <div id="libraryCount" class="source"></div>
         <div id="libraryGrid" class="library-grid" style="margin-top:12px"></div>
@@ -478,6 +574,10 @@ const DATA_FILES = {
   worldSeries:"../data/processed/panel_daily.csv",
   forecasts:"../data/processed/forecasts_sa.csv",
   predictions:"../data/processed/latest_predictions.csv",
+  specificPredictions:"../data/processed/latest_specific_predictions.csv",
+  modelRegistry:"../data/processed/specific_model_registry.csv",
+  modelComparison:"../data/processed/specific_model_comparison.csv",
+  modelSensitivity:"../data/processed/specific_model_sensitivity.csv",
   strategy:"../data/processed/strategy_holdout.csv"
 };
 const COLORS = {blue:"#155eef",gray:"#7b869a",gold:"#c58b16",green:"#14804a",red:"#c9363e"};
@@ -493,6 +593,8 @@ let data = structuredClone(EMBEDDED);
 let worldMap = new Map();
 let seriesMap = new Map();
 let predictionMap = new Map();
+let specificPredictionMap = new Map();
+let modelRegistryMap = new Map();
 let forecastMap = new Map();
 let activeView = "overview";
 let selectedForecastHorizon = "1m";
@@ -520,6 +622,8 @@ function rebuildIndexes(){
   }
   for(const rows of seriesMap.values())rows.sort((a,b)=>a.date.localeCompare(b.date));
   predictionMap=new Map(data.predictions.map(row=>[row.world,row]));
+  specificPredictionMap=new Map(data.specificPredictions.map(row=>[row.world,row]));
+  modelRegistryMap=new Map(data.modelRegistry.map(row=>[row.world,row]));
   forecastMap=new Map(data.forecasts.map(row=>[row.world,row]));
 }
 
@@ -537,6 +641,11 @@ function initialize(){
   populateSelect($("#worldA"),worlds,params.get("a")||"Antica");
   populateSelect($("#worldB"),worlds,params.get("b")||"Belobra");
   populateSelect($("#forecastWorld"),[...forecastMap.keys()].sort(),params.get("forecast")||"Belobra");
+  const modelWorlds=[...specificPredictionMap.keys()].sort();
+  populateSelect($("#modelPvp"),[...new Set(data.specificPredictions.map(row=>row.pvp_type))].sort(),params.get("modelPvp")||"all","All PvP types");
+  populateSelect($("#modelBattleye"),[...new Set(data.specificPredictions.map(row=>row.battleye_color))].sort(),params.get("modelBe")||"all","All cohorts");
+  populateSelect($("#modelRegion"),[...new Set(data.specificPredictions.map(row=>row.region))].sort(),params.get("modelRegion")||"all","All regions");
+  populateSelect($("#modelWorld"),modelWorlds,params.get("modelWorld")||"Belobra");
   const dates=data.marketIndex.map(row=>row.date);
   const min=dates[0],max=dates[dates.length-1];
   $("#overviewStart").min=$("#overviewEnd").min=min;
@@ -547,7 +656,7 @@ function initialize(){
   selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
   bindEvents();
   populateLibraryChapters();
-  showView(["overview","worlds","forecasts","strategy","emission","library"].includes(params.get("view"))?params.get("view"):"overview",false);
+  showView(["overview","worlds","forecasts","models","strategy","emission","library"].includes(params.get("view"))?params.get("view"):"overview",false);
   updateStatus();
   renderAll();
   if(params.get("exhibit")&&data.figures.some(item=>item.id===params.get("exhibit"))){
@@ -565,6 +674,9 @@ function bindEvents(){
   $("#worldSearch").addEventListener("input",renderWorldTable);
   $("#forecastWorld").addEventListener("change",()=>{renderForecasts();updateURL()});
   $$("#forecastHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedForecastHorizon=button.dataset.horizon;renderForecasts();updateURL()}));
+  ["#modelPvp","#modelBattleye","#modelRegion"].forEach(selector=>$(selector).addEventListener("change",()=>{renderModels();updateURL()}));
+  $("#modelWorld").addEventListener("change",()=>{renderModelDetail();updateURL()});
+  $("#modelSearch").addEventListener("input",renderModelTable);
   $$("#strategyHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedStrategyHorizon=Number(button.dataset.days);renderStrategy();updateURL()}));
   $("#librarySearch").addEventListener("input",renderLibrary);
   $("#libraryTopic").addEventListener("change",renderLibrary);
@@ -572,7 +684,7 @@ function bindEvents(){
   $("#copyView").addEventListener("click",copyView);
   $("#modalClose").addEventListener("click",closeExhibit);
   $("#exhibitDialog").addEventListener("click",event=>{if(event.target===$("#exhibitDialog"))closeExhibit()});
-  window.addEventListener("resize",debounce(()=>{if(activeView==="overview")renderOverviewChart();if(activeView==="worlds")renderWorldChart();if(activeView==="forecasts")renderForecastChart()},120));
+  window.addEventListener("resize",debounce(()=>{if(activeView==="overview")renderOverviewChart();if(activeView==="worlds")renderWorldChart();if(activeView==="forecasts")renderForecastChart();if(activeView==="models")renderModelChart()},120));
 }
 
 function showView(view,push=true){
@@ -583,6 +695,7 @@ function showView(view,push=true){
   if(view==="overview")renderOverview();
   if(view==="worlds")renderWorlds();
   if(view==="forecasts")renderForecasts();
+  if(view==="models")renderModels();
   if(view==="strategy")renderStrategy();
   if(view==="library")renderLibrary();
   if(push)updateURL();
@@ -590,7 +703,7 @@ function showView(view,push=true){
 }
 
 function renderAll(){
-  renderOverview();renderWorlds();renderForecasts();renderStrategy();renderLibrary();
+  renderOverview();renderWorlds();renderForecasts();renderModels();renderStrategy();renderLibrary();
   $("#footerCoverage").textContent=`${fmt.format(data.meta.worldDays)} world-days · ${fmt.format(data.meta.worlds)} worlds · ${data.meta.start} to ${data.meta.end}`;
 }
 
@@ -826,6 +939,95 @@ function renderPredictionTable(){
   $$("#predictionTable tr").forEach(row=>row.addEventListener("click",()=>{if(forecastMap.has(row.dataset.world)){$("#forecastWorld").value=row.dataset.world;renderForecasts();updateURL()}}));
 }
 
+function modelLevelLabel(value){
+  return({pvp_battleye_region:"PvP × BattlEye × region",pvp_battleye:"PvP × BattlEye",pvp:"PvP only"})[value]||value;
+}
+
+function filteredModelRows(){
+  const pvp=$("#modelPvp").value,battleye=$("#modelBattleye").value,region=$("#modelRegion").value;
+  const term=$("#modelSearch").value.trim().toLowerCase();
+  return data.specificPredictions.filter(row=>
+    (pvp==="all"||row.pvp_type===pvp)&&
+    (battleye==="all"||row.battleye_color===battleye)&&
+    (region==="all"||row.region===region)&&
+    row.world.toLowerCase().includes(term));
+}
+
+function renderModels(){
+  const overall=data.modelComparison.find(row=>row.scope==="all")||{};
+  $("#modelGeneralRmse").textContent=`${num(overall.general_rmse_pct).toFixed(3)}%`;
+  $("#modelSpecificRmse").textContent=`${num(overall.specific_rmse_pct).toFixed(3)}%`;
+  const winner=overall.better_model==="specific"?"Specific":"General";
+  $("#modelWinner").textContent=winner;
+  const delta=Math.abs(num(overall.specific_improvement_pct));
+  $("#modelWinnerMeta").textContent=`${winner==="General"?"specific is":"specific improves"} ${delta.toFixed(2)}% ${winner==="General"?"higher":"lower"} RMSE · p=${num(overall.dm_p_specific_vs_general).toFixed(3)}`;
+  $("#modelCount").textContent=fmt.format(new Set(data.modelRegistry.map(row=>row.group_id)).size);
+  renderModelChart();renderModelTable();renderModelDetail();renderModelSensitivity();
+}
+
+function renderModelChart(){
+  const rows=data.modelComparison.filter(row=>row.scope==="pvp_type").sort((a,b)=>num(a.general_rmse_pct)-num(b.general_rmse_pct));
+  const svg=$("#modelChart");svg.innerHTML="";
+  const width=Math.max(320,svg.clientWidth||800),height=340,m={top:24,right:62,bottom:42,left:Math.min(150,Math.max(105,width*.2))},iw=width-m.left-m.right,ih=height-m.top-m.bottom;
+  const max=Math.max(1,...rows.flatMap(row=>[num(row.general_rmse_pct),num(row.specific_rmse_pct)]))*1.12;
+  const x=value=>m.left+num(value)/max*iw,rowH=ih/Math.max(rows.length,1),barH=Math.min(18,rowH*.28);
+  svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  for(let i=0;i<=4;i++){const value=max*i/4,xx=x(value);addSvg(svg,"line",{x1:xx,x2:xx,y1:m.top,y2:height-m.bottom,stroke:"#e5eaf1"});addSvg(svg,"text",{x:xx,y:height-17,"text-anchor":"middle",fill:"#647087","font-size":10},`${value.toFixed(1)}%`)}
+  rows.forEach((row,index)=>{
+    const cy=m.top+rowH*(index+.5),general=num(row.general_rmse_pct),specific=num(row.specific_rmse_pct);
+    const label=row.scope_value.replace("Retro Hardcore PvP","Retro Hardcore").replace("Retro Open PvP","Retro Open").replace("Optional PvP","Optional").replace("Open PvP","Open");
+    addSvg(svg,"text",{x:m.left-10,y:cy+4,"text-anchor":"end",fill:"#273552","font-size":11,"font-weight":700},label);
+    addSvg(svg,"rect",{x:m.left,y:cy-barH-2,width:Math.max(1,x(general)-m.left),height:barH,fill:COLORS.blue,rx:2});
+    addSvg(svg,"rect",{x:m.left,y:cy+2,width:Math.max(1,x(specific)-m.left),height:barH,fill:COLORS.gold,rx:2});
+    addSvg(svg,"text",{x:x(general)+5,y:cy-barH/2+1,fill:COLORS.blue,"font-size":9,"font-weight":700},general.toFixed(2));
+    addSvg(svg,"text",{x:x(specific)+5,y:cy+barH/2+7,fill:"#8a6512","font-size":9,"font-weight":700},specific.toFixed(2));
+  });
+}
+
+function renderModelDetail(){
+  const world=$("#modelWorld").value,row=specificPredictionMap.get(world),registry=modelRegistryMap.get(world);
+  if(!row||!registry){$("#modelDetail").innerHTML='<div class="empty">No eligible world selected.</div>';return}
+  const comparison=data.modelComparison.find(item=>item.scope==="model_group"&&item.scope_value===row.group_id)||{};
+  const winner=comparison.better_model==="specific"?"Specific":"General";
+  const warning=bool(row.low_sample_warning)?'<div class="evidence-callout">Low-sample model: this PvP has fewer than five eligible worlds, and cannot be pooled with another PvP type.</div>':"";
+  $("#modelDetail").innerHTML=`<div><span class="model-badge ${bool(row.low_sample_warning)?"warning":""}">${escapeHtml(modelLevelLabel(row.group_level))}</span><h2 style="margin-top:10px">${escapeHtml(world)}</h2><p class="signal-note">${escapeHtml(row.pvp_type)} · ${escapeHtml(row.battleye_color)} BattlEye · ${escapeHtml(row.region)}</p></div>
+    <div class="fact"><span>General prediction</span><strong class="${num(row.general_predicted_change_pct)>=0?"positive":"negative"}">${signed(row.general_predicted_change_pct)}</strong></div>
+    <div class="fact"><span>Specific prediction</span><strong class="${num(row.specific_predicted_change_pct)>=0?"positive":"negative"}">${signed(row.specific_predicted_change_pct)}</strong></div>
+    <div class="fact"><span>Specific 80% interval</span><strong>${signed(row.specific_low80_pct)} to ${signed(row.specific_high80_pct)}</strong></div>
+    <div class="fact"><span>Difference</span><strong class="${num(row.specific_minus_general_pct)>=0?"positive":"negative"}">${signed(row.specific_minus_general_pct)}</strong></div>
+    <div class="fact"><span>Training pool</span><strong>${fmt.format(row.model_worlds)} worlds</strong></div>
+    <div class="fact"><span>Estimator</span><strong>${registry.selected_estimator==="random_forest"?"Random Forest":"Ridge"}</strong></div>
+    <div class="fact"><span>Group holdout winner</span><strong>${winner}</strong></div>
+    <p class="signal-note">${escapeHtml(row.fallback_reason)}</p>${warning}`;
+}
+
+function renderModelTable(){
+  const rows=filteredModelRows().sort((a,b)=>num(b.specific_predicted_change_pct)-num(a.specific_predicted_change_pct));
+  $("#modelTableCount").textContent=`${fmt.format(rows.length)} of ${fmt.format(data.specificPredictions.length)} eligible worlds`;
+  $("#modelTable").innerHTML=rows.length?rows.map(row=>`<tr data-world="${escapeHtml(row.world)}">
+    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
+    <td data-label="PvP">${escapeHtml(row.pvp_type)}</td>
+    <td data-label="BattlEye">${escapeHtml(row.battleye_color)}</td>
+    <td data-label="Region">${escapeHtml(row.region)}</td>
+    <td data-label="General 7d" class="${num(row.general_predicted_change_pct)>=0?"positive":"negative"}">${signed(row.general_predicted_change_pct)}</td>
+    <td data-label="Specific 7d" class="${num(row.specific_predicted_change_pct)>=0?"positive":"negative"}">${signed(row.specific_predicted_change_pct)}</td>
+    <td data-label="Difference" class="${num(row.specific_minus_general_pct)>=0?"positive":"negative"}">${signed(row.specific_minus_general_pct)}</td>
+    <td data-label="Group level">${escapeHtml(modelLevelLabel(row.group_level))}</td></tr>`).join(""):'<tr><td colspan="8"><div class="empty">No eligible worlds match these filters.</div></td></tr>';
+  $$("#modelTable tr[data-world]").forEach(tableRow=>tableRow.addEventListener("click",()=>{$("#modelWorld").value=tableRow.dataset.world;renderModelDetail();updateURL()}));
+}
+
+function renderModelSensitivity(){
+  const rows=[...data.modelSensitivity].sort((a,b)=>num(a.min_group_worlds)-num(b.min_group_worlds));
+  $("#modelSensitivityTable").innerHTML=rows.map(row=>`<tr>
+    <td data-label="Minimum worlds"><strong>${fmt.format(row.min_group_worlds)}</strong></td>
+    <td data-label="Specific models">${fmt.format(row.n_models)}</td>
+    <td data-label="Exact worlds">${fmt.format(row.n_exact_worlds)}</td>
+    <td data-label="Region pooled">${fmt.format(row.n_region_pooled_worlds)}</td>
+    <td data-label="PvP pooled">${fmt.format(row.n_pvp_pooled_worlds)}</td>
+    <td data-label="General validation RMSE">${num(row.general_rmse_pct).toFixed(3)}%</td>
+    <td data-label="Specific validation RMSE">${num(row.specific_rmse_pct).toFixed(3)}%</td></tr>`).join("");
+}
+
 function renderStrategy(){
   $$("#strategyHorizon .segment").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===selectedStrategyHorizon));
   const rows=data.strategy.filter(row=>num(row.horizon)===selectedStrategyHorizon);
@@ -881,6 +1083,10 @@ function updateURL(){
   if($("#worldB").value!=="Belobra")params.set("b",$("#worldB").value);
   if($("#forecastWorld").value!=="Belobra")params.set("forecast",$("#forecastWorld").value);
   if(selectedForecastHorizon!=="1m")params.set("horizon",selectedForecastHorizon);
+  if($("#modelPvp").value!=="all")params.set("modelPvp",$("#modelPvp").value);
+  if($("#modelBattleye").value!=="all")params.set("modelBe",$("#modelBattleye").value);
+  if($("#modelRegion").value!=="all")params.set("modelRegion",$("#modelRegion").value);
+  if($("#modelWorld").value!=="Belobra")params.set("modelWorld",$("#modelWorld").value);
   if(selectedStrategyHorizon!==7)params.set("days",selectedStrategyHorizon);
   if(selectedExhibit)params.set("exhibit",selectedExhibit);
   const query=params.toString();try{history.replaceState(null,"",`${location.pathname}${query?`?${query}`:""}${location.hash}`)}catch(_){}

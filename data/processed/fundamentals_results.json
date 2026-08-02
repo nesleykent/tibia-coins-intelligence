@@ -5778,5 +5778,67 @@
   "worst_oos_rmse_improvement_pct": -0.19073149063630157,
   "n_model_rows": 233,
   "n_sensitivity_rows": 15
+ },
+ "group_specific_models": {
+  "generated_at": "2026-08-02T20:52:59.793485+00:00",
+  "target": "Seven-day change in a world's log-price deviation from the cross-world mean",
+  "hierarchy": [
+   "PvP \u00d7 BattlEye \u00d7 region",
+   "PvP \u00d7 BattlEye, regions pooled",
+   "PvP, regions and BattlEye cohorts pooled"
+  ],
+  "pvp_never_pooled": true,
+  "battleye_definition": {
+   "green": "battleye_date == release",
+   "yellow": "BattlEye retrofitted after world release"
+  },
+  "preferred_min_worlds": 5,
+  "sensitivity_thresholds": [
+   4,
+   5,
+   6
+  ],
+  "eligible_worlds": 61,
+  "specific_models": 11,
+  "selected_estimators": {
+   "ridge": 7,
+   "random_forest": 4
+  },
+  "low_sample_models": 1,
+  "validation_start": "2025-11-25",
+  "holdout_start": "2026-03-25",
+  "holdout": {
+   "scope": "all",
+   "scope_value": "All eligible worlds",
+   "n_test": 7200,
+   "n_dates": 121,
+   "n_worlds": 61,
+   "general_rmse_pct": 1.8673801868183708,
+   "specific_rmse_pct": 1.8850309376177927,
+   "specific_improvement_pct": -0.9452146340641602,
+   "general_mae_pct": 1.3017017798782937,
+   "specific_mae_pct": 1.3142088964668868,
+   "general_r2_oos": 0.0881784356251506,
+   "specific_r2_oos": 0.07085962896084375,
+   "general_direction_accuracy": 0.6180555555555556,
+   "specific_direction_accuracy": 0.6173611111111111,
+   "dm_t_specific_vs_general": -2.2103461244428004,
+   "dm_p_specific_vs_general": 0.027081149792171466,
+   "better_model": "general"
+  },
+  "group_level_worlds": {
+   "pvp": 10,
+   "pvp_battleye": 17,
+   "pvp_battleye_region": 34
+  },
+  "outputs": {
+   "registry": "data/processed/specific_model_registry.csv",
+   "estimator_selection": "data/processed/specific_model_estimator_selection.csv",
+   "sensitivity": "data/processed/specific_model_sensitivity.csv",
+   "comparison": "data/processed/specific_model_comparison.csv",
+   "holdout_predictions": "data/processed/specific_model_holdout_predictions.csv",
+   "latest_predictions": "data/processed/latest_specific_predictions.csv",
+   "artifact": "models/specific_models.pkl.gz"
+  }
  }
 }
