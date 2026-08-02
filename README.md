@@ -7,8 +7,8 @@ from public data and rendered to a single PDF.
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.
 
-**Technical report:** `reports/tibia_coin_market_report.pdf` — 176 pages, 8 chapters,
-34 exhibits, 109 tables, 5 appendices.
+**Technical report:** `reports/tibia_coin_market_report.pdf` — 179 pages, 8 chapters,
+34 exhibits, 110 tables, 5 appendices.
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
 

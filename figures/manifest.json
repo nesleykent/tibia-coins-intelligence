@@ -165,7 +165,7 @@
   "title": "Fundamentals do not make the level predictable, and barely move the relative price",
   "subtitle": "Out-of-sample R\u00b2 against a random walk; above zero beats the benchmark",
   "source": "Sources: price archive item_id 22118; tibiamaps/tibia-kill-stats; GuildStats.eu /online-counter. Expanding-origin walk-forward, 6 folds, horizon purged.",
-  "note": "Bars below the line are models that lose to predicting no change. On the level, every model loses at every horizon. On the relative price the picture is better but small: of 42 model-horizon comparisons, 4 survives a Benjamini-Hochberg correction at 5% - the starred bar, a random forest at 7 days, which beat the random walk in 5 of 6 folds with an out-of-sample R\u00b2 of 0.017. 61 converged worlds, 2025-12-05 to 2026-07-30."
+  "note": "Bars below the line are models that lose to predicting no change. On the level, every model loses at every horizon. On the relative price the picture is better but small: of 42 model-horizon comparisons, 4 survive a Benjamini-Hochberg correction at 5% - the starred bars, all of them on the relative price. The strongest at seven days is a random forest with an out-of-sample R\u00b2 of 0.050, which beat the random walk in 5 of 6 folds. 61 converged worlds, 2025-12-05 to 2026-07-30."
  },
  "fig28_scenarios": {
   "title": "Three months out, the most likely outcome is the price it is at now",
