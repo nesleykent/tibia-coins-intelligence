@@ -129,14 +129,32 @@ check("transaction counts are never reported as coins", not _tc_claim, f"{_tc_cl
 # The report must not name two different gaps as "the binding limitation". This drifted once:
 # the gold-supply gap was binding until Section 6.6.14 obtained the series and rejected the
 # channel, after which the venue gap took over and three older passages still disagreed.
-# The headline verdict is stated in four places. They drifted apart once - the verdict page
-# was rewritten while three other passages still read "Overall rating: Neutral" - so every
-# statement of it must now agree on the same words.
-_verdicts = re.findall(r"(?:Overall rating|Verdict)[:.]?\s*([A-Za-z][^.\n]{0,44})", doc)
-_norm = {v.strip().lower().rstrip(".").replace("buy relative, not directional", "relative")
-         for v in _verdicts}
-check("every statement of the verdict agrees", len(_norm) <= 1 or not any(
-      "neutral" in v for v in _norm), f"{sorted(_norm)}")
+# The headline verdict is stated in several places and they drifted apart once. The check
+# compares each statement against the canonical value in narrative.py rather than blacklisting
+# a word: an earlier version made the colon optional, which matched table headers like
+# "Verdict against the global model", and only ever policed the literal string "neutral" - a
+# drift to "Hold" would have passed silently.
+_canon = None
+try:
+    import narrative as _nar_v
+    _canon = _nar_v.facts()["verdict"].strip().lower()
+except Exception:
+    pass
+# A real statement of the verdict is a label followed by a colon and a short phrase that ends
+# at a sentence boundary. Table headers have no colon and are excluded by construction.
+_verdicts = [v.strip().lower().rstrip(".")
+             for v in re.findall(r"(?:Overall rating|Verdict):\s*([A-Za-z][^.\n]{0,60}?)\s*"
+                                 r"(?:\.|Confidence)", doc)]
+if _canon is None:
+    check("every statement of the verdict agrees", False, "narrative.py unavailable")
+elif not _verdicts:
+    check("every statement of the verdict agrees", False,
+          "the report states no verdict at all")
+else:
+    _off = sorted({v for v in _verdicts if v != _canon})
+    check("every statement of the verdict agrees", not _off,
+          f"canonical {_canon!r}, found {_off}" if _off
+          else f"{len(_verdicts)} statements, all {_canon!r}")
 
 _bind = re.findall(r"[^.]{0,90}binding (?:limitation|one)[^.]{0,90}\.", doc)
 _stale = [b for b in _bind if "gold" in b.lower() and "at the time" not in b.lower()]

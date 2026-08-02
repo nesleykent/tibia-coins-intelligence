@@ -3100,7 +3100,7 @@
     "side": "Demand",
     "stimulus": "Farm hours against the coin price and the outside money price",
     "prediction": "Buys coins to export value; would show as coins leaving the game",
-    "evidence": "5,583,427 TIB outstanding is coins held outside the in-game system (Section 5.8)"
+    "evidence": "5,579,274 TIB outstanding is coins held outside the in-game system (Section 5.8)"
    },
    {
     "profile": "Farmer selling gold directly",

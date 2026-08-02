@@ -626,6 +626,26 @@ R["merge"]["wave_2025_11_06"] = {
     "first_obs_dates": {w: str(g.date.min().date()) for w, g in wv.groupby("world")},
 }
 
+def _antica_example() -> dict:
+    """One world's book, as the report's worked example of order count against depth."""
+    lo = pd.read_csv(P / "live_offers.csv")
+    bd_ = pd.read_csv(P / "order_books.csv")
+    w = "Antica"
+    a = lo[lo.world == w]
+    buys, sells = a[a.side == "buyers"], a[a.side == "sellers"]
+    mid = bd_.loc[bd_.world == w, "mid"]
+    # Distinct prices, so the example reads as a spread of placeholders rather than the
+    # same number four times.
+    cheap = sorted(set(buys.price.tolist()))[:4]
+    return {
+        "example_world": w,
+        "example_sell_orders": int(len(sells)),
+        "example_buy_orders": int(len(buys)),
+        "example_bids_below_2000": int((buys.price < 2000).sum()),
+        "example_mid_gp": float(mid.iloc[0]) if len(mid) else float("nan"),
+        "example_cheapest_bids": [int(x) for x in cheap],
+    }
+
 # ============================================================ 23. microstructure
 boards = []
 for f in sorted((ROOT / "data" / "raw" / "market_board").glob("*.json")):
@@ -655,6 +675,14 @@ R["micro"] = {
     "executed_gap_median_pct": float(CONV.executed_gap_pct.median()),
     "executed_gap_mean_pct": float(CONV.executed_gap_pct.mean()),
     "median_buy_orders": float(bd.n_buy_orders.median()),
+    # The worked example the report uses to show why an order count is not depth. Computed
+    # rather than transcribed: the counts, the sub-2,000 GP tail and the mid all moved when
+    # the snapshot was refreshed, and a hand-typed version silently did not.
+    **_antica_example(),
+    # Share of the daily low-bid field sitting at placeholder prices, which is why daily
+    # ranges are only accepted when both ends survive the filter.
+    "placeholder_low_share": float(
+        (lambda v: (v[v > -1] <= 1).mean())(panel.day_lowest_buy.dropna())),
     "median_sell_orders": float(bd.n_sell_orders.median()),
     "median_orders_below_2000": float(bd.buy_orders_below_2000.median()),
     "share_buy_orders_below_2000": float((bd.buy_orders_below_2000 / bd.n_buy_orders).median()),

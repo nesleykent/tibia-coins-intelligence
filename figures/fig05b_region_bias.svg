@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-02T20:00:31.094054</dc:date>
+    <dc:date>2026-08-02T20:22:18.996606</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -1351,7 +1351,7 @@ L 199.132333 201.403636
 L 199.132333 172.771844 
 L 114.048 172.771844 
 z
-" clip-path="url(#pb22e86983c)" style="fill: #bab0ac"/>
+" clip-path="url(#p921a67b16f)" style="fill: #bab0ac"/>
    </g>
    <g id="patch_4">
     <path d="M 114.048 152.038476 
@@ -1359,7 +1359,7 @@ L 231.134527 152.038476
 L 231.134527 123.406684 
 L 114.048 123.406684 
 z
-" clip-path="url(#pb22e86983c)" style="fill: #bab0ac"/>
+" clip-path="url(#p921a67b16f)" style="fill: #bab0ac"/>
    </g>
    <g id="patch_5">
     <path d="M 114.048 102.673316 
@@ -1367,7 +1367,7 @@ L 273.840527 102.673316
 L 273.840527 74.041524 
 L 114.048 74.041524 
 z
-" clip-path="url(#pb22e86983c)" style="fill: #bab0ac"/>
+" clip-path="url(#p921a67b16f)" style="fill: #bab0ac"/>
    </g>
    <g id="patch_6">
     <path d="M 114.048 53.308156 
@@ -1375,7 +1375,7 @@ L 419.106462 53.308156
 L 419.106462 24.676364 
 L 114.048 24.676364 
 z
-" clip-path="url(#pb22e86983c)" style="fill: #4e79a7"/>
+" clip-path="url(#p921a67b16f)" style="fill: #4e79a7"/>
    </g>
    <g id="text_6">
     <!-- 0.78x -->
@@ -2447,12 +2447,12 @@ z
    <g id="line2d_5">
     <path d="M 223.270507 210.24 
 L 223.270507 15.84 
-" clip-path="url(#pb22e86983c)" style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #e15759; stroke-width: 0.9"/>
+" clip-path="url(#p921a67b16f)" style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #e15759; stroke-width: 0.9"/>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="pb22e86983c">
+  <clipPath id="p921a67b16f">
    <rect x="114.048" y="15.84" width="396.576" height="194.4"/>
   </clipPath>
  </defs>

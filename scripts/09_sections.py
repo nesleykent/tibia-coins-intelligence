@@ -891,9 +891,11 @@ h3("3.4.1 Three readings the data do not support")
 bullets([
     tag("lim") + f"<b>Order counts are not depth.</b> On the median world the live book carries "
     f"{MI['median_buy_orders']:.0f} buy orders against {MI['median_sell_orders']:.0f} sell "
-    f"orders, which invites a reading of overwhelming demand. Antica's book at the time of "
-    f"collection held 4 sell orders against 37 buy orders - but 11 of those buy orders sat below "
-    f"2,000 GP against a market near 39,300 GP, including bids at 1, 2, 8 and 39 GP. These are "
+    f"orders, which invites a reading of overwhelming demand. {MI['example_world']}'s book at "
+    f"the time of collection held {MI['example_sell_orders']} sell orders against "
+    f"{MI['example_buy_orders']} buy orders - but {MI['example_bids_below_2000']} of those buy "
+    f"orders sat below 2,000 GP against a market near {gp(MI['example_mid_gp'])} GP, including "
+    f"bids at {', '.join(str(x) for x in MI['example_cheapest_bids'])} GP. These are "
     f"non-executable placeholders. Across all 93 worlds the correlation between the order-count "
     f"ratio and the actual depth ratio is only {MI['corr_ordercount_vs_depth_ratio']:.2f}.",
 
@@ -906,7 +908,8 @@ bullets([
     f"{pc(MI['antica_executed_gap'])}. Only the executed gap has history.",
 
     tag("lim") + f"<b>day_lowest_buy is unusable.</b> On large worlds "
-    f"{37:.0f}% of non-sentinel observations of this field sit at 1 GP or below, reflecting the "
+    f"{MI['placeholder_low_share']:.0%} of non-sentinel observations of this field sit at "
+    f"1 GP or below, reflecting the "
     f"placeholder bids described above. Daily ranges are therefore accepted only when both the "
     f"high and the low fall within 0.5x to 2.0x of that day's price, which removes the "
     f"placeholder lows; in practice the surviving lows come from the sell side.",
@@ -5318,7 +5321,7 @@ table([["Script", "Purpose"],
        ["11_finance.py", "Microstructure, efficiency, volatility and diagnostics"],
        ["16_killstats.py", "Per-world daily kill statistics aggregated to a fundamentals "
                           "panel (Section 6.6)"],
-       ["17_features.py", "92-feature matrix with the leakage assertion"],
+       ["17_features.py", f"{FD['panel']['n_features']}-feature matrix with the leakage assertion"],
        ["18_predict.py", "Leading indicators, walk-forward model comparison, "
                          "Diebold-Mariano"],
        ["19_regimes.py", "Hidden Markov states, change points and SHAP attribution"],
