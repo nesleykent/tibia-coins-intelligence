@@ -64,6 +64,7 @@ priority.
 
 | ID | Priority | Work item | Why now | Definition of done | Status |
 |---|---:|---|---|---|---|
+| SITE-00 | P0 | Publish the complete analysis on the site | The site is the primary interactive publication, not a shortened companion to the PDF | Every PDF section, finding, limitation, table, and exhibit has a discoverable site destination generated from canonical content; quantitative views are interactive where useful; an automated coverage manifest reports zero unexplained omissions and zero disagreements | `NEXT` |
 | SITE-01 | P0 | Complete a responsive visual and spacing audit of Overview | The Overview is the first impression and has already shown CSS/spacing regressions while new report content is being integrated | Desktop and narrow layouts inspected; hierarchy and spacing tokens consistent; no overlaps, clipped text, or misplaced controls; screenshots or browser checks recorded; hub verifier passes | `NEXT` |
 | SITE-02 | P1 | Build an Executive Investment Summary decision surface | The current navigation exposes analytical tools but not one place answering buy/sell/hold/avoid, fair-value context, confidence, horizon, and risks | World selection produces an as-of-dated decision card; separates observation, forecast, and action; includes price/unit, horizon, range, confidence, costs, risks, invalidation, model used, freshness, and “insufficient evidence” state | `NEXT` |
 | AN-01 | P1 | Define the decision and recommendation policy | A polished site must not turn raw forecasts into unsupported investment calls | Versioned rules map validated signals to Buy/Sell/Hold/Avoid/Investigate; transaction costs, liquidity, world eligibility, uncertainty, horizon, and conflicting signals are explicit; backtest and holdout evidence attached; policy can abstain | `NEXT` |
@@ -84,6 +85,7 @@ journey.”
 
 | Product question | Current state | Missing product behavior | Related queue |
 |---|---|---|---|
+| Where is the complete research? | PDF contains the full narrative and the site exposes seven views plus 34 exhibits | Full section-by-section site publication with no unexplained omissions from the PDF | SITE-00, QA-01 |
 | What is happening now? | Overview and world charts exist | Stronger responsive hierarchy and a concise market regime explanation | SITE-01, SITE-03 |
 | Should I buy, sell, hold, or avoid? | Strategy evidence and forecasts exist separately | Audited recommendation policy and unified decision card | AN-01, AN-02, SITE-02 |
 | Is the coin cheap or expensive? | Relative deviations and scenarios exist | Dedicated valuation framing; do not imply a forecastable absolute fair value | SITE-04 |
@@ -146,6 +148,12 @@ The product is decision-ready only when all of the following are true:
 
 - The site answers buy, sell, hold, avoid, and arbitrage questions with an
   explicit option to say “insufficient evidence.”
+- Every analysis, finding, limitation, table, and exhibit in the PDF is
+  discoverable on the site, with equivalent meaning and evidential depth.
+- An automated coverage manifest maps canonical analysis IDs to their PDF and
+  site destinations and reports zero unexplained omissions or disagreements.
+- Quantitative analysis is interactive where filtering, comparison, tooltips,
+  drill-down, or scenario selection improves understanding.
 - Every action states world, date, unit, horizon, expected range, confidence,
   costs, capacity, risks, freshness, and model identity.
 - Players can understand the decision without reading formulas.

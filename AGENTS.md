@@ -158,6 +158,20 @@ rather than displayed as an unexplained blank.
 
 ## Interface and editorial design
 
+- The website is a complete publication of the research, not a summary or a
+  companion dashboard. Every analysis, finding, limitation, table, and exhibit
+  published in the PDF must also be discoverable on the site.
+- Keep one canonical source for shared analytical content. Do not manually copy
+  conclusions into separate PDF and site implementations that can drift.
+- Site coverage must preserve the meaning and evidential depth of the analysis.
+  Progressive disclosure may hide technical detail initially, but it must
+  remain accessible on the same site.
+- Quantitative content should be interactive when interaction materially helps
+  comparison or exploration. A static representation is acceptable when
+  interaction adds no analytical value, but the underlying method, source,
+  sample, units, uncertainty, and limitations must still be available.
+- New analysis is incomplete until it appears in every applicable publication
+  surface and cross-artifact coverage checks pass.
 - Optimize first for comprehension and decisions, then density.
 - Maintain a clear hierarchy: conclusion, implication, evidence, details.
 - Keep spacing, typography, controls, and chart behavior consistent across the

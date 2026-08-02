@@ -7,6 +7,10 @@ from public data and rendered to a single PDF.
 state, ordered site backlog, analytical gaps, missing data, and definitions of done shared by
 all agents.
 
+**Publication requirement:** the site must publish the complete analysis contained in the PDF,
+not only its executive summary or selected dashboards. Shared claims come from canonical
+content and are checked for coverage and numerical agreement across artifacts.
+
 **Interactive workspace:** `reports/intelligence_hub.html` — seven connected areas for market
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.
