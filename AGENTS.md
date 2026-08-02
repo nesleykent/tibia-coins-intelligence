@@ -81,6 +81,18 @@ understand a statistical or financial term in order to understand the finding.
 When a technical term is useful, show a plain-language label first and place
 the technical name in supporting text or an expandable layer.
 
+Write the visible player layer as a guildmate would explain it in chat:
+
+- say what the player pays, receives, gains, loses, can buy, or can sell;
+- prefer short sentences with one idea each;
+- use familiar Market actions before market-structure vocabulary;
+- do not put terms such as bid, ask, midpoint, spread, depth, attribution,
+  dispersion, holdout, or significance in the primary label;
+- place the precise technical term and formula under “How this is calculated”
+  or another optional detail;
+- do not solve complexity by replacing a technical term with a different
+  unexplained term.
+
 Examples:
 
 - “How different world prices are” before “cross-world dispersion”;

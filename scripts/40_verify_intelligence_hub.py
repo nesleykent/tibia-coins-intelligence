@@ -129,22 +129,24 @@ def main() -> None:
     )
     assert '$("#emissionFrame").src="gold_emission_dashboard.html"' in html
     assert 'href="tibia_coin_market_report.pdf"' in html
-    assert 'data-mode="mid">Mid</button>' in html
+    assert 'data-mode="mid">Average</button>' in html
     assert 'data-mode="buy">Buy TC</button>' in html
     assert 'data-mode="sell">Sell TC</button>' in html
-    assert 'data-mode="return">Return (%)</button>' in html
+    assert 'data-mode="return">Change</button>' in html
     assert 'id="worldStart" type="date"' in html
     assert 'id="worldEnd" type="date"' in html
     assert '$("#worldStart").value=$("#overviewStart").value' in html
     assert '$("#overviewStart").value=$("#worldStart").value' in html
     assert 'const start=$("#worldStart").value,end=$("#worldEnd").value' in html
-    assert "Mean of the valid daily buyer-side and seller-side executed averages." in html
-    assert "Buy TC now" in html and "Sell TC now" in html
-    assert "Quoted spread" in html
-    assert "Demand depth" in html and "Supply depth" in html
-    assert "Book snapshot" in html
+    assert "What players paid, on average, to buy one TC each day." in html
+    assert "You pay to buy TC now" in html
+    assert "You receive selling TC now" in html
+    assert "Difference between buy and sell" in html
+    assert "TC wanted / TC for sale" in html
+    assert "Offer list updated" in html
+    assert "How these numbers are calculated" in html
     assert "comparisonDates=[...new Set(data.worldSeries.map(row=>row.date))].sort()" in html
-    assert "missing history is left blank" in html
+    assert "Days without data stay empty" in html
     assert "const linePath=key=>" in html
     assert "each series is rebased to 100" not in html
     assert "Interactive rebased world comparison" not in html

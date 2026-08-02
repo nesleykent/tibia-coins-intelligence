@@ -613,14 +613,14 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-worlds" class="view" hidden>
-        <div class="view-header"><div><h1>Worlds</h1><p class="view-intro">Compare actual Tibia Coin prices first, then switch to percentage returns when relative performance matters.</p></div>
+        <div class="view-header"><div><h1>Worlds</h1><p class="view-intro">See how much GP you pay to buy TC, how much you receive when selling TC, and how prices changed in each world.</p></div>
           <div class="filters"><div class="field"><label for="worldA">Primary world</label><select id="worldA"></select></div><div class="field"><label for="worldB">Compare with</label><select id="worldB"></select></div><div class="field wide"><label>Date range</label><div class="date-pair"><input id="worldStart" type="date" aria-label="World comparison start date"><input id="worldEnd" type="date" aria-label="World comparison end date"></div></div></div>
         </div>
         <div class="world-layout">
-          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p id="worldChartDescription">Daily executed midpoint in GP per Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="World chart measure"><button class="segment active" data-mode="mid">Mid</button><button class="segment" data-mode="buy">Buy TC</button><button class="segment" data-mode="sell">Sell TC</button><button class="segment" data-mode="return">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
+          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">Compare TC prices</h2><p id="worldChartDescription">The daily average paid in GP for one Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="Choose what price to compare"><button class="segment active" data-mode="mid">Average</button><button class="segment" data-mode="buy">Buy TC</button><button class="segment" data-mode="sell">Sell TC</button><button class="segment" data-mode="return">Change</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
           <aside id="worldFacts" class="panel world-facts"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Executable prices now</h2><p>“Buy TC” is the cheapest current sell offer; “Sell TC” is the highest current buy offer. Mid is only a reference and may not be executable.</p></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Buy TC</th><th>Sell TC</th><th>Mid</th><th>Spread</th><th>Demand depth</th><th>Supply depth</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>What you can pay or receive now</h2><p>The buy column shows the cheapest TC for sale. The sell column shows the best amount a buyer offers for your TC.</p><details class="claim-details"><summary>How these numbers are calculated</summary><p>In Market terms, “buy TC” uses the best ask and “sell TC” uses the best bid. The middle price is halfway between them. The difference is the quoted spread. TC wanted is demand depth; TC for sale is supply depth. These are current offers, so a large trade may reach worse prices.</p></details></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>You pay</th><th>You receive</th><th>Middle price</th><th>Difference</th><th>TC wanted</th><th>TC for sale</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
       </section>
 
       <section id="view-forecasts" class="view" hidden>
@@ -1142,10 +1142,10 @@ function renderWorldChart(){
   const start=$("#worldStart").value,end=$("#worldEnd").value;
   const fixedWindow=start&&end?`${isoDate(start)} to ${isoDate(end)}`:"invalid date range";
   const descriptions={
-    mid:`Mean of the valid daily buyer-side and seller-side executed averages. Selected window: ${fixedWindow}; missing history is left blank.`,
-    buy:`Average GP paid on the seller side—the closest historical measure of what it cost to buy TC. Selected window: ${fixedWindow}; missing history is left blank.`,
-    sell:`Average GP paid on the buyer side—the closest historical measure of what a player received for selling TC. Selected window: ${fixedWindow}; missing history is left blank.`,
-    return:`Percentage gain or loss in the executed midpoint from each world's first observation inside the selected window. Selected window: ${fixedWindow}; 0% means no change.`
+    mid:`Daily reference price: the average of what players paid when buying and received when selling TC. Period: ${fixedWindow}. Days without data stay empty.`,
+    buy:`What players paid, on average, to buy one TC each day. Period: ${fixedWindow}. Days without data stay empty.`,
+    sell:`What players received, on average, for selling one TC each day. Period: ${fixedWindow}. Days without data stay empty.`,
+    return:`How much the daily average price rose or fell since the first available day. Period: ${fixedWindow}. 0% means no change.`
   };
   $("#worldChartDescription").textContent=descriptions[selectedWorldChartMode];
   $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
@@ -1170,7 +1170,7 @@ function drawTwoSeries(svg,tooltip,rows,labels,mode){
   const linePath=key=>{let d="",open=false;rows.forEach((row,i)=>{if(!Number.isFinite(row[key])){open=false;return}d+=`${open?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)} `;open=true});return d.trim()};
   for(const [key,color] of [[aKey,COLORS.blue],[bKey,COLORS.gold]])addSvg(svg,"path",{d:linePath(key),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
-  const measureLabel={mid:"executed midpoint",buy:"historical buy TC price",sell:"historical sell TC price",return:"percentage return"}[mode];
+  const measureLabel={mid:"daily average price",buy:"price paid to buy TC",sell:"price received for selling TC",return:"price change"}[mode];
   const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive world comparison by ${measureLabel}`});
   const reading=(value,ret)=>value===null?"No observation":mode==="return"?`${signed(value,1)} since start`:`${fmt.format(value)} GP${mode==="mid"?` · ${signed(ret,1)} since start`:""}`;
   const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${escapeHtml(labels.a)}: ${reading(row[aKey],row.aReturn)}<br>${escapeHtml(labels.b)}: ${reading(row[bKey],row.bReturn)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
@@ -1182,16 +1182,15 @@ function drawTwoSeries(svg,tooltip,rows,labels,mode){
 function renderWorldFacts(){
   const name=$("#worldA").value,row=worldMap.get(name)||{},book=orderBookMap.get(name)||{},prediction=predictionMap.get(name);
   $("#worldFacts").innerHTML=`<h2>${escapeHtml(name)}</h2>
-    <div class="fact"><span>Buy TC now</span><strong>${book.best_ask?fmt.format(book.best_ask)+" GP":"No sell offer"}</strong></div>
-    <div class="fact"><span>Sell TC now</span><strong>${book.best_bid?fmt.format(book.best_bid)+" GP":"No buy offer"}</strong></div>
-    <div class="fact"><span>Reference mid</span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
-    <div class="fact"><span>Quoted spread</span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
-    <div class="fact"><span>Demand / supply depth</span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
-    <div class="fact"><span>Book snapshot</span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
-    <div class="fact"><span>Latest executed midpoint</span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
-    <div class="fact"><span>Latest executed buy / sell</span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>
-    <div class="fact"><span>Total return</span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
-    <div class="fact"><span>7-day prediction</span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"No model"}</strong></div>`;
+    <div class="fact"><span>You pay to buy TC now</span><strong>${book.best_ask?fmt.format(book.best_ask)+" GP":"No TC for sale"}</strong></div>
+    <div class="fact"><span>You receive selling TC now</span><strong>${book.best_bid?fmt.format(book.best_bid)+" GP":"No buyer"}</strong></div>
+    <div class="fact"><span>Middle price</span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
+    <div class="fact"><span>Difference between buy and sell</span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
+    <div class="fact"><span>TC wanted / TC for sale</span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
+    <div class="fact"><span>Offer list updated</span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
+    <div class="fact"><span>Latest daily average</span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
+    <div class="fact"><span>Price change in all available history</span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
+    <div class="fact"><span>Model estimate for next 7 days</span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"Not enough data"}</strong></div>`;
 }
 
 function renderWorldTable(){
@@ -1199,12 +1198,12 @@ function renderWorldTable(){
   const rows=[...data.worlds].filter(row=>row.world.toLowerCase().includes(term)).sort((a,b)=>num(orderBookMap.get(b.world)?.mid)-num(orderBookMap.get(a.world)?.mid));
   $("#worldTable").innerHTML=rows.map(row=>`<tr data-world="${escapeHtml(row.world)}" class="${row.world===$("#worldA").value?"selected":""}">
     <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
-    <td data-label="Buy TC">${orderBookMap.get(row.world)?.best_ask?fmt.format(orderBookMap.get(row.world).best_ask):"—"}</td>
-    <td data-label="Sell TC">${orderBookMap.get(row.world)?.best_bid?fmt.format(orderBookMap.get(row.world).best_bid):"—"}</td>
-    <td data-label="Mid">${orderBookMap.get(row.world)?.mid?fmt.format(orderBookMap.get(row.world).mid):"—"}</td>
-    <td data-label="Spread">${orderBookMap.get(row.world)?.quoted_spread_pct!==null&&orderBookMap.get(row.world)?.quoted_spread_pct!==undefined?num(orderBookMap.get(row.world).quoted_spread_pct).toFixed(1)+"%":"—"}</td>
-    <td data-label="Demand depth">${orderBookMap.get(row.world)?.bid_depth_tc?compact(orderBookMap.get(row.world).bid_depth_tc)+" TC":"—"}</td>
-    <td data-label="Supply depth">${orderBookMap.get(row.world)?.ask_depth_tc?compact(orderBookMap.get(row.world).ask_depth_tc)+" TC":"—"}</td></tr>`).join("");
+    <td data-label="You pay">${orderBookMap.get(row.world)?.best_ask?fmt.format(orderBookMap.get(row.world).best_ask):"—"}</td>
+    <td data-label="You receive">${orderBookMap.get(row.world)?.best_bid?fmt.format(orderBookMap.get(row.world).best_bid):"—"}</td>
+    <td data-label="Middle price">${orderBookMap.get(row.world)?.mid?fmt.format(orderBookMap.get(row.world).mid):"—"}</td>
+    <td data-label="Difference">${orderBookMap.get(row.world)?.quoted_spread_pct!==null&&orderBookMap.get(row.world)?.quoted_spread_pct!==undefined?num(orderBookMap.get(row.world).quoted_spread_pct).toFixed(1)+"%":"—"}</td>
+    <td data-label="TC wanted">${orderBookMap.get(row.world)?.bid_depth_tc?compact(orderBookMap.get(row.world).bid_depth_tc)+" TC":"—"}</td>
+    <td data-label="TC for sale">${orderBookMap.get(row.world)?.ask_depth_tc?compact(orderBookMap.get(row.world).ask_depth_tc)+" TC":"—"}</td></tr>`).join("");
   $$("#worldTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;renderWorlds();updateURL()}));
 }
 
