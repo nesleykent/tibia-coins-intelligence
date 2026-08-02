@@ -531,6 +531,12 @@ HTML = r"""<!doctype html>
     return value && value >= min && value <= max ? value : "";
   }
 
+  function clampDate(value, min, max) {
+    if (!value || value < min) return min;
+    if (value > max) return max;
+    return value;
+  }
+
   function bindEvents() {
     ["#worldSelect", "#dateStart", "#dateEnd", "#scenarioSelect"].forEach(selector => {
       $(selector).addEventListener("change", render);
@@ -859,42 +865,98 @@ HTML = r"""<!doctype html>
     if (!file) return;
     try {
       const text = await file.text();
-      const parsed = parseCSV(text);
-      const missing = REQUIRED_CSV.filter(field => !parsed.headers.includes(field));
-      if (missing.length) throw new Error(`Missing required columns: ${missing.join(", ")}`);
-      const previousWorld = $("#worldSelect").value;
-      rawRows = parsed.rows.map(row => ({
-        ...row,
-        top_emission_creature_gp: numeric(row.top_emission_creature_gp),
-        total_kills: numeric(row.total_kills),
-        nonboss_kills: numeric(row.nonboss_kills),
-        modeled_kills_nonboss: numeric(row.modeled_kills_nonboss),
-        direct_coin_gp: numeric(row.direct_coin_gp),
-        npc_potential_gp_max: numeric(row.npc_potential_gp_max),
-        potential_total_gp_max: numeric(row.potential_total_gp_max),
-        low_quality_flag: bool(row.low_quality_flag),
-        partial_date_flag: bool(row.partial_date_flag),
-        ev_any: bool(row.ev_any)
-      }));
-      if (!rawRows.length) throw new Error("The CSV contains no data rows.");
-      const dates = rawRows.map(row => row.date).sort();
-      sourceMeta = {
-        generatedAt: new Date().toISOString(), source: file.name,
-        worlds: new Set(rawRows.map(row => row.world)).size, worldDays: rawRows.length,
-        minDate: dates[0], maxDate: dates[dates.length - 1], loaded: true
-      };
-      populateWorlds(previousWorld);
-      $("#dateStart").min = $("#dateEnd").min = dates[0];
-      $("#dateStart").max = $("#dateEnd").max = dates[dates.length - 1];
-      $("#dateStart").value = dates[0];
-      $("#dateEnd").value = dates[dates.length - 1];
-      showAllRows = false;
-      updateStatus();
-      render();
+      const rows = normalizeCSV(text);
+      applyDataset(rows, datasetMeta(rows, file.name, new Date().toISOString(), "manual"));
     } catch (error) {
       showError(`Could not load CSV. ${error.message}`);
     } finally {
       event.target.value = "";
+    }
+  }
+
+  function normalizeCSV(text) {
+    const parsed = parseCSV(text);
+    const missing = REQUIRED_CSV.filter(field => !parsed.headers.includes(field));
+    if (missing.length) throw new Error(`Missing required columns: ${missing.join(", ")}`);
+    const rows = parsed.rows.map(row => ({
+      ...row,
+      top_emission_creature_gp: numeric(row.top_emission_creature_gp),
+      total_kills: numeric(row.total_kills),
+      nonboss_kills: numeric(row.nonboss_kills),
+      modeled_kills_nonboss: numeric(row.modeled_kills_nonboss),
+      direct_coin_gp: numeric(row.direct_coin_gp),
+      npc_potential_gp_max: numeric(row.npc_potential_gp_max),
+      potential_total_gp_max: numeric(row.potential_total_gp_max),
+      low_quality_flag: bool(row.low_quality_flag),
+      partial_date_flag: bool(row.partial_date_flag),
+      ev_any: bool(row.ev_any)
+    }));
+    if (!rows.length) throw new Error("The CSV contains no data rows.");
+    if (rows.some(row => !row.world || !/^\d{4}-\d{2}-\d{2}$/.test(row.date))) {
+      throw new Error("The CSV contains an invalid world or date.");
+    }
+    return rows;
+  }
+
+  function datasetMeta(rows, source, generatedAt, mode) {
+    const dates = rows.map(row => row.date).sort();
+    return {
+      generatedAt, source, mode,
+      worlds: new Set(rows.map(row => row.world)).size,
+      worldDays: rows.length,
+      minDate: dates[0],
+      maxDate: dates[dates.length - 1]
+    };
+  }
+
+  function applyDataset(rows, meta, preserveFilters = false) {
+    const previous = {
+      world: $("#worldSelect").value,
+      start: $("#dateStart").value,
+      end: $("#dateEnd").value,
+      min: $("#dateStart").min,
+      max: $("#dateEnd").max
+    };
+    rawRows = rows;
+    sourceMeta = meta;
+    populateWorlds(preserveFilters ? previous.world : "all");
+    $("#dateStart").min = $("#dateEnd").min = sourceMeta.minDate;
+    $("#dateStart").max = $("#dateEnd").max = sourceMeta.maxDate;
+    if (preserveFilters) {
+      $("#dateStart").value = previous.start === previous.min
+        ? sourceMeta.minDate
+        : clampDate(previous.start, sourceMeta.minDate, sourceMeta.maxDate);
+      $("#dateEnd").value = previous.end === previous.max
+        ? sourceMeta.maxDate
+        : clampDate(previous.end, sourceMeta.minDate, sourceMeta.maxDate);
+      if ($("#dateStart").value > $("#dateEnd").value) {
+        $("#dateStart").value = sourceMeta.minDate;
+        $("#dateEnd").value = sourceMeta.maxDate;
+      }
+    } else {
+      $("#dateStart").value = sourceMeta.minDate;
+      $("#dateEnd").value = sourceMeta.maxDate;
+    }
+    showAllRows = false;
+    updateStatus();
+    render();
+  }
+
+  async function refreshProjectCSV() {
+    if (!["http:", "https:"].includes(location.protocol)) return;
+    try {
+      const response = await fetch("../data/processed/gold_emission_daily.csv", { cache: "no-store" });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const rows = normalizeCSV(await response.text());
+      const updatedAt = response.headers.get("last-modified") || new Date().toISOString();
+      applyDataset(
+        rows,
+        datasetMeta(rows, "data/processed/gold_emission_daily.csv", updatedAt, "project"),
+        true
+      );
+    } catch (_) {
+      sourceMeta = { ...sourceMeta, mode: "fallback" };
+      updateStatus();
     }
   }
 
@@ -925,9 +987,16 @@ HTML = r"""<!doctype html>
   function updateStatus() {
     const generated = new Date(sourceMeta.generatedAt);
     const stamp = Number.isNaN(generated.valueOf()) ? sourceMeta.generatedAt : generated.toLocaleString("en-US");
+    const sourceLabel = sourceMeta.mode === "project"
+      ? `project CSV refreshed ${stamp}`
+      : sourceMeta.mode === "manual"
+        ? `loaded CSV updated ${stamp}`
+        : sourceMeta.mode === "fallback"
+          ? `embedded fallback · project CSV unavailable · snapshot updated ${stamp}`
+          : `embedded snapshot updated ${stamp}`;
     $("#dataStatus").textContent =
       `${number.format(sourceMeta.worldDays)} world-days · ${number.format(sourceMeta.worlds)} worlds · ` +
-      `${sourceMeta.minDate} to ${sourceMeta.maxDate} · ${sourceMeta.loaded ? "loaded" : "embedded"} data updated ${stamp}`;
+      `${sourceMeta.minDate} to ${sourceMeta.maxDate} · ${sourceLabel}`;
   }
 
   function updateURL() {
@@ -1008,6 +1077,7 @@ HTML = r"""<!doctype html>
   }
 
   initialize();
+  void refreshProjectCSV();
   </script>
 </body>
 </html>
