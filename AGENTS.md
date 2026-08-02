@@ -141,6 +141,26 @@ A claim that gold emission does or does not predict Tibia Coin prices must be
 based on the reconstructed GP series, appropriate controls, lags, sensitivity
 tests, and out-of-sample evidence—not raw kill counts alone.
 
+Do not equate gold production with immediate Tibia Coin demand. Treat the
+possible transmission chain explicitly:
+
+`GP emission → GP circulation/market turnover → TC turnover → GP/TC price`
+
+When studying this chain:
+
+- use “GP-to-TC absorption lag” or “detectable circulation lag,” not “the time
+  each GP takes to become a TC”;
+- test whether GP-emission shocks precede TC turnover before testing price;
+- estimate a distributed response across lags rather than selecting the largest
+  isolated correlation;
+- report the cumulative response and its confidence band;
+- report a median/half-absorption time only when the cumulative response is
+  positive, statistically distinguishable from zero, and stable out of sample;
+- otherwise state that no conversion time is identifiable from the available
+  data;
+- disclose that anonymized aggregate data cannot trace individual GP from a
+  creature drop into a Tibia Coin purchase.
+
 ### Model families
 
 Keep model identity visible:
