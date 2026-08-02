@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-02T20:22:20.025021</dc:date>
+    <dc:date>2026-08-02T20:27:07.999330</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -1100,7 +1100,7 @@ L 489.416727 203.04
 L 489.416727 15.84 
 L 347.119935 15.84 
 z
-" clip-path="url(#pff4bf466b4)" style="fill: #4e79a7; opacity: 0.1"/>
+" clip-path="url(#pbb4c061e80)" style="fill: #4e79a7; opacity: 0.1"/>
    </g>
    <g id="text_13">
     <!-- price observation window -->
@@ -3773,12 +3773,12 @@ L 489.087337 111.947891
 L 489.30693 118.443335 
 L 489.416727 118.397867 
 L 489.416727 118.397867 
-" clip-path="url(#pff4bf466b4)" style="fill: none; stroke: #59a14f; stroke-linecap: round"/>
+" clip-path="url(#pbb4c061e80)" style="fill: none; stroke: #59a14f; stroke-linecap: round"/>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="pff4bf466b4">
+  <clipPath id="pbb4c061e80">
    <rect x="44.064" y="15.84" width="466.56" height="187.2"/>
   </clipPath>
  </defs>

@@ -163,9 +163,9 @@ FACTS = [
      "pattern": r"(\d+\.\d) times (?:more|the coins|larger)",
      "why": "the Char Bazaar moves an order of magnitude more coins than the Market"},
     {"key": "emission_channel", "meta": "emissionVerdict", "scope": ("pdf", "hub", "gold_report"),
-     "value": "rejected",
+     "value": "no reliable signal",
      "kind": "phrase",
-     "topic": r"gold (?:production|emission)[^.]{0,60}(?:not supported|rejected|eliminated)",
+     "topic": r"gold (?:production|emission)[^.]{0,90}(?:not supported|not identified|no reliable|no direct)",
      "why": "direct GP-to-price tests find no reliable signal, but do not identify the intermediate GP-circulation-to-TC-turnover path"},
 ]
 

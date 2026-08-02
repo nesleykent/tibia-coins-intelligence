@@ -52,6 +52,46 @@ d["absdev"] = d.dev_lag.abs()
 print(f"panel: {len(d):,} world-days, {d.world.nunique()} worlds, "
       f"{d.date.min():%Y-%m-%d} to {d.date.max():%Y-%m-%d}")
 
+def by_date(frame, col="net", date_col="date"):
+    """Collapse a pooled panel to one observation per date.
+
+    The deviations this study trades are each world's log price minus the SAME cross-world
+    mean, so two worlds qualifying on one day are not two independent observations - they are
+    two views of one day, mechanically linked through the mean they are measured against.
+    Averaging within the date is what makes the series a time series, which is the only thing
+    a Newey-West correction knows how to handle.
+    """
+    return frame.groupby(date_col)[col].mean().sort_index().values
+
+
+def independent_windows(frame, h, date_col="date"):
+    """How many non-overlapping h-day windows the sample actually spans.
+
+    Dividing row count by the horizon counts cross-sectional replication as independent time
+    and overstates the sample roughly threefold here. The calendar span is the bound that
+    matters.
+    """
+    span = (frame[date_col].max() - frame[date_col].min()).days
+    return int(span // h)
+
+
+def nw_t(x, lag):
+    """Newey-West t against zero, for a mean estimated on overlapping windows.
+
+    Pass a per-date series, not a pooled panel: see by_date above.
+    """
+    x = np.asarray(x, float)
+    x = x[~np.isnan(x)]
+    n, mu = len(x), x.mean()
+    e = x - mu
+    gamma0 = (e @ e) / n
+    s = gamma0
+    for j in range(1, min(lag, n - 1) + 1):
+        gj = (e[j:] @ e[:-j]) / n
+        s += 2 * (1 - j / (lag + 1)) * gj
+    se = np.sqrt(max(s, 1e-18) / n)
+    return float(mu / se), float(se)
+
 RES = {}
 
 # ============================================================ 1. strength and holding period
@@ -79,7 +119,13 @@ for h in HORIZONS:
                 "gross_pct": float(b.gross.mean() * 100), "cost_pct": cost * 100,
                 "net_pct": float(net.mean() * 100),
                 "share_profitable": float((net > 0).mean()),
-                "t_stat": float(stats.ttest_1samp(net, 0).statistic) if len(net) > 30 else np.nan})
+                # Both are reported because the difference is the point: the naive t treats
+                # every world-day as an independent observation, which overstates the sample
+                # roughly threefold, and the corrected one runs on the per-date series.
+                "t_naive": float(stats.ttest_1samp(net, 0).statistic) if len(net) > 30 else np.nan,
+                "t_stat": (nw_t(by_date(b.assign(net=b.gross - cost)), h)[0]
+                           if len(net) > 30 else np.nan),
+                "independent_windows": independent_windows(b, h)})
 grid = pd.DataFrame(rows)
 grid.to_csv(P / "strategy_grid.csv", index=False)
 
@@ -210,45 +256,7 @@ print("\n" + "=" * 78)
 ATT = {}
 
 
-def by_date(frame, col="net", date_col="date"):
-    """Collapse a pooled panel to one observation per date.
 
-    The deviations this study trades are each world's log price minus the SAME cross-world
-    mean, so two worlds qualifying on one day are not two independent observations - they are
-    two views of one day, mechanically linked through the mean they are measured against.
-    Averaging within the date is what makes the series a time series, which is the only thing
-    a Newey-West correction knows how to handle.
-    """
-    return frame.groupby(date_col)[col].mean().sort_index().values
-
-
-def independent_windows(frame, h, date_col="date"):
-    """How many non-overlapping h-day windows the sample actually spans.
-
-    Dividing row count by the horizon counts cross-sectional replication as independent time
-    and overstates the sample roughly threefold here. The calendar span is the bound that
-    matters.
-    """
-    span = (frame[date_col].max() - frame[date_col].min()).days
-    return int(span // h)
-
-
-def nw_t(x, lag):
-    """Newey-West t against zero, for a mean estimated on overlapping windows.
-
-    Pass a per-date series, not a pooled panel: see by_date above.
-    """
-    x = np.asarray(x, float)
-    x = x[~np.isnan(x)]
-    n, mu = len(x), x.mean()
-    e = x - mu
-    gamma0 = (e @ e) / n
-    s = gamma0
-    for j in range(1, min(lag, n - 1) + 1):
-        gj = (e[j:] @ e[:-j]) / n
-        s += 2 * (1 - j / (lag + 1)) * gj
-    se = np.sqrt(max(s, 1e-18) / n)
-    return float(mu / se), float(se)
 
 
 att = []

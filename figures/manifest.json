@@ -194,13 +194,13 @@
  "fig32_strategy_horizon": {
   "title": "The cost is paid once, so the trade becomes profitable by being held",
   "subtitle": "Gross return on the cross-world convergence trade against a flat round-trip cost",
-  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "source": "Estimated on converged worlds from 06 Apr 2024 to 30 Jul 2026, the dates carrying at least ten observed worlds.",
   "note": "Deviations past the estimated band, sorted into deciles of size. The shaded area is return kept after the cheapest documented round trip. The median-gap line shows the same trade on an ordinary signal, which never clears the cost. Figures are means over overlapping windows; significance is assessed with Newey-West standard errors in the accompanying table, not from this chart."
  },
  "fig33_holdout": {
   "title": "The quarterly figure is the largest and the least supported",
   "subtitle": "Net return of the top-decile convergence trade, and the out-of-sample sample behind it",
-  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "source": "Estimated on converged worlds from 06 Apr 2024 to 30 Jul 2026, the dates carrying at least ten observed worlds.",
   "note": "Left: mean net return after the cheapest documented round trip, in the training period and in a holdout that was never inspected while the rule was formed; only the decile cutoff crosses the split. Right: the holdout's effective sample, being its length divided by the holding period, since daily observations of an h-day return share h-1 days of data. At ninety-one days the holdout contains a single independent window, so the t-statistic reported for it carries no information whatever its size."
  }
 }

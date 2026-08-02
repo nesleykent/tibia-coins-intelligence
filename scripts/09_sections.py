@@ -2934,7 +2934,9 @@ table([["Horizon", "p10", "p25", "Median", "p75", "p90", "Below today"]] +
       caption="Table 6.12 - The index forecast as a distribution, in GP per Tibia Coin. "
               "Percentiles of the simulated level, not a point estimate.")
 para(tag("fc") + f"<b>The base case.</b> Three months ahead, the most likely single outcome is "
-     f"{gp(37000)} to {gp(42000)} GP/TC, at "
+     f"{gp(SCN['scenarios'][0]['low'] if isinstance(SCN['scenarios'], list) and 'low' in SCN['scenarios'][0] else 37000)} "
+     f"to {gp(42000)} GP/TC - round numbers chosen to straddle the current level, with the "
+     f"probability read off the simulation rather than assigned - at "
      f"{float(SCNS[SCNS.scenario == 'Base'].probability.iloc[0]):.0%}. Above that range carries "
      f"{float(SCNS[SCNS.scenario == 'Upside'].probability.iloc[0]):.0%} and below it "
      f"{float(SCNS[SCNS.scenario == 'Downside'].probability.iloc[0]):.0%}. Those three "
@@ -3525,7 +3527,7 @@ para(tag("judg") + "<b>So the correction in Section 6.6.14 holds on the better v
      "report's own long-held explanation, the count was the weakest possible test of it, and "
      "the natural defence was that the proxy was too crude. Built properly, from drop tables "
      "and NPC prices rather than from body counts, the channel is still absent. The claim in "
-     "Section 7.6 that this market is not a monetary phenomenon rests on this measurement, not "
+     "Section 7.6 that no direct monetary channel is identified rests on this measurement, not "
      "on the proxy.")
 para(tag("lim") + f"<b>What the emission series is not.</b> It bounds gold <i>created</i>, and "
      f"says nothing about gold destroyed - NPC purchases, repairs, death penalties - so it is "
@@ -3877,7 +3879,8 @@ table([["#", "Limitation", "Consequence"],
       caption="Table 7.8 - Limitations and their analytical consequences.")
 para(tag("judg") + f"<b>Limitation 17 is the binding one, and it displaced limitation 6 during "
      f"this study.</b> The gold-production series was obtained and the channel it was supposed "
-     f"to support was rejected outright, so the missing supply data is no longer what stands "
+     f"to support was tested twice and found no direct signal, so the missing supply data is "
+     f"no longer what stands "
      f"between this report and an explanation of the level. What stands there now is that the "
      f"venue moving {MS['bazaar_over_market']:.1f} times more coins is visible only as one "
      f"number a year.")
@@ -4479,7 +4482,7 @@ para(tag("mech") + "<b>One. The anchor is fixed and the supply at it is unlimite
      "the coin - it is gold, quoted in coins. Everything that follows is a statement about an "
      "exchange rate between an elastic, fixed-price outside good and a currency produced inside "
      "the game.")
-para(tag("stat") + f"<b>Two. It is not a monetary phenomenon.</b> The obvious model - more gold "
+para(tag("stat") + f"<b>Two. No direct monetary channel is identified.</b> The obvious model - more gold "
      f"is mined, so each coin costs more gold - is not merely unproven here, it is rejected with "
      f"the sign against it. The elasticity of the forward price to gold production is within "
      f"{abs(_FLOW7):.3f} of zero at seven days, and the slope of the price on accumulated "
@@ -4487,7 +4490,13 @@ para(tag("stat") + f"<b>Two. It is not a monetary phenomenon.</b> The obvious mo
      f"of {SVD['gold_stock']['n_worlds']} worlds, at a median correlation of "
      f"{SVD['gold_stock']['median_corr']:+.2f}. Against that, behaviour alone reaches a "
      f"within-world R-squared of {_R2B:.3f} where production alone reaches {_R2S:.4f} - a factor "
-     f"of {_R2B / _R2S:.0f}. The production channel is eliminated, not left open.")
+     f"of {_R2B / _R2S:.0f}.")
+para(tag("lim") + "<b>What that does and does not settle.</b> Both tests run gold against the "
+     "price directly, and neither finds a stable signal at any lag tried. Neither measures the "
+     "step in between: gold generated has to be spent into coin turnover before it can move a "
+     "price, and that circulation is not observed here. So a delayed absorption channel is not "
+     "rejected by this evidence - it is untested, and the conversion interval from gold "
+     "created to coins bought cannot be estimated from what this study holds.")
 para(tag("stat") + f"<b>Three. Clearing is thin, and it is need-driven.</b> The median world "
      f"executes {PX['median_executed_txn_per_world_day']:,.0f} lots a day - "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins - against a resting bid "
@@ -4520,8 +4529,8 @@ para(tag("judg") + "The tests in this report are usually reported one at a time 
      "comparative statements about which model the data prefer, not statements about "
      "statistical significance.")
 table([["Hypothesis", "Verdict", "What decides it"],
-       ["Gold production sets the price",
-        "<b>Eliminated</b>",
+       ["Gold production sets the price, directly",
+        "<b>Not identified</b>",
         f"Elasticity within {abs(_FLOW7):.3f} of zero; slope on accumulated production negative "
         f"on {SVD['gold_stock']['n_worlds']} of {SVD['gold_stock']['n_worlds']} worlds; "
         f"behaviour outperforms production {_R2B / _R2S:.0f}:1"],
@@ -4648,7 +4657,8 @@ para(tag("stat") + f"<b>The grid.</b> Deviations past the band, sorted into deci
      f"held from one week to one quarter, net of the cheapest documented round trip of "
      f"{pc(STR['verdict']['cost_pct'], 3)}. "
      f"{STR['verdict']['cells_net_positive']} of {STR['verdict']['cells_tested']} cells clear "
-     f"the cost and {STR['verdict']['cells_net_positive_and_significant']} do so at a "
+     f"the cost and {STR['verdict']['cells_net_positive_and_significant']} do so on the "
+     f"per-date inference of Section 7.7.1 at a "
      f"t-statistic above two. The report's previous claim - that the edge never clears the fee - "
      f"held only at the shortest horizon and only on the unconditional average.")
 table([["Holding period", "Mean gap", "Gross", "Net of cost", "Wins", "t (Newey-West)"]] +
@@ -4847,7 +4857,7 @@ para(tag("econ") + f"<b>Strip out the short leg and the signal still pays, becau
      f"<i>where</i> to transact.</b> A player about to buy coins is going to buy them somewhere. "
      f"Buying on a world trading below the cross-world mean, rather than on an arbitrary world, "
      f"is free to implement and carries no extra risk - the market exposure is identical.")
-table([["Holding period", "Cheap world", "Anywhere", "Rich world", "Advantage",
+table([["Holding period", "Cheap world", "Anywhere", "Rich world", "Advantage, paired",
         "t (NW)", "Independent windows"]] +
       [[f"{int(r.horizon)} days", pc(r.cheap_world_pct, 2), pc(r.any_world_pct, 2),
         pc(r.rich_world_pct, 2), f"<b>{pc(r.daily_paired_pct, 2)}</b>",
@@ -4855,7 +4865,7 @@ table([["Holding period", "Cheap world", "Anywhere", "Rich world", "Advantage",
        for _, r in STO.iterrows()],
       [26 * mm, 24 * mm, 22 * mm, 22 * mm, 24 * mm, 16 * mm, AVAIL - 134 * mm], fs=7,
       align=[None, "R", "R", "R", "R", "R", "R"],
-      caption="Table 7.27 - Gold return of simply holding coins, by where they were bought. The "
+      caption="Table 7.27 - Gold return of simply holding coins, by where they were bought. The fourth column is <i>not</i> the difference of the two before it: it is a paired comparison, and the two disagree because the unconditional columns average over different sets of dates. The "
               "advantage is a paired comparison made within each date, so the market move common "
               "to both sides cancels. Cheap and rich are defined by the estimated band.")
 para(tag("stat") + f"<b>The edge is real at a week and a month, and not established at a "
@@ -4951,9 +4961,9 @@ table([["Decision", "Instruction"],
 
 h3("7.8.3 Next quarter")
 para(tag("fc") + f"<b>The single most likely outcome is {SCNS.iloc[0].range}, at "
-     f"{SCNS.iloc[0].probability:.0%}.</b> Above {gp(41530)} the price sits in the top quartile "
-     f"of its own distribution and is expensive relative to its uncertainty; below "
-     f"{gp(38586)} it is in the bottom quartile and cheap on the same measure. Those are not "
+     f"{SCNS.iloc[0].probability:.0%}.</b> Above {gp(LV['p75_3m'])} the price sits in the top "
+     f"quartile of its own distribution and is expensive relative to its uncertainty; below "
+     f"{gp(LV['p25_3m'])} it is in the bottom quartile and cheap on the same measure. Those are not "
      f"predictions that either level will be reached - they are where to act if it is.")
 table([["Level", "If the price gets here", "Do"],
        [f"Above {gp(LV['p90_3m'])}", "Reached in 10% of simulated paths",

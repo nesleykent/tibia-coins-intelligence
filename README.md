@@ -87,7 +87,7 @@ converted at the lot. The order book is the opposite case — minimum 25, every 
 lot, quoted against a per-coin price — so those are already coins and are left alone. Two
 verifier checks now re-derive both classifications from the data on every build.
 
-**The gold-supply story does not survive a monetary reconstruction.** 21,412 world-days of kill
+**No direct gold-to-price channel is identified, and the circulation step is unmeasured.** 21,412 world-days of kill
 statistics were joined to revision-audited TibiaWiki loot tables and guaranteed player-to-NPC
 prices. Reliable models cover 96.2% of non-boss deaths and separate direct coins, maximum
 potential NPC sales, and 25%/50%/75%/100% realization scenarios. On identical fixed-effects

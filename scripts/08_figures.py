@@ -1402,6 +1402,23 @@ print(f"SA converging  (n={len(SA_NEW)}): log    {NEW_LO:,.0f}-{NEW_HI:,.0f} GP"
 print(f"  mature-band floor {MATURE_FLOOR:,.0f} GP; converging: "
       + ", ".join(sorted(g["world"] for g in SA_NEW)))
 
+def strategy_window() -> str:
+    """The window the strategy exhibits are actually estimated on.
+
+    SRC_PX states the archive span, which is right for the price figures and wrong here: the
+    cross-world deviation needs at least ten worlds on a date, so estimation starts well after
+    the archive does.
+    """
+    _c = pd.read_csv(P / "strategy_grid.csv")
+    _p = pd.read_csv(P / "panel_daily.csv", parse_dates=["date"])
+    _bw = pd.read_csv(P / "world_summary.csv")
+    _d = _p[_p.world.isin(set(_bw.query("converged").world))].dropna(subset=["price_gp"])
+    _n = _d.groupby("date").world.nunique()
+    _ok = _n[_n >= 10]
+    return (f"Estimated on converged worlds from {_ok.index.min():%d %b %Y} to "
+            f"{_ok.index.max():%d %b %Y}, the dates carrying at least ten observed worlds.")
+
+
 # ---------------------------------------------------------------- strategy: cost vs horizon
 # The argument is one crossing: gross return grows with the holding period while the round
 # trip does not, so the two lines cross once and everything to the right of that point is a
@@ -1434,7 +1451,7 @@ ax.set_xlim(0, _top.horizon.max() * 1.22)
 finish(fig, "fig32_strategy_horizon.png",
        "The cost is paid once, so the trade becomes profitable by being held",
        "Gross return on the cross-world convergence trade against a flat round-trip cost",
-       SRC_PX,
+       strategy_window(),
        "Deviations past the estimated band, sorted into deciles of size. The shaded area is "
        "return kept after the cheapest documented round trip. The median-gap line shows the "
        "same trade on an ordinary signal, which never clears the cost. Figures are means over "
@@ -1483,7 +1500,7 @@ axB.set_title("The evidence behind it does not", fontsize=7.6, color=INK,
 finish(fig, "fig33_holdout.png",
        "The quarterly figure is the largest and the least supported",
        "Net return of the top-decile convergence trade, and the out-of-sample sample behind it",
-       SRC_PX,
+       strategy_window(),
        "Left: mean net return after the cheapest documented round trip, in the training period "
        "and in a holdout that was never inspected while the rule was formed; only the decile "
        "cutoff crosses the split. Right: the holdout's effective sample, being its length "

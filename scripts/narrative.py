@@ -94,7 +94,7 @@ def _load() -> dict:
         "annualVolPct": res["desc"]["ret_sd_ann_pct"],
         "factorR2": irr["r2_factor_smoothed"],
         "factorR2Ahead": irr["r2_factor_forecast"],
-        "emissionVerdict": "rejected",
+        "emissionVerdict": "no reliable signal",
         "emissionCoverage": json.loads(
             (P / "gold_emission_quality.json").read_text())["covered_deaths_pct_all"],
         "behaviourOverProduction": (
