@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data" / "processed" / "gold_emission_daily.csv"
 PRICE_SOURCE = ROOT / "data" / "processed" / "panel_daily.csv"
+CREATURE_VALUE_SOURCE = ROOT / "data" / "processed" / "creature_gold_value.csv"
 OUTPUT = ROOT / "reports" / "gold_emission_dashboard.html"
 
 FIELDS = (
@@ -76,6 +77,18 @@ def build_payload() -> dict[str, object]:
             if row.get("world") and row.get("date") and row.get("price_gp")
         ]
 
+    creature_fields = (
+        "canonical_name", "raw_names", "loot_model_status", "is_boss",
+        "included_in_main_series", "expected_direct_coin_gp_per_kill",
+        "expected_npc_sale_gp_per_kill", "exclusion_reason",
+    )
+    with CREATURE_VALUE_SOURCE.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        missing = sorted(set(creature_fields) - set(reader.fieldnames or ()))
+        if missing:
+            raise ValueError(f"Missing creature-value fields: {', '.join(missing)}")
+        creature_values = [[row[field] for field in creature_fields] for row in reader]
+
     worlds = sorted({str(row[0]) for row in rows})
     dates = sorted({str(row[1]) for row in rows})
     return {
@@ -83,6 +96,8 @@ def build_payload() -> dict[str, object]:
         "rows": rows,
         "priceSchema": ["world", "date", "price_gp"],
         "priceRows": price_rows,
+        "creatureValueSchema": list(creature_fields),
+        "creatureValues": creature_values,
         "meta": {
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "source": str(SOURCE.relative_to(ROOT)),
@@ -250,6 +265,17 @@ HTML = r"""<!doctype html>
     .quality-label.partial { color: var(--warning); }
     .quality-label.low { color: var(--danger); }
     .table-footer { display: flex; justify-content: center; padding: 10px; }
+    .date-drill {
+      border: 0; background: transparent; color: var(--focus); font-weight: 800;
+      padding: 5px 2px; min-height: 32px; cursor: pointer; text-decoration: underline;
+      text-decoration-thickness: 1px; text-underline-offset: 3px;
+    }
+    .creature-detail { margin-top: 16px; overflow: hidden; }
+    .creature-detail[hidden] { display: none; }
+    .creature-detail .table-head { align-items: start; }
+    .creature-detail table { min-width: 1120px; }
+    .detail-message { padding: 24px 16px; color: var(--muted); line-height: 1.5; }
+    .detail-summary { color: var(--muted); font-size: 12px; margin-top: 5px; }
     .empty { padding: 72px 20px; text-align: center; color: var(--muted); }
     .error {
       margin: 0 0 16px; border-left: 4px solid var(--danger); background: #fff6f6;
@@ -456,6 +482,17 @@ HTML = r"""<!doctype html>
       </div>
     </section>
 
+    <section id="creatureDetail" class="panel creature-detail" aria-labelledby="creatureDetailTitle" hidden>
+      <div class="table-head">
+        <div>
+          <h2 id="creatureDetailTitle">Creature detail</h2>
+          <p id="creatureDetailSummary" class="detail-summary"></p>
+        </div>
+        <button id="closeCreatureDetail" class="button text" type="button">Close</button>
+      </div>
+      <div id="creatureDetailContent" aria-live="polite"></div>
+    </section>
+
     <p class="footnote">
       Source: reconstructed creature loot values joined to Tibia world kill statistics. Player-market values are zero.
       “Potential GP maximum” assumes all modeled NPC-sellable loot is collected and sold; realized scenarios apply only to that NPC component.
@@ -489,8 +526,10 @@ HTML = r"""<!doctype html>
 
   let rawRows = decodeRows(EMBEDDED.schema, EMBEDDED.rows);
   const rawPriceRows = decodeRows(EMBEDDED.priceSchema, EMBEDDED.priceRows);
+  const creatureValueRows = decodeRows(EMBEDDED.creatureValueSchema, EMBEDDED.creatureValues);
   let priceByWorldDate = new Map();
   let priceByDateMedian = new Map();
+  let creatureValueMap = new Map();
   let sourceMeta = EMBEDDED.meta;
   let filtered = [];
   let showAllRows = false;
@@ -533,6 +572,7 @@ HTML = r"""<!doctype html>
 
   function initialize() {
     rebuildPriceIndexes();
+    rebuildCreatureValueIndex();
     populateWorlds();
     const params = new URLSearchParams(location.search);
     const dates = rawRows.map(row => row.date).sort();
@@ -580,8 +620,12 @@ HTML = r"""<!doctype html>
   }
 
   function bindEvents() {
-    ["#worldSelect", "#dateStart", "#dateEnd", "#scenarioSelect"].forEach(selector => {
-      $(selector).addEventListener("change", render);
+    ["#worldSelect", "#dateStart", "#dateEnd"].forEach(selector => {
+      $(selector).addEventListener("change", () => { closeCreatureDetail(); render(); });
+    });
+    $("#scenarioSelect").addEventListener("change", () => {
+      closeCreatureDetail();
+      render();
     });
     $$("[data-series]").forEach(input => input.addEventListener("change", () => {
       if (!$$("[data-series]:checked").length) input.checked = true;
@@ -593,6 +637,7 @@ HTML = r"""<!doctype html>
     $("#fileInput").addEventListener("change", loadCSV);
     $("#tableToggle").addEventListener("click", toggleTable);
     $("#tableToggleBottom").addEventListener("click", toggleTable);
+    $("#closeCreatureDetail").addEventListener("click", closeCreatureDetail);
     $("#chartInspector").addEventListener("input", event => showTooltipAt(Number(event.target.value), true));
     window.addEventListener("resize", debounce(() => renderChart(filtered), 100));
   }
@@ -628,6 +673,18 @@ HTML = r"""<!doctype html>
       const median = values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
       return [date, median];
     }));
+  }
+
+  function normalizedCreatureName(value) {
+    return String(value || "").trim().toLocaleLowerCase("en-US").replace(/\s+/g, " ");
+  }
+
+  function rebuildCreatureValueIndex() {
+    creatureValueMap = new Map();
+    for (const row of creatureValueRows) {
+      const names = [row.canonical_name, ...String(row.raw_names || "").split(" | ")];
+      for (const name of names) creatureValueMap.set(normalizedCreatureName(name), row);
+    }
   }
 
   function aggregateRows() {
@@ -981,7 +1038,7 @@ HTML = r"""<!doctype html>
       const qualityLabel = quality === "low" ? "Low quality" : quality[0].toUpperCase() + quality.slice(1);
       const topEmitter = $("#worldSelect").value === "all" ? `${row.topName} · ${row.topWorld}` : row.topName;
       return `<tr>
-        <td>${isoDate(row.date)}</td>
+        <td><button class="date-drill" type="button" data-detail-date="${isoDate(row.date)}" aria-label="Open creature details for ${isoDate(row.date)}">${isoDate(row.date)}</button></td>
         <td>${percent.format(row.coverage)}</td>
         <td><span class="quality-label ${quality}">${qualityLabel}</span></td>
         <td>${number.format(row.kills)}</td>
@@ -991,6 +1048,9 @@ HTML = r"""<!doctype html>
         <td>${escapeHtml(topEmitter || "—")}</td>
       </tr>`;
     }).join("");
+    $$("[data-detail-date]").forEach(button => button.addEventListener("click", () => {
+      openCreatureDetail(button.dataset.detailDate);
+    }));
     $("#tableCount").textContent = `${number.format(rows.length)} observed days`;
     const toggleLabel = showAllRows ? "Show latest 30" : `View all ${number.format(rows.length)}`;
     $("#tableToggle").textContent = $("#tableToggleBottom").textContent = toggleLabel;
@@ -1000,6 +1060,90 @@ HTML = r"""<!doctype html>
   function toggleTable() {
     showAllRows = !showAllRows;
     renderTable(filtered);
+  }
+
+  function closeCreatureDetail() {
+    const host = $("#creatureDetail");
+    host.hidden = true;
+    $("#creatureDetailContent").innerHTML = "";
+  }
+
+  async function openCreatureDetail(date) {
+    const world = $("#worldSelect").value;
+    const host = $("#creatureDetail");
+    host.hidden = false;
+    $("#creatureDetailTitle").textContent = `Creature detail · ${date}`;
+    if (world === "all") {
+      $("#creatureDetailSummary").textContent = "Choose one world first; the daily row currently combines all worlds.";
+      $("#creatureDetailContent").innerHTML = `<div class="detail-message">Select a specific server in the World filter, then click the date again to see every creature killed there.</div>`;
+      host.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+      return;
+    }
+    $("#creatureDetailSummary").textContent = `${world} · ${date} · loading source kill statistics…`;
+    $("#creatureDetailContent").innerHTML = `<div class="detail-message">Loading every creature killed on this day…</div>`;
+    host.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
+    const sourceUrl = `https://raw.githubusercontent.com/tibiamaps/tibia-kill-stats/main/data/${encodeURIComponent(world.toLocaleLowerCase("en-US"))}/${date}.json`;
+    try {
+      const response = await fetch(sourceUrl, { cache: "force-cache" });
+      if (!response.ok) throw new Error(`source returned HTTP ${response.status}`);
+      const payload = await response.json();
+      const stats = payload.killstatistics || payload;
+      const entries = Array.isArray(stats.entries) ? stats.entries : [];
+      const scenario = numeric($("#scenarioSelect").value);
+      const details = entries.map(entry => {
+        const name = String(entry.race || "").trim();
+        const kills = numeric(entry.last_day_killed);
+        if (!name || kills <= 0) return null;
+        const model = creatureValueMap.get(normalizedCreatureName(name));
+        const directPerKill = model ? numeric(model.expected_direct_coin_gp_per_kill) : 0;
+        const npcPerKill = model ? numeric(model.expected_npc_sale_gp_per_kill) : 0;
+        const modeled = Boolean(model) && (model.loot_model_status === "complete" || directPerKill > 0 || npcPerKill > 0);
+        return {
+          name, kills, modeled,
+          direct: directPerKill * kills,
+          npc: npcPerKill * kills,
+          realized: (directPerKill + scenario * npcPerKill) * kills,
+          included: model ? bool(model.included_in_main_series) : false,
+          boss: model ? bool(model.is_boss) : false,
+          status: model?.exclusion_reason || model?.loot_model_status || "No GP model"
+        };
+      }).filter(Boolean).sort((a, b) => b.realized - a.realized || b.kills - a.kills || a.name.localeCompare(b.name));
+      renderCreatureDetail(world, date, details, sourceUrl);
+    } catch (error) {
+      $("#creatureDetailSummary").textContent = `${world} · ${date}`;
+      $("#creatureDetailContent").innerHTML = `<div class="detail-message">The detailed public kill-statistics file could not be loaded. Check your connection or <a href="${sourceUrl}" target="_blank" rel="noopener">open the source file</a>. ${escapeHtml(error.message)}</div>`;
+    }
+  }
+
+  function renderCreatureDetail(world, date, rows, sourceUrl) {
+    const modeledRows = rows.filter(row => row.modeled);
+    const totalKills = rows.reduce((total, row) => total + row.kills, 0);
+    const realized = modeledRows.reduce((total, row) => total + row.realized, 0);
+    $("#creatureDetailSummary").textContent =
+      `${world} · ${date} · ${number.format(rows.length)} creature types · ${number.format(totalKills)} deaths · ${number.format(realized)} modeled GP at ${scenarioPercent()} realization`;
+    if (!rows.length) {
+      $("#creatureDetailContent").innerHTML = `<div class="detail-message">No creature deaths were recorded for this world and date.</div>`;
+      return;
+    }
+    $("#creatureDetailContent").innerHTML = `<div class="table-wrap"><table>
+      <thead><tr>
+        <th scope="col">Creature</th>
+        <th scope="col">Deaths</th>
+        <th scope="col">Direct GP drops</th>
+        <th scope="col">NPC loot maximum</th>
+        <th scope="col">Realized GP estimate (${scenarioPercent()})</th>
+        <th scope="col">Model coverage</th>
+      </tr></thead>
+      <tbody>${rows.map(row => `<tr>
+        <td>${escapeHtml(row.name)}${row.boss ? " · Boss" : ""}</td>
+        <td>${number.format(row.kills)}</td>
+        <td>${row.modeled ? number.format(row.direct) : "—"}</td>
+        <td>${row.modeled ? number.format(row.npc) : "—"}</td>
+        <td>${row.modeled ? number.format(row.realized) : "—"}</td>
+        <td>${row.modeled ? (row.included ? "Included in main series" : `Modeled · outside main series`) : `Not modeled${row.status ? ` · ${escapeHtml(row.status)}` : ""}`}</td>
+      </tr>`).join("")}</tbody>
+    </table></div>
+    <div class="detail-message">GP values use the same creature loot model as the daily total. Bosses and other excluded categories remain visible here but are marked outside the main series. <a href="${sourceUrl}" target="_blank" rel="noopener">Open source kill statistics</a>.</div>`;
   }
 
   async function loadCSV(event) {
