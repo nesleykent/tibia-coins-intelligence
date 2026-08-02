@@ -143,6 +143,20 @@ def main() -> None:
     assert 'id="lineChart"' in dashboard
     assert 'id="fileInput"' in dashboard
     assert "<script src=" not in dashboard, "dashboard must remain self-contained"
+    invalid_guard = dashboard.index(
+        'if ($("#dateStart").value > $("#dateEnd").value)'
+    )
+    invalid_return = dashboard.index("return;", invalid_guard)
+    invalid_block = dashboard[invalid_guard:invalid_return]
+    assert "filtered = []" in invalid_block
+    for renderer in (
+        "updateMetrics(filtered)",
+        "renderChart(filtered)",
+        "renderComposition(filtered)",
+        "renderQuality(filtered)",
+        "renderTable(filtered)",
+    ):
+        assert renderer in invalid_block, f"invalid date range leaves stale {renderer}"
 
     print(
         f"[GOLD VERIFY] passed: {len(creatures):,} creatures, {len(items):,} loot rows, "

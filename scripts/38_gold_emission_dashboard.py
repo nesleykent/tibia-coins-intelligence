@@ -605,6 +605,13 @@ HTML = r"""<!doctype html>
     clearError();
     if ($("#dateStart").value > $("#dateEnd").value) {
       showError("Start date must be on or before end date.");
+      filtered = [];
+      updateMetrics(filtered);
+      renderLegend();
+      renderChart(filtered);
+      renderComposition(filtered);
+      renderQuality(filtered);
+      renderTable(filtered);
       return;
     }
     filtered = aggregateRows();
