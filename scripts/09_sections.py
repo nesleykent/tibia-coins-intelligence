@@ -4594,11 +4594,17 @@ para(tag("judg") + "A result this strong in a report that has found nothing trad
      "hundred pages deserves to be attacked before it is believed. Three things could "
      "manufacture it, and each was tested.")
 bullets([
-    f"<b>Overlapping windows.</b> Daily observations of a quarterly return share 90 days of "
-    f"data. The naive t-statistic of {STOV[STOV.horizon == 91].t_naive.iloc[0]:.0f} at 91 days "
-    f"falls to {STOV[STOV.horizon == 91].t_newey_west.iloc[0]:.1f} once corrected, on an "
-    f"effective sample of {int(STOV[STOV.horizon == 91].n_effective.iloc[0])} independent "
-    f"windows. It survives.",
+    f"<b>Overlapping windows, and a panel that is not a time series.</b> Two corrections apply "
+    f"and they compound. Daily observations of a quarterly return share ninety days of data, "
+    f"which Newey-West handles. But the panel also holds several worlds on the same day, and "
+    f"those are not independent observations: every deviation is measured against the same "
+    f"cross-world mean, so worlds qualifying together are views of one day. The series is "
+    f"therefore collapsed to one observation per date before the correction is applied, and "
+    f"the sample is counted in calendar span rather than in rows - "
+    f"{int(STOV[STOV.horizon == 91].n_effective.iloc[0])} non-overlapping quarters, not the "
+    f"{int(STOV[STOV.horizon == 91].n.iloc[0] / 91)} that dividing world-days by the horizon "
+    f"would suggest. The naive t of {STOV[STOV.horizon == 91].t_naive.iloc[0]:.0f} falls to "
+    f"{STOV[STOV.horizon == 91].t_newey_west.iloc[0]:.1f}. It survives.",
     f"<b>Selecting on noise.</b> Entering the day after the signal, so the selection day and "
     f"the entry day share no observation, leaves the 91-day net at "
     f"{pc(float(STD[STD.horizon == 91].net_pct.iloc[0]), 2)} against "

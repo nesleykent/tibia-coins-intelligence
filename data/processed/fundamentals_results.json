@@ -4785,56 +4785,56 @@
     {
      "horizon": 7,
      "n": 2572,
-     "n_effective": 367,
+     "n_effective": 119,
      "net_pct": 0.6913793885302013,
      "t_naive": 13.703003284167963,
-     "t_newey_west": 7.477293749846276,
-     "inflation": 1.8326153475580225
+     "t_newey_west": 5.096634686007008,
+     "inflation": 2.688637528169332
     },
     {
      "horizon": 14,
      "n": 2534,
-     "n_effective": 181,
+     "n_effective": 59,
      "net_pct": 1.0803582446437376,
      "t_naive": 17.35569918861628,
-     "t_newey_west": 7.136619186642969,
-     "inflation": 2.431921717372777
+     "t_newey_west": 5.133289331245859,
+     "inflation": 3.3810093428737282
     },
     {
      "horizon": 21,
      "n": 2497,
-     "n_effective": 118,
+     "n_effective": 39,
      "net_pct": 1.3719107103547952,
      "t_naive": 21.022800235734923,
-     "t_newey_west": 7.99041942423846,
-     "inflation": 2.631000842329192
+     "t_newey_west": 5.428872385034975,
+     "inflation": 3.8724064123676185
     },
     {
      "horizon": 30,
      "n": 2448,
-     "n_effective": 81,
+     "n_effective": 27,
      "net_pct": 1.6784864459032944,
      "t_naive": 24.652356384823335,
-     "t_newey_west": 8.00388980808728,
-     "inflation": 3.0800469491614106
+     "t_newey_west": 4.952617649120052,
+     "inflation": 4.977641750560616
     },
     {
      "horizon": 60,
      "n": 2294,
-     "n_effective": 38,
+     "n_effective": 13,
      "net_pct": 2.8021407798768645,
      "t_naive": 36.50594049861593,
-     "t_newey_west": 8.694751534950322,
-     "inflation": 4.19861802282364
+     "t_newey_west": 4.400777535163379,
+     "inflation": 8.295338768416213
     },
     {
      "horizon": 91,
      "n": 2138,
-     "n_effective": 23,
+     "n_effective": 8,
      "net_pct": 4.199308798848104,
      "t_naive": 51.650785463815765,
-     "t_newey_west": 12.897774209260433,
-     "inflation": 4.004627823824919
+     "t_newey_west": 5.407540000968141,
+     "inflation": 9.551623373025155
     }
    ],
    "delayed_entry": [
@@ -4842,21 +4842,21 @@
      "horizon": 7,
      "n": 2567,
      "net_pct": 0.465299944995162,
-     "t_newey_west": 5.094271606660296,
+     "t_newey_west": 3.9695900805130453,
      "share_profitable": 0.5660303856641995
     },
     {
      "horizon": 30,
      "n": 2443,
      "net_pct": 1.4327358688298855,
-     "t_newey_west": 7.202438215738642,
+     "t_newey_west": 4.440930000416698,
      "share_profitable": 0.6790830945558739
     },
     {
      "horizon": 91,
      "n": 2134,
      "net_pct": 3.9575343405285297,
-     "t_newey_west": 12.46891388237717,
+     "t_newey_west": 5.132047889641669,
      "share_profitable": 0.8687910028116214
     }
    ],
@@ -4891,7 +4891,7 @@
      "daily_paired_pct": 0.17126862623009403,
      "t_newey_west": 3.7352708972972577,
      "n_dates": 824,
-     "n_dates_effective": 117,
+     "n_dates_effective": 119,
      "share_dates_positive": 0.6237864077669902,
      "n_cheap": 13977
     },
@@ -4904,7 +4904,7 @@
      "daily_paired_pct": 0.4444656947174026,
      "t_newey_west": 2.1473178159498696,
      "n_dates": 801,
-     "n_dates_effective": 26,
+     "n_dates_effective": 27,
      "share_dates_positive": 0.6254681647940075,
      "n_cheap": 13156
     },
@@ -4952,9 +4952,9 @@
      "period": "train",
      "cutoff_pct": 9.89089922844638,
      "n": 1364,
-     "n_effective": 194,
+     "n_effective": 84,
      "net_pct": 0.5629232965690298,
-     "t_newey_west": 6.115194456655578,
+     "t_newey_west": 4.547782428527793,
      "share_profitable": 0.6085043988269795
     },
     {
@@ -4962,9 +4962,9 @@
      "period": "holdout",
      "cutoff_pct": 9.89089922844638,
      "n": 276,
-     "n_effective": 39,
+     "n_effective": 33,
      "net_pct": 1.7277041832419615,
-     "t_newey_west": 5.3008107819992905,
+     "t_newey_west": 4.577265099203781,
      "share_profitable": 0.7463768115942029
     },
     {
@@ -4972,9 +4972,9 @@
      "period": "train",
      "cutoff_pct": 10.024472787800498,
      "n": 1248,
-     "n_effective": 41,
+     "n_effective": 18,
      "net_pct": 1.3741735717909953,
-     "t_newey_west": 6.494715953248259,
+     "t_newey_west": 3.4924247252931027,
      "share_profitable": 0.6995192307692307
     },
     {
@@ -4982,9 +4982,9 @@
      "period": "holdout",
      "cutoff_pct": 10.024472787800498,
      "n": 188,
-     "n_effective": 6,
+     "n_effective": 7,
      "net_pct": 5.136261361169385,
-     "t_newey_west": 7.016211436056946,
+     "t_newey_west": 5.7691843069456095,
      "share_profitable": 0.9202127659574468
     },
     {
@@ -4992,9 +4992,9 @@
      "period": "train",
      "cutoff_pct": 10.415036587930828,
      "n": 982,
-     "n_effective": 10,
+     "n_effective": 5,
      "net_pct": 4.561831657904096,
-     "t_newey_west": 14.479664716017856,
+     "t_newey_west": 5.18358311949397,
      "share_profitable": 0.8961303462321792
     },
     {
@@ -5004,13 +5004,13 @@
      "n": 109,
      "n_effective": 1,
      "net_pct": 6.765993385116391,
-     "t_newey_west": 6.078294517682495,
+     "t_newey_west": 5.4365768795086264,
      "share_profitable": 0.908256880733945
     }
    ],
    "holdout_positive_at_all_horizons": true,
    "holdout_min_net_pct": 1.7277041832419615,
-   "holdout_min_t": 5.3008107819992905,
+   "holdout_min_t": 4.577265099203781,
    "decay_vs_train": {
     "7": 1.1647808866729317,
     "30": 3.76208778937839,
@@ -5027,9 +5027,9 @@
      "dispersion": "low",
      "mean_disp_pct": 5.8198086350717295,
      "n": 863,
-     "n_effective": 123,
+     "n_effective": 98,
      "net_pct": 1.4869116355324996,
-     "t_newey_west": 7.146691311829373,
+     "t_newey_west": 5.082917587333408,
      "share_profitable": 0.7033603707995365
     },
     {
@@ -5037,9 +5037,9 @@
      "dispersion": "mid",
      "mean_disp_pct": 8.937655442222713,
      "n": 858,
-     "n_effective": 122,
+     "n_effective": 68,
      "net_pct": 0.28028042104933676,
-     "t_newey_west": 2.7483804618814553,
+     "t_newey_west": 1.409712690198423,
      "share_profitable": 0.5757575757575758
     },
     {
@@ -5047,9 +5047,9 @@
      "dispersion": "high",
      "mean_disp_pct": 11.57729377386523,
      "n": 851,
-     "n_effective": 121,
+     "n_effective": 16,
      "net_pct": 0.2991098056108107,
-     "t_newey_west": 2.5296138899671217,
+     "t_newey_west": 1.7310575010708027,
      "share_profitable": 0.5393654524089306
     },
     {
@@ -5057,9 +5057,9 @@
      "dispersion": "low",
      "mean_disp_pct": 6.006279565994277,
      "n": 817,
-     "n_effective": 27,
+     "n_effective": 22,
      "net_pct": 2.8950546778479898,
-     "t_newey_west": 6.715782838615741,
+     "t_newey_west": 5.232890925577714,
      "share_profitable": 0.8115055079559363
     },
     {
@@ -5067,9 +5067,9 @@
      "dispersion": "mid",
      "mean_disp_pct": 9.128874621777051,
      "n": 821,
-     "n_effective": 27,
+     "n_effective": 15,
      "net_pct": 1.379567388730025,
-     "t_newey_west": 8.968806670739564,
+     "t_newey_west": 2.891811646794133,
      "share_profitable": 0.7369062119366626
     },
     {
@@ -5077,9 +5077,9 @@
      "dispersion": "high",
      "mean_disp_pct": 11.625444776380311,
      "n": 810,
-     "n_effective": 27,
+     "n_effective": 3,
      "net_pct": 0.7543831131137122,
-     "t_newey_west": 2.753959687121558,
+     "t_newey_west": 1.2271586862895965,
      "share_profitable": 0.5925925925925926
     }
    ],
@@ -5093,54 +5093,54 @@
      "horizon": 7,
      "selector": "raw deviation",
      "n": 2963,
-     "n_effective": 423,
+     "n_effective": 119,
      "net_pct": 0.6366716882314142,
-     "t_newey_west": 7.567389778395065,
+     "t_newey_west": 5.437361625916714,
      "share_profitable": 0.5973675329058387
     },
     {
      "horizon": 7,
      "selector": "dispersion-normalised",
      "n": 2963,
-     "n_effective": 423,
+     "n_effective": 111,
      "net_pct": 0.6052989586260935,
-     "t_newey_west": 7.43407572143884,
+     "t_newey_west": 5.68381229536119,
      "share_profitable": 0.5808302396220048
     },
     {
      "horizon": 30,
      "selector": "raw deviation",
      "n": 2823,
-     "n_effective": 94,
+     "n_effective": 27,
      "net_pct": 1.5911137267170559,
-     "t_newey_west": 8.400692251731005,
+     "t_newey_west": 4.934662437736754,
      "share_profitable": 0.7056323060573858
     },
     {
      "horizon": 30,
      "selector": "dispersion-normalised",
      "n": 2823,
-     "n_effective": 94,
+     "n_effective": 25,
      "net_pct": 1.027523496658518,
-     "t_newey_west": 5.531865812420269,
+     "t_newey_west": 4.327843452502839,
      "share_profitable": 0.5961742826780021
     },
     {
      "horizon": 91,
      "selector": "raw deviation",
      "n": 2451,
-     "n_effective": 26,
+     "n_effective": 8,
      "net_pct": 4.041225095215115,
-     "t_newey_west": 13.415481084320609,
+     "t_newey_west": 5.423797148442851,
      "share_profitable": 0.8816809465524276
     },
     {
      "horizon": 91,
      "selector": "dispersion-normalised",
      "n": 2451,
-     "n_effective": 26,
+     "n_effective": 7,
      "net_pct": 0.9075099767199903,
-     "t_newey_west": 2.371298592817713,
+     "t_newey_west": 2.115629244344713,
      "share_profitable": 0.5193798449612403
     }
    ],
@@ -5160,7 +5160,7 @@
      "mean_disp_pct": 7.671132675477193,
      "n": 473,
      "net_pct": 1.229765859670757,
-     "t_newey_west": 4.1930221631728495
+     "t_newey_west": 2.874420014518727
     },
     {
      "period": "train only",
@@ -5169,7 +5169,7 @@
      "mean_disp_pct": 10.463704475837412,
      "n": 470,
      "net_pct": 0.018676293198677998,
-     "t_newey_west": 0.13886065781461684
+     "t_newey_west": -0.25605916742445484
     },
     {
      "period": "train only",
@@ -5178,7 +5178,7 @@
      "mean_disp_pct": 11.975112335867744,
      "n": 460,
      "net_pct": 0.6717824808911288,
-     "t_newey_west": 4.382497353836276
+     "t_newey_west": 2.8402470195674443
     },
     {
      "period": "train only",
@@ -5187,7 +5187,7 @@
      "mean_disp_pct": 7.671132675477193,
      "n": 473,
      "net_pct": 2.391508139161297,
-     "t_newey_west": 5.84769188714485
+     "t_newey_west": 3.4575309845765663
     },
     {
      "period": "train only",
@@ -5196,7 +5196,7 @@
      "mean_disp_pct": 10.463704475837412,
      "n": 470,
      "net_pct": 1.0779638621121996,
-     "t_newey_west": 4.008519157408054
+     "t_newey_west": 1.3677626658409088
     },
     {
      "period": "train only",
@@ -5205,7 +5205,7 @@
      "mean_disp_pct": 11.975112335867744,
      "n": 460,
      "net_pct": 0.8532885352189762,
-     "t_newey_west": 2.762770885602985
+     "t_newey_west": 1.2553089342813044
     },
     {
      "period": "holdout only",
@@ -5214,7 +5214,7 @@
      "mean_disp_pct": 4.686484326561889,
      "n": 394,
      "net_pct": 0.907663140147699,
-     "t_newey_west": 4.345980866857397
+     "t_newey_west": 3.836022731194622
     },
     {
      "period": "holdout only",
@@ -5223,7 +5223,7 @@
      "mean_disp_pct": 5.361350386431288,
      "n": 393,
      "net_pct": 0.8905001290585234,
-     "t_newey_west": 3.77899194798891
+     "t_newey_west": 3.635247388505996
     },
     {
      "period": "holdout only",
@@ -5232,7 +5232,7 @@
      "mean_disp_pct": 5.921915870988976,
      "n": 383,
      "net_pct": 0.7228375910612871,
-     "t_newey_west": 4.254710784593367
+     "t_newey_west": 3.4207883173845444
     },
     {
      "period": "holdout only",
@@ -5241,7 +5241,7 @@
      "mean_disp_pct": 4.59147831975012,
      "n": 351,
      "net_pct": 1.70794903012133,
-     "t_newey_west": 4.292767208264854
+     "t_newey_west": 6.61469678139564
     },
     {
      "period": "holdout only",
@@ -5250,7 +5250,7 @@
      "mean_disp_pct": 5.0942811798304515,
      "n": 348,
      "net_pct": 2.2556230509212796,
-     "t_newey_west": 3.0943089978331715
+     "t_newey_west": 1.9965484680140058
     },
     {
      "period": "holdout only",
@@ -5259,7 +5259,7 @@
      "mean_disp_pct": 5.78878149745993,
      "n": 347,
      "net_pct": 1.8816575452318358,
-     "t_newey_west": 7.247910524770639
+     "t_newey_west": 9.49480678649381
     }
    ],
    "low_minus_high_pp": {

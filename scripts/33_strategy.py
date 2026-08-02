@@ -210,8 +210,34 @@ print("\n" + "=" * 78)
 ATT = {}
 
 
+def by_date(frame, col="net", date_col="date"):
+    """Collapse a pooled panel to one observation per date.
+
+    The deviations this study trades are each world's log price minus the SAME cross-world
+    mean, so two worlds qualifying on one day are not two independent observations - they are
+    two views of one day, mechanically linked through the mean they are measured against.
+    Averaging within the date is what makes the series a time series, which is the only thing
+    a Newey-West correction knows how to handle.
+    """
+    return frame.groupby(date_col)[col].mean().sort_index().values
+
+
+def independent_windows(frame, h, date_col="date"):
+    """How many non-overlapping h-day windows the sample actually spans.
+
+    Dividing row count by the horizon counts cross-sectional replication as independent time
+    and overstates the sample roughly threefold here. The calendar span is the bound that
+    matters.
+    """
+    span = (frame[date_col].max() - frame[date_col].min()).days
+    return int(span // h)
+
+
 def nw_t(x, lag):
-    """Newey-West t against zero, for a mean estimated on overlapping windows."""
+    """Newey-West t against zero, for a mean estimated on overlapping windows.
+
+    Pass a per-date series, not a pooled panel: see by_date above.
+    """
     x = np.asarray(x, float)
     x = x[~np.isnan(x)]
     n, mu = len(x), x.mean()
@@ -234,8 +260,8 @@ for h in HORIZONS:
     b = past[past.dec == past.dec.max()]
     net = (b.gross - LARGE_RT).values
     t_naive = float(stats.ttest_1samp(net, 0).statistic)
-    t_nw, se = nw_t(net, h)
-    att.append({"horizon": h, "n": len(net), "n_effective": int(len(net) / h),
+    t_nw, se = nw_t(by_date(b.assign(net=b.gross - LARGE_RT)), h)
+    att.append({"horizon": h, "n": len(net), "n_effective": independent_windows(b, h),
                 "net_pct": float(net.mean() * 100), "t_naive": t_naive, "t_newey_west": t_nw,
                 "inflation": float(t_naive / t_nw) if t_nw else np.nan})
 atd = pd.DataFrame(att)
@@ -256,7 +282,7 @@ for h in (7, 30, 91):
     b = b.assign(dec=pd.qcut(b.absdev, 10, labels=False, duplicates="drop") + 1)
     b = b[b.dec == b.dec.max()]
     net = (b.gross - LARGE_RT).values
-    t_nw, _ = nw_t(net, h)
+    t_nw, _ = nw_t(by_date(b.assign(net=b.gross - LARGE_RT)), h)
     dly.append({"horizon": h, "n": len(net), "net_pct": float(net.mean() * 100),
                 "t_newey_west": t_nw, "share_profitable": float((net > 0).mean())})
 dld = pd.DataFrame(dly)
@@ -312,7 +338,8 @@ for h in (7, 30, 91):
                                              - allw[f"absfwd{h}"].mean()) * 100),
                "daily_paired_pct": float(daily.mean() * 100),
                "t_newey_west": t_nw,
-               "n_dates": int(len(daily)), "n_dates_effective": int(len(daily) / h),
+               "n_dates": int(len(daily)),
+               "n_dates_effective": int((daily.index.max() - daily.index.min()).days // h),
                "share_dates_positive": float((daily > 0).mean()),
                "n_cheap": len(cheap)})
 lod = pd.DataFrame(lo)
@@ -431,9 +458,9 @@ for h in (7, 30, 91):
         if len(b) < 30:
             continue
         net = (b.gross - LARGE_RT).values
-        t_nw, _ = nw_t(net, h)
+        t_nw, _ = nw_t(by_date(b.assign(net=b.gross - LARGE_RT)), h)
         hold.append({"horizon": h, "period": label, "cutoff_pct": float(cutoff * 100),
-                     "n": len(net), "n_effective": int(len(net) / h),
+                     "n": len(net), "n_effective": independent_windows(b, h),
                      "net_pct": float(net.mean() * 100), "t_newey_west": t_nw,
                      "share_profitable": float((net > 0).mean())})
 hd = pd.DataFrame(hold)
@@ -486,10 +513,10 @@ for h in (7, 30):
     b["disp_q"] = pd.qcut(b.disp, 3, labels=["low", "mid", "high"])
     for q, g_ in b.groupby("disp_q", observed=True):
         net = (g_.gross - LARGE_RT).values
-        t_nw, _ = nw_t(net, h)
+        t_nw, _ = nw_t(by_date(g_.assign(net=g_.gross - LARGE_RT)), h)
         reg.append({"horizon": h, "dispersion": str(q),
                     "mean_disp_pct": float(g_.disp.mean() * 100),
-                    "n": len(net), "n_effective": int(len(net) / h),
+                    "n": len(net), "n_effective": independent_windows(g_, h),
                     "net_pct": float(net.mean() * 100), "t_newey_west": t_nw,
                     "share_profitable": float((net > 0).mean())})
 rg = pd.DataFrame(reg)
@@ -537,9 +564,9 @@ for h in (7, 30, 91):
         cut = sig[col].quantile(0.9)
         b = sig[sig[col] >= cut]
         net = (b.gross - LARGE_RT).values
-        t_nw, _ = nw_t(net, h)
+        t_nw, _ = nw_t(by_date(b.assign(net=b.gross - LARGE_RT)), h)
         cmp_rows.append({"horizon": h, "selector": name, "n": len(net),
-                         "n_effective": int(len(net) / h),
+                         "n_effective": independent_windows(b, h),
                          "net_pct": float(net.mean() * 100), "t_newey_west": t_nw,
                          "share_profitable": float((net > 0).mean())})
 cp = pd.DataFrame(cmp_rows)
@@ -588,7 +615,7 @@ for label, frame in (("train only", d2[d2.date <= split]), ("holdout only", d2[d
             net = (gq.gross - LARGE_RT).values
             if len(net) < 20:
                 continue
-            t_nw, _ = nw_t(net, h)
+            t_nw, _ = nw_t(by_date(gq.assign(net=gq.gross - LARGE_RT)), h)
             conf.append({"period": label, "horizon": h, "dispersion": str(q),
                          "mean_disp_pct": float(gq.disp.mean() * 100), "n": len(net),
                          "net_pct": float(net.mean() * 100), "t_newey_west": t_nw})

@@ -34,9 +34,11 @@ offer; the long-only version — buy on a world trading below the cross-world me
 +0.44% a month (t = 2.1) and is not established at a quarter, where 2.3 years of history hold
 only 8 independent windows. A true holdout — cutoff fitted on the training period alone,
 final 50% of world-days never looked at — keeps the edge positive at every horizon, but the
-usable claim is the short one: **7 days confirmed** (+1.73% net, t = 5.3, 39 independent
-windows), 30 days suggestive (6 windows), 91 days no evidence (1 window, whatever its
-t-statistic says).
+usable claim is the short one: **7 days confirmed** (+1.73% net, t = 4.6, 33 independent
+windows), 30 days suggestive (7 windows), 91 days no evidence (1 window, whatever its
+t-statistic says). Inference is run on a per-date series, not on the pooled panel: several
+worlds qualifying on one day are views of one day, since every deviation is measured against
+the same cross-world mean. The sample is counted in calendar span rather than in rows.
 
 **A regime effect appeared and did not survive two tests.** Pooled over the history, the trade
 looks like it pays four times more when cross-world dispersion is in its lowest third (+2.90% at
