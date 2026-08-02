@@ -84,10 +84,18 @@ The monetary-emission reconstruction is also available as four audit layers:
 | `reports/gold_emission_report_artifact.json` | Validated technical report manifest and bounded evidence snapshot |
 | `reports/gold_emission_dashboard.html` | Self-contained interactive dashboard with world, time, realization and series filters |
 
-Open `reports/gold_emission_dashboard.html` directly in a browser. It includes the current
-world-day dataset, works offline, stores shareable filters in the URL and can load a newer
-`gold_emission_daily.csv` through its **Load updated CSV** control. Regenerate the embedded
-snapshot after the monetary pipeline changes:
+Open `reports/gold_emission_dashboard.html` directly in a browser for its embedded offline
+snapshot. When the project is served over HTTP, the dashboard automatically refreshes from
+`data/processed/gold_emission_daily.csv`, preserves shareable URL filters, and falls back to
+the embedded data if that file is unavailable. A newer CSV can also be selected through the
+**Load updated CSV** control.
+
+```bash
+python3 -m http.server 4173
+# then open http://127.0.0.1:4173/reports/gold_emission_dashboard.html
+```
+
+Regenerate the embedded snapshot after the monetary pipeline changes:
 
 ```bash
 python scripts/38_gold_emission_dashboard.py

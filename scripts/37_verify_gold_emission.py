@@ -143,6 +143,11 @@ def main() -> None:
     assert 'id="lineChart"' in dashboard
     assert 'id="fileInput"' in dashboard
     assert "<script src=" not in dashboard, "dashboard must remain self-contained"
+    assert "async function refreshProjectCSV()" in dashboard
+    assert 'fetch("../data/processed/gold_emission_daily.csv", { cache: "no-store" })' in dashboard
+    assert 'if (!["http:", "https:"].includes(location.protocol)) return;' in dashboard
+    assert 'sourceMeta = { ...sourceMeta, mode: "fallback" };' in dashboard
+    assert "void refreshProjectCSV();" in dashboard
     invalid_guard = dashboard.index(
         'if ($("#dateStart").value > $("#dateEnd").value)'
     )
