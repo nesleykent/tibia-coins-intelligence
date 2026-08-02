@@ -27,7 +27,8 @@ FUND = ["16_killstats.py", "17_features.py", "18_predict.py", "19_regimes.py",
         "25_arbitrage.py", "26_maximise.py", "27_irreducible.py", "28_supply_demand.py",
         "34_gold_emission.py", "35_gold_emission_models.py", "36_gold_emission_report.py",
         "29_scenarios.py", "30_model_artifact.py", "41_group_models.py",
-        "42_verify_group_models.py", "43_build_group_model_notebook.py",
+        "42_verify_group_models.py", "44_launch_phase_models.py",
+        "45_verify_launch_models.py", "43_build_group_model_notebook.py",
         "31_participants.py",
         "32_scenario_backtest.py", "33_strategy.py", "38_gold_emission_dashboard.py",
         "37_verify_gold_emission.py"]
@@ -57,6 +58,7 @@ REQUIRED_FUND = {
     "supply_vs_demand": "28_supply_demand.py", "scenarios": "29_scenarios.py",
     "gold_emission": "35_gold_emission_models.py",
     "group_specific_models": "41_group_models.py",
+    "launch_phase_models": "44_launch_phase_models.py",
     "participants": "31_participants.py",
 }
 

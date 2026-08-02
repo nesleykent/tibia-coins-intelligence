@@ -65,6 +65,11 @@ GSC = pd.read_csv(P / "specific_model_comparison.csv")
 GSR = pd.read_csv(P / "specific_model_registry.csv")
 GSO = GSC[GSC.scope == "all"].iloc[0]
 GSP = GSC[GSC.scope == "pvp_type"].sort_values("scope_value")
+LPM = FD["launch_phase_models"]
+LPC = pd.read_csv(P / "launch_model_comparison.csv")
+LPR = pd.read_csv(P / "launch_model_registry.csv")
+LPO = LPC[LPC.scope == "all"].iloc[0]
+LPP = LPC[LPC.scope == "pvp_type"].sort_values("scope_value")
 _IXYRS = (pd.Timestamp(IX['index_end']) - pd.Timestamp(IX['index_start'])).days / 365.25
 _DRIFT_T = IX['cagr_pct'] / (D['ret_sd_ann_pct'] / _IXYRS ** 0.5)
 _YRS_NEEDED = (2 * D['ret_sd_ann_pct'] / IX['cagr_pct']) ** 2
@@ -4061,6 +4066,42 @@ para(tag("lim") + f"One forced exception remains visible rather than hidden: Ret
      f"selection, sensitivity and current predictions are written by "
      f"<i>scripts/41_group_models.py</i>.")
 
+h3("7.5.3b Launch-phase models")
+para(tag("stat") + f"<b>Launch phase is now a separate, age-bounded model family.</b> A world "
+     f"qualifies from creation through age {LPM['max_age_days']} days, close to the observed "
+     f"{LPM['observed_median_convergence_days']}-day median time to come within 5% of the mature "
+     f"market. The archive contains {LPM['launch_worlds_observed']} launch worlds; "
+     f"{LPM['training_eligible_worlds']} have enough complete feature and target rows for model "
+     f"development, and {LPM['active_launch_worlds']} are currently inside the age window. "
+     f"Open, Optional and Retro Open PvP are fitted separately. BattlEye is not split because "
+     f"all but one usable launch world are green.")
+para(tag("lim") + f"<b>Enough observations do not guarantee a better forecast.</b> The holdout "
+     f"combines later dates with {int(LPO.n_worlds)} launch worlds never used for estimation. "
+     f"The launch family records RMSE {LPO.launch_rmse_pct:.3f}%, against "
+     f"{LPO.general_rmse_pct:.3f}% when the mature general mapping is applied and "
+     f"{LPO.zero_rmse_pct:.3f}% for zero change. Launch specialisation is "
+     f"{abs(LPO.launch_improvement_vs_general_pct):.2f}% worse than the general model "
+     f"(Newey-West p = {LPO.nw_p_launch_vs_general:.3f}), so the general model remains the "
+     f"production default and Launch remains an explicitly experimental diagnostic.")
+table([["Scope", "Worlds", "Launch RMSE", "General RMSE", "Zero RMSE",
+        "Winner"]] +
+      [[r.scope_value, int(r.n_worlds), f"{r.launch_rmse_pct:.3f}%",
+        f"{r.general_rmse_pct:.3f}%", f"{r.zero_rmse_pct:.3f}%",
+        str(r.better_model).title()] for _, r in
+       pd.concat([LPC[LPC.scope == "all"], LPP]).iterrows()],
+      [46 * mm, 16 * mm, 28 * mm, 28 * mm, 25 * mm, AVAIL - 143 * mm],
+      fs=6.8, align=[None, "R", "R", "R", "R", None],
+      caption="Launch-phase seven-day relative-value models evaluated on later dates and "
+              "previously unseen launch worlds. Lower RMSE is better.")
+para(tag("lim") + f"Retro Open PvP has only "
+     f"{int(LPR[LPR.pvp_type == 'Retro Open PvP'].world.nunique())} training-eligible worlds "
+     f"and therefore carries a low-sample warning. Current scores also publish their age and "
+     f"staleness; the most data-constrained current score is "
+     f"{LPM['max_prediction_staleness_days']} days behind the project date rather than being "
+     f"silently presented as current. The model family and its independent audit are written "
+     f"by <i>scripts/44_launch_phase_models.py</i> and "
+     f"<i>scripts/45_verify_launch_models.py</i>.")
+
 para(tag("stat") + f"<b>The bands were checked rather than asserted.</b> Walking the "
      f"history and simulating forward from each origin using only the data available at that "
      f"point, {BTS['well_calibrated']} of {BTS['n_tested']} band-horizon pairs cover within ten "
@@ -5121,6 +5162,8 @@ table([["Script", "Purpose"],
        ["30_model_artifact.py", "Fits, persists and scores the shipped model; run with --predict"],
        ["41_group_models.py", "Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores"],
        ["42_verify_group_models.py", "Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family"],
+       ["44_launch_phase_models.py", "PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines"],
+       ["45_verify_launch_models.py", "Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness"],
        ["43_build_group_model_notebook.py", "Builds and executes the reproducible general-versus-specific model notebook"],
        ["31_participants.py", "Demand decomposed by participant type from the order-book size distribution"],
        ["32_scenario_backtest.py", "Walk-forward coverage test of the scenario bands"],
@@ -5542,6 +5585,9 @@ table([["File", "Contents"],
        ["data/processed/latest_specific_predictions.csv", "Current general and group-specific predictions for every converged world"],
        ["data/processed/specific_model_*.csv", "Group registry, estimator selection, sensitivity, holdout comparison and audit predictions"],
        ["models/specific_models.pkl.gz", "Compressed hierarchical group-specific model family and calibrated intervals"],
+       ["data/processed/latest_launch_predictions.csv", "Current experimental launch-phase scores, age, staleness and general comparison"],
+       ["data/processed/launch_model_*.csv", "Launch cohorts, estimator selection, untouched comparison and audit predictions"],
+       ["models/launch_phase_models.pkl.gz", "Compressed PvP-specific launch-phase model family and calibrated intervals"],
        ["reports/gold_emission_dashboard.html", "Interactive world-by-time monetary-emission explorer"],
        ["reports/intelligence_hub.html", "Unified interactive market-intelligence workspace"],
        ["scripts/run_all.py", "Runs every stage in dependency order and verifies the result "

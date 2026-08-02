@@ -1,0 +1,59 @@
+{
+  "generated_at": "2026-08-02T21:21:22.781402+00:00",
+  "definition": "Regular worlds created inside the sample, from age 0 through 540 days",
+  "max_age_days": 540,
+  "observed_median_convergence_days": 501,
+  "target": "Seven-day change in a launch world's log-price deviation from the mature converged-world mean",
+  "pvp_never_pooled": true,
+  "battleye_not_split": "Launch cohorts are overwhelmingly green; BattlEye separation is not identified",
+  "launch_worlds_observed": 29,
+  "training_eligible_worlds": 21,
+  "active_launch_worlds": 18,
+  "active_as_of": "2026-07-30",
+  "max_prediction_staleness_days": 51,
+  "validation_start": "2025-12-03",
+  "holdout_start": "2026-03-29",
+  "cohort_worlds": {
+    "holdout": 5,
+    "train": 13,
+    "validation": 3
+  },
+  "pvp_worlds": {
+    "Open PvP": 9,
+    "Optional PvP": 8,
+    "Retro Open PvP": 4
+  },
+  "selected_estimators": {
+    "Open PvP": "random_forest",
+    "Optional PvP": "random_forest",
+    "Retro Open PvP": "random_forest"
+  },
+  "holdout": {
+    "scope": "all",
+    "scope_value": "All launch holdout worlds",
+    "n_test": 352,
+    "n_dates": 114,
+    "n_worlds": 5,
+    "launch_rmse_pct": 11.75316963619221,
+    "general_rmse_pct": 10.652865116046808,
+    "zero_rmse_pct": 11.050728550070833,
+    "launch_improvement_vs_general_pct": -10.328719158266377,
+    "launch_improvement_vs_zero_pct": -6.35651380756136,
+    "launch_mae_pct": 9.159024777204849,
+    "general_mae_pct": 8.246247201415455,
+    "zero_mae_pct": 8.40374180132209,
+    "nw_t_launch_vs_general": -2.1024736766224854,
+    "nw_p_launch_vs_general": 0.03551180317482294,
+    "nw_t_launch_vs_zero": -1.6672218774791963,
+    "nw_p_launch_vs_zero": 0.09547029407730534,
+    "better_model": "general"
+  },
+  "outputs": {
+    "registry": "data/processed/launch_model_registry.csv",
+    "estimator_selection": "data/processed/launch_model_estimator_selection.csv",
+    "comparison": "data/processed/launch_model_comparison.csv",
+    "holdout_predictions": "data/processed/launch_model_holdout_predictions.csv",
+    "latest_predictions": "data/processed/latest_launch_predictions.csv",
+    "artifact": "models/launch_phase_models.pkl.gz"
+  }
+}

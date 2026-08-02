@@ -35,6 +35,9 @@ def main() -> None:
     model_registry = pd.read_csv(P / "specific_model_registry.csv")
     model_comparison = pd.read_csv(P / "specific_model_comparison.csv")
     model_sensitivity = pd.read_csv(P / "specific_model_sensitivity.csv")
+    launch_predictions = pd.read_csv(P / "latest_launch_predictions.csv")
+    launch_registry = pd.read_csv(P / "launch_model_registry.csv")
+    launch_comparison = pd.read_csv(P / "launch_model_comparison.csv")
     forecasts = pd.read_csv(P / "forecasts_sa.csv")
     strategy = pd.read_csv(P / "strategy_holdout.csv")
     figures = json.loads((ROOT / "figures" / "manifest.json").read_text())
@@ -50,6 +53,9 @@ def main() -> None:
     assert len(payload["modelRegistry"]) == len(model_registry)
     assert len(payload["modelComparison"]) == len(model_comparison)
     assert len(payload["modelSensitivity"]) == len(model_sensitivity)
+    assert len(payload["launchPredictions"]) == len(launch_predictions)
+    assert len(payload["launchRegistry"]) == len(launch_registry)
+    assert len(payload["launchComparison"]) == len(launch_comparison)
     assert len(payload["forecasts"]) == len(forecasts)
     assert len(payload["strategy"]) == len(strategy)
     assert len(payload["figures"]) == len(figures) == 34
@@ -60,6 +66,9 @@ def main() -> None:
     )
     assert {row["world"] for row in payload["modelRegistry"]} == set(
         model_registry.world
+    )
+    assert {row["world"] for row in payload["launchPredictions"]} == set(
+        launch_predictions.world
     )
 
     for view in (
@@ -82,6 +91,7 @@ def main() -> None:
         "function renderModels(",
         "function renderModelChart(",
         "function renderModelDetail(",
+        "function renderLaunchModels(",
         "function renderStrategy(",
         "function renderLibrary(",
         "function openExhibit(",
@@ -101,6 +111,9 @@ def main() -> None:
         "../data/processed/specific_model_registry.csv",
         "../data/processed/specific_model_comparison.csv",
         "../data/processed/specific_model_sensitivity.csv",
+        "../data/processed/latest_launch_predictions.csv",
+        "../data/processed/launch_model_registry.csv",
+        "../data/processed/launch_model_comparison.csv",
         "../data/processed/strategy_holdout.csv",
     ):
         assert source in html, f"missing live data source: {source}"
@@ -120,6 +133,7 @@ def main() -> None:
         f"[INTELLIGENCE VERIFY] passed: {len(worlds)} worlds, "
         f"{panel.price_gp.notna().sum():,} price rows, {len(predictions)} predictions, "
         f"{model_registry.group_id.nunique()} specific models, "
+        f"{launch_registry.pvp_type.nunique()} launch models, "
         f"{len(forecasts)} scenario forecasts, {len(figures)} interactive exhibits"
     )
 

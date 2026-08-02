@@ -133,6 +133,39 @@ def build_payload() -> dict:
             "specific_improvement_pct",
         ],
     )
+    launch_predictions = records(
+        P / "latest_launch_predictions.csv",
+        [
+            "world", "as_of", "created", "age_days", "price_gp", "pvp_type",
+            "battleye_color", "region", "model_worlds", "selected_estimator",
+            "low_sample_warning", "stale_days", "deviation_pct",
+            "general_predicted_change_pct", "general_low80_pct",
+            "general_high80_pct", "launch_predicted_change_pct",
+            "launch_low80_pct", "launch_high80_pct",
+            "launch_minus_general_pct",
+        ],
+    )
+    launch_registry = records(
+        P / "launch_model_registry.csv",
+        [
+            "world", "created", "first", "last", "pvp_type",
+            "battleye_color", "region", "complete_rows", "cohort",
+            "age_at_latest_days", "currently_in_launch_phase",
+            "low_sample_pvp_warning", "selected_estimator",
+        ],
+    )
+    launch_comparison = records(
+        P / "launch_model_comparison.csv",
+        [
+            "scope", "scope_value", "n_test", "n_dates", "n_worlds",
+            "launch_rmse_pct", "general_rmse_pct", "zero_rmse_pct",
+            "launch_improvement_vs_general_pct",
+            "launch_improvement_vs_zero_pct", "launch_mae_pct",
+            "general_mae_pct", "zero_mae_pct",
+            "nw_t_launch_vs_general", "nw_p_launch_vs_general",
+            "nw_t_launch_vs_zero", "nw_p_launch_vs_zero", "better_model",
+        ],
+    )
     strategy = records(
         P / "strategy_holdout.csv",
         [
@@ -169,6 +202,10 @@ def build_payload() -> dict:
             "specificModels": int(pd.Series(
                 [row["group_id"] for row in model_registry]
             ).nunique()),
+            "launchModels": int(pd.Series(
+                [row["pvp_type"] for row in launch_registry]
+            ).nunique()),
+            "activeLaunchWorlds": len(launch_predictions),
         },
         "marketIndex": market_index,
         "worlds": worlds,
@@ -179,6 +216,9 @@ def build_payload() -> dict:
         "modelRegistry": model_registry,
         "modelComparison": model_comparison,
         "modelSensitivity": model_sensitivity,
+        "launchPredictions": launch_predictions,
+        "launchRegistry": launch_registry,
+        "launchComparison": launch_comparison,
         "strategy": strategy,
         "figures": figures,
     }
@@ -512,6 +552,19 @@ HTML = r"""<!doctype html>
           <aside id="modelDetail" class="panel model-detail"></aside>
         </div>
         <article class="panel" style="margin-top:16px">
+          <div class="panel-heading"><div><h2>Launch phase · experimental</h2><p>PvP-specific models for regular worlds from creation through age 540 days.</p></div><span class="model-badge warning">General remains default</span></div>
+          <div class="metric-rail" aria-label="Launch model comparison summary">
+            <div class="metric"><span class="metric-label">Active launch worlds</span><strong id="launchActiveWorlds" class="metric-value">—</strong><span class="metric-meta">inside the 540-day window</span></div>
+            <div class="metric"><span class="metric-label">General holdout RMSE</span><strong id="launchGeneralRmse" class="metric-value">—</strong><span class="metric-meta">mature mapping applied to launches</span></div>
+            <div class="metric"><span class="metric-label">Launch holdout RMSE</span><strong id="launchRmse" class="metric-value">—</strong><span class="metric-meta">unseen worlds and later dates</span></div>
+            <div class="metric"><span class="metric-label">Holdout winner</span><strong id="launchWinner" class="metric-value">—</strong><span id="launchWinnerMeta" class="metric-meta"></span></div>
+          </div>
+          <div class="panel-heading"><div><h2>Current launch scores</h2><p id="launchTableCount">Active launch worlds</p></div><div class="table-tools"><input id="launchSearch" type="search" placeholder="Search launch worlds…" aria-label="Search launch predictions"></div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Age</th><th>Data age</th><th>PvP</th><th>General 7d</th><th>Launch 7d</th><th>Difference</th><th>Model</th></tr></thead><tbody id="launchTable"></tbody></table></div>
+          <div class="panel-heading"><div><h2>Launch holdout by PvP</h2><p>Lower RMSE is better; zero means no expected change.</p></div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Scope</th><th>Worlds</th><th>Launch RMSE</th><th>General RMSE</th><th>Zero RMSE</th><th>Winner</th></tr></thead><tbody id="launchComparisonTable"></tbody></table></div>
+        </article>
+        <article class="panel" style="margin-top:16px">
           <div class="panel-heading"><div><h2>Pooling hierarchy</h2><p>Five worlds is the preferred minimum; fallback removes dimensions from the bottom up.</p></div><span class="model-badge">PvP always separate</span></div>
           <div class="model-levels">
             <div class="model-level"><strong>1 · Exact segment</strong>PvP × BattlEye × region. Used when at least five eligible worlds share all three dimensions.</div>
@@ -550,7 +603,7 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-library" class="view" hidden>
-        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Read 175-page report</a></div>
+        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Read 176-page report</a></div>
         <div class="library-tools"><input id="librarySearch" type="search" placeholder="Search titles, topics or notes…" aria-label="Search research library"><select id="libraryTopic" aria-label="Filter research topic"><option value="all">All topics</option></select><button id="clearLibrary" class="button" type="button">Clear filters</button></div>
         <div id="libraryCount" class="source"></div>
         <div id="libraryGrid" class="library-grid" style="margin-top:12px"></div>
@@ -578,6 +631,9 @@ const DATA_FILES = {
   modelRegistry:"../data/processed/specific_model_registry.csv",
   modelComparison:"../data/processed/specific_model_comparison.csv",
   modelSensitivity:"../data/processed/specific_model_sensitivity.csv",
+  launchPredictions:"../data/processed/latest_launch_predictions.csv",
+  launchRegistry:"../data/processed/launch_model_registry.csv",
+  launchComparison:"../data/processed/launch_model_comparison.csv",
   strategy:"../data/processed/strategy_holdout.csv"
 };
 const COLORS = {blue:"#155eef",gray:"#7b869a",gold:"#c58b16",green:"#14804a",red:"#c9363e"};
@@ -595,6 +651,8 @@ let seriesMap = new Map();
 let predictionMap = new Map();
 let specificPredictionMap = new Map();
 let modelRegistryMap = new Map();
+let launchPredictionMap = new Map();
+let launchRegistryMap = new Map();
 let forecastMap = new Map();
 let activeView = "overview";
 let selectedForecastHorizon = "1m";
@@ -624,6 +682,8 @@ function rebuildIndexes(){
   predictionMap=new Map(data.predictions.map(row=>[row.world,row]));
   specificPredictionMap=new Map(data.specificPredictions.map(row=>[row.world,row]));
   modelRegistryMap=new Map(data.modelRegistry.map(row=>[row.world,row]));
+  launchPredictionMap=new Map(data.launchPredictions.map(row=>[row.world,row]));
+  launchRegistryMap=new Map(data.launchRegistry.map(row=>[row.world,row]));
   forecastMap=new Map(data.forecasts.map(row=>[row.world,row]));
 }
 
@@ -641,10 +701,11 @@ function initialize(){
   populateSelect($("#worldA"),worlds,params.get("a")||"Antica");
   populateSelect($("#worldB"),worlds,params.get("b")||"Belobra");
   populateSelect($("#forecastWorld"),[...forecastMap.keys()].sort(),params.get("forecast")||"Belobra");
-  const modelWorlds=[...specificPredictionMap.keys()].sort();
-  populateSelect($("#modelPvp"),[...new Set(data.specificPredictions.map(row=>row.pvp_type))].sort(),params.get("modelPvp")||"all","All PvP types");
-  populateSelect($("#modelBattleye"),[...new Set(data.specificPredictions.map(row=>row.battleye_color))].sort(),params.get("modelBe")||"all","All cohorts");
-  populateSelect($("#modelRegion"),[...new Set(data.specificPredictions.map(row=>row.region))].sort(),params.get("modelRegion")||"all","All regions");
+  const modelWorlds=[...new Set([...specificPredictionMap.keys(),...launchPredictionMap.keys()])].sort();
+  const allModelRows=[...data.specificPredictions,...data.launchPredictions];
+  populateSelect($("#modelPvp"),[...new Set(allModelRows.map(row=>row.pvp_type))].sort(),params.get("modelPvp")||"all","All PvP types");
+  populateSelect($("#modelBattleye"),[...new Set(allModelRows.map(row=>row.battleye_color))].sort(),params.get("modelBe")||"all","All cohorts");
+  populateSelect($("#modelRegion"),[...new Set(allModelRows.map(row=>row.region))].sort(),params.get("modelRegion")||"all","All regions");
   populateSelect($("#modelWorld"),modelWorlds,params.get("modelWorld")||"Belobra");
   const dates=data.marketIndex.map(row=>row.date);
   const min=dates[0],max=dates[dates.length-1];
@@ -677,6 +738,7 @@ function bindEvents(){
   ["#modelPvp","#modelBattleye","#modelRegion"].forEach(selector=>$(selector).addEventListener("change",()=>{renderModels();updateURL()}));
   $("#modelWorld").addEventListener("change",()=>{renderModelDetail();updateURL()});
   $("#modelSearch").addEventListener("input",renderModelTable);
+  $("#launchSearch").addEventListener("input",renderLaunchModels);
   $$("#strategyHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedStrategyHorizon=Number(button.dataset.days);renderStrategy();updateURL()}));
   $("#librarySearch").addEventListener("input",renderLibrary);
   $("#libraryTopic").addEventListener("change",renderLibrary);
@@ -962,7 +1024,7 @@ function renderModels(){
   const delta=Math.abs(num(overall.specific_improvement_pct));
   $("#modelWinnerMeta").textContent=`${winner==="General"?"specific is":"specific improves"} ${delta.toFixed(2)}% ${winner==="General"?"higher":"lower"} RMSE · p=${num(overall.dm_p_specific_vs_general).toFixed(3)}`;
   $("#modelCount").textContent=fmt.format(new Set(data.modelRegistry.map(row=>row.group_id)).size);
-  renderModelChart();renderModelTable();renderModelDetail();renderModelSensitivity();
+  renderModelChart();renderModelTable();renderModelDetail();renderModelSensitivity();renderLaunchModels();
 }
 
 function renderModelChart(){
@@ -985,7 +1047,25 @@ function renderModelChart(){
 }
 
 function renderModelDetail(){
-  const world=$("#modelWorld").value,row=specificPredictionMap.get(world),registry=modelRegistryMap.get(world);
+  const world=$("#modelWorld").value,launchRow=launchPredictionMap.get(world);
+  if(launchRow){
+    const comparison=data.launchComparison.find(item=>item.scope==="pvp_type"&&item.scope_value===launchRow.pvp_type)||{};
+    const winner=String(comparison.better_model||"general");
+    const warning=bool(launchRow.low_sample_warning)?'<div class="evidence-callout">Low-sample launch family: this PvP has fewer than five training-eligible worlds. Its score is experimental.</div>':"";
+    const stale=num(launchRow.stale_days)>0?` · data ${fmt.format(launchRow.stale_days)} days behind project date`:" · current project date";
+    $("#modelDetail").innerHTML=`<div><span class="model-badge warning">Launch phase · experimental</span><h2 style="margin-top:10px">${escapeHtml(world)}</h2><p class="signal-note">${escapeHtml(launchRow.pvp_type)} · ${escapeHtml(launchRow.battleye_color)} BattlEye · ${escapeHtml(launchRow.region)}</p></div>
+      <div class="fact"><span>World age</span><strong>${fmt.format(launchRow.age_days)} days</strong></div>
+      <div class="fact"><span>General extrapolation</span><strong class="${num(launchRow.general_predicted_change_pct)>=0?"positive":"negative"}">${signed(launchRow.general_predicted_change_pct)}</strong></div>
+      <div class="fact"><span>Launch prediction</span><strong class="${num(launchRow.launch_predicted_change_pct)>=0?"positive":"negative"}">${signed(launchRow.launch_predicted_change_pct)}</strong></div>
+      <div class="fact"><span>Launch 80% interval</span><strong>${signed(launchRow.launch_low80_pct)} to ${signed(launchRow.launch_high80_pct)}</strong></div>
+      <div class="fact"><span>Difference</span><strong class="${num(launchRow.launch_minus_general_pct)>=0?"positive":"negative"}">${signed(launchRow.launch_minus_general_pct)}</strong></div>
+      <div class="fact"><span>PvP training pool</span><strong>${fmt.format(launchRow.model_worlds)} worlds</strong></div>
+      <div class="fact"><span>Estimator</span><strong>${launchRow.selected_estimator==="random_forest"?"Random Forest":"Ridge"}</strong></div>
+      <div class="fact"><span>PvP holdout winner</span><strong>${winner==="launch"?"Launch":winner==="zero"?"Zero change":"General"}</strong></div>
+      <p class="signal-note">As of ${escapeHtml(launchRow.as_of)}${stale}. The mature general model remains the production default.</p>${warning}`;
+    return;
+  }
+  const row=specificPredictionMap.get(world),registry=modelRegistryMap.get(world);
   if(!row||!registry){$("#modelDetail").innerHTML='<div class="empty">No eligible world selected.</div>';return}
   const comparison=data.modelComparison.find(item=>item.scope==="model_group"&&item.scope_value===row.group_id)||{};
   const winner=comparison.better_model==="specific"?"Specific":"General";
@@ -999,6 +1079,50 @@ function renderModelDetail(){
     <div class="fact"><span>Estimator</span><strong>${registry.selected_estimator==="random_forest"?"Random Forest":"Ridge"}</strong></div>
     <div class="fact"><span>Group holdout winner</span><strong>${winner}</strong></div>
     <p class="signal-note">${escapeHtml(row.fallback_reason)}</p>${warning}`;
+}
+
+function filteredLaunchRows(){
+  const pvp=$("#modelPvp").value,battleye=$("#modelBattleye").value,region=$("#modelRegion").value;
+  const term=$("#launchSearch").value.trim().toLowerCase();
+  return data.launchPredictions.filter(row=>
+    (pvp==="all"||row.pvp_type===pvp)&&
+    (battleye==="all"||row.battleye_color===battleye)&&
+    (region==="all"||row.region===region)&&
+    row.world.toLowerCase().includes(term));
+}
+
+function renderLaunchModels(){
+  const pvp=$("#modelPvp").value;
+  const comparison=(pvp!=="all"?data.launchComparison.find(row=>row.scope==="pvp_type"&&row.scope_value===pvp):null)||
+    data.launchComparison.find(row=>row.scope==="all")||{};
+  const rows=filteredLaunchRows().sort((a,b)=>num(b.launch_predicted_change_pct)-num(a.launch_predicted_change_pct));
+  $("#launchActiveWorlds").textContent=fmt.format(rows.length);
+  $("#launchGeneralRmse").textContent=`${num(comparison.general_rmse_pct).toFixed(3)}%`;
+  $("#launchRmse").textContent=`${num(comparison.launch_rmse_pct).toFixed(3)}%`;
+  const winner=comparison.better_model==="launch"?"Launch":comparison.better_model==="zero"?"Zero change":"General";
+  $("#launchWinner").textContent=winner;
+  const delta=Math.abs(num(comparison.launch_improvement_vs_general_pct));
+  $("#launchWinnerMeta").textContent=`launch is ${delta.toFixed(2)}% ${num(comparison.launch_improvement_vs_general_pct)>=0?"lower":"higher"} RMSE vs general`;
+  $("#launchTableCount").textContent=`${fmt.format(rows.length)} of ${fmt.format(data.launchPredictions.length)} active launch worlds`;
+  $("#launchTable").innerHTML=rows.length?rows.map(row=>`<tr data-world="${escapeHtml(row.world)}">
+    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
+    <td data-label="Age">${fmt.format(row.age_days)}d</td>
+    <td data-label="Data age" class="${num(row.stale_days)>14?"negative":""}">${num(row.stale_days)?fmt.format(row.stale_days)+"d stale":"Current"}</td>
+    <td data-label="PvP">${escapeHtml(row.pvp_type)}</td>
+    <td data-label="General 7d" class="${num(row.general_predicted_change_pct)>=0?"positive":"negative"}">${signed(row.general_predicted_change_pct)}</td>
+    <td data-label="Launch 7d" class="${num(row.launch_predicted_change_pct)>=0?"positive":"negative"}">${signed(row.launch_predicted_change_pct)}</td>
+    <td data-label="Difference" class="${num(row.launch_minus_general_pct)>=0?"positive":"negative"}">${signed(row.launch_minus_general_pct)}</td>
+    <td data-label="Model">${row.selected_estimator==="random_forest"?"Random Forest":"Ridge"}${bool(row.low_sample_warning)?" · low sample":""}</td></tr>`).join(""):'<tr><td colspan="8"><div class="empty">No active launch worlds match these filters.</div></td></tr>';
+  $$("#launchTable tr[data-world]").forEach(tableRow=>tableRow.addEventListener("click",()=>{$("#modelWorld").value=tableRow.dataset.world;renderModelDetail();updateURL()}));
+  const comparisonRows=data.launchComparison.filter(row=>
+    row.scope==="all"||(row.scope==="pvp_type"&&(pvp==="all"||row.scope_value===pvp)));
+  $("#launchComparisonTable").innerHTML=comparisonRows.map(row=>`<tr>
+    <td data-label="Scope"><strong>${escapeHtml(row.scope==="all"?"All launch worlds":row.scope_value)}</strong></td>
+    <td data-label="Worlds">${fmt.format(row.n_worlds)}</td>
+    <td data-label="Launch RMSE">${num(row.launch_rmse_pct).toFixed(3)}%</td>
+    <td data-label="General RMSE">${num(row.general_rmse_pct).toFixed(3)}%</td>
+    <td data-label="Zero RMSE">${num(row.zero_rmse_pct).toFixed(3)}%</td>
+    <td data-label="Winner">${row.better_model==="launch"?"Launch":row.better_model==="zero"?"Zero change":"General"}</td></tr>`).join("");
 }
 
 function renderModelTable(){

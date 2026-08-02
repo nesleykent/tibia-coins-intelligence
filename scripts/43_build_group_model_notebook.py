@@ -1,4 +1,4 @@
-"""Build and execute the reproducible general-versus-specific model notebook.
+"""Build and execute the reproducible general, specific and launch model notebook.
 
     python scripts/43_build_group_model_notebook.py
 """
@@ -33,7 +33,7 @@ def main() -> None:
     notebook["cells"] = [
         markdown(
             """
-# General versus group-specific Tibia Coin models
+# General, group-specific and launch-phase Tibia Coin models
 
 ## tl;dr
 
@@ -41,7 +41,9 @@ The hierarchical family creates one model per sufficiently populated PvP × Batt
 region group, pooling locations first and BattlEye cohorts second when samples are small.
 PvP types are never mixed. On the untouched final holdout, the general model remains the
 default because it has lower aggregate RMSE. The specific family is retained as an
-interactive diagnostic and alternative score.
+interactive diagnostic and alternative score. A second experimental family covers regular
+worlds through age 540 days with one model per PvP type; later-date, unseen-world holdout
+evidence also keeps the mature general model as the default.
 """
         ),
         markdown(
@@ -53,12 +55,17 @@ cross-world mean. The first 70% of dates train estimator selection, the next 15%
 pooling sensitivity, and the final 15% are opened once for comparison. Seven dates are purged
 between estimation and evaluation windows.
 
+Launch models use deviation from the mature-world mean, include world age and observation-age
+features, and are tested on later dates from launch worlds excluded from estimation.
+
 ### Key assumptions
 
 - BattlEye green means protected since world release; yellow means protection was retrofitted.
 - The preferred group minimum is five eligible worlds.
 - Pooling order is location, then BattlEye; PvP is always isolated.
 - Lower RMSE is better. A positive “specific improvement” means the specific family wins.
+- Launch phase is fixed at 0–540 days; PvP types are never pooled and BattlEye is not split
+  because all but one training-eligible launch world are green.
 """
         ),
         code(
@@ -75,6 +82,10 @@ comparison = pd.read_csv(P / "specific_model_comparison.csv")
 sensitivity = pd.read_csv(P / "specific_model_sensitivity.csv")
 latest = pd.read_csv(P / "latest_specific_predictions.csv")
 results = json.loads((P / "specific_model_results.json").read_text())
+launch_registry = pd.read_csv(P / "launch_model_registry.csv")
+launch_comparison = pd.read_csv(P / "launch_model_comparison.csv")
+launch_latest = pd.read_csv(P / "latest_launch_predictions.csv")
+launch_results = json.loads((P / "launch_model_results.json").read_text())
 """
         ),
         markdown("## Data"),
@@ -103,6 +114,21 @@ groups = (
     .sort_values(["pvp_type", "group_level", "group_id"])
 )
 groups
+"""
+        ),
+        code(
+            """
+launch_coverage = (
+    launch_registry.groupby(["pvp_type", "cohort"], observed=True)
+    .world.nunique()
+    .unstack(fill_value=0)
+)
+launch_coverage.loc["Active scores"] = {
+    "train": launch_latest.world.nunique(),
+    "validation": 0,
+    "holdout": 0,
+}
+launch_coverage
 """
         ),
         markdown("## Results"),
@@ -137,6 +163,33 @@ sensitivity[[
 ]]
 """
         ),
+        code(
+            """
+launch_headline = launch_comparison[[
+    "scope_value", "n_worlds", "launch_rmse_pct",
+    "general_rmse_pct", "zero_rmse_pct",
+    "launch_improvement_vs_general_pct", "better_model",
+]]
+launch_headline
+"""
+        ),
+        code(
+            """
+launch_chart = (
+    launch_comparison.query("scope == 'pvp_type'")
+    .set_index("scope_value")[[
+        "launch_rmse_pct", "general_rmse_pct", "zero_rmse_pct",
+    ]]
+)
+ax = launch_chart.plot.barh(figsize=(9, 4.5), color=["#f59e0b", "#60a5fa", "#94a3b8"])
+ax.set_xlabel("Unseen-world/later-date holdout RMSE (%)")
+ax.set_ylabel("")
+ax.set_title("Launch-specific, mature-general and zero-change error by PvP")
+ax.legend(["Launch", "General", "Zero change"], frameon=False)
+plt.tight_layout()
+plt.show()
+"""
+        ),
         markdown(
             """
 ## Takeaways
@@ -149,6 +202,10 @@ sensitivity[[
   therefore be treated as exploratory context rather than a replacement production default.
 - Retro Hardcore PvP has only three eligible worlds. It remains isolated, uses regularized
   Ridge, and carries a visible low-sample warning.
+- The launch family has 21 training-eligible worlds and 18 active scores across three
+  PvP-specific models. It is statistically worse than the mature general mapping overall,
+  so it ships as an experimental diagnostic rather than the default.
+- Retro Open launch has four training-eligible worlds and carries a low-sample warning.
 """
         ),
         code(
@@ -159,6 +216,13 @@ print(
     f"general RMSE {overall.general_rmse_pct:.3f}% vs "
     f"specific {overall.specific_rmse_pct:.3f}%, "
     f"specific improvement {overall.specific_improvement_pct:+.2f}%."
+)
+launch_overall = launch_comparison.query("scope == 'all'").iloc[0]
+print(
+    f"Launch conclusion: {launch_overall.better_model} wins — "
+    f"launch RMSE {launch_overall.launch_rmse_pct:.3f}% vs "
+    f"general {launch_overall.general_rmse_pct:.3f}% and "
+    f"zero {launch_overall.zero_rmse_pct:.3f}%."
 )
 """
         ),

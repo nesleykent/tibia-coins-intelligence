@@ -7,7 +7,7 @@ from public data and rendered to a single PDF.
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.
 
-**Technical report:** `reports/tibia_coin_market_report.pdf` — 175 pages, 8 chapters,
+**Technical report:** `reports/tibia_coin_market_report.pdf` — 176 pages, 8 chapters,
 34 exhibits, 109 tables, 5 appendices.
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
@@ -79,6 +79,17 @@ specific scores remain available for diagnosis and comparison:
 ```bash
 python scripts/41_group_models.py
 python scripts/42_verify_group_models.py
+```
+
+**Launch phase is modelled separately.** Regular worlds from creation through age 540 days
+receive one experimental model per PvP type. The family has 21 training-eligible worlds and
+18 current scores; Retro Open carries a low-sample warning. A later-date holdout made entirely
+of unseen launch worlds keeps the mature general model as the default (10.653% RMSE versus
+11.753% launch and 11.051% zero change):
+
+```bash
+python scripts/44_launch_phase_models.py
+python scripts/45_verify_launch_models.py
 ```
 
 ## Running it

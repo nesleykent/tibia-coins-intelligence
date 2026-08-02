@@ -1,0 +1,7 @@
+pvp_type,candidate_estimator,train_worlds,validation_worlds,n_train,n_validation,validation_rmse_pct,selected
+Open PvP,ridge,6,1,501,63,15.452417834051149,False
+Open PvP,random_forest,6,1,501,63,10.29231118448623,True
+Optional PvP,ridge,5,1,723,116,10.232815920051717,False
+Optional PvP,random_forest,5,1,723,116,9.527808082924095,True
+Retro Open PvP,ridge,2,1,94,82,41.23876240509072,False
+Retro Open PvP,random_forest,2,1,94,82,14.729140906559001,True

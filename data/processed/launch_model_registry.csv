@@ -1,0 +1,22 @@
+world,created,first,last,pvp_type,battleye_color,region,n_obs,complete_rows,cohort,age_at_latest_days,currently_in_launch_phase,low_sample_pvp_warning,selected_estimator
+Victoris,2024-04-10,2024-04-16,2026-07-29,Open PvP,green,Oceania,727,270,train,841,False,False,random_forest
+Unebra,2024-05-15,2025-09-03,2026-07-30,Open PvP,green,South America,331,36,train,806,False,False,random_forest
+Aethera,2024-10-16,2025-09-04,2026-07-25,Open PvP,green,North America,318,76,train,652,False,False,random_forest
+Cantabra,2024-10-16,2025-09-03,2026-07-29,Open PvP,green,South America,328,155,train,652,False,False,random_forest
+Ignitera,2025-02-19,2025-09-04,2026-07-25,Open PvP,green,North America,322,206,train,526,True,False,random_forest
+Noctalia,2025-02-19,2025-09-04,2026-07-29,Open PvP,green,Europe,327,255,train,526,True,False,random_forest
+Xybra,2025-02-19,2025-09-04,2026-07-29,Open PvP,green,South America,327,247,validation,526,True,False,random_forest
+Dracobra,2025-10-29,2026-02-01,2026-07-26,Open PvP,green,South America,176,147,holdout,274,True,False,random_forest
+Hostera,2025-10-29,2026-02-01,2026-07-24,Open PvP,green,North America,170,73,holdout,274,True,False,random_forest
+Dia,2023-02-08,2023-10-14,2026-07-28,Optional PvP,green,Europe,998,89,train,1268,False,False,random_forest
+Oceanis,2024-04-10,2024-04-10,2026-07-26,Optional PvP,yellow,Oceania,836,431,train,841,False,False,random_forest
+Bravoria,2024-10-16,2025-08-28,2026-07-24,Optional PvP,green,Europe,331,196,train,652,False,False,random_forest
+Kalimera,2025-05-21,2025-08-29,2026-07-22,Optional PvP,green,North America,327,269,train,435,True,False,random_forest
+Luzibra,2025-05-21,2025-08-28,2026-07-26,Optional PvP,green,South America,333,304,train,435,True,False,random_forest
+Sonira,2025-05-21,2025-08-29,2026-07-28,Optional PvP,green,Europe,334,305,validation,435,True,False,random_forest
+Idyllia,2025-10-29,2026-02-01,2026-07-27,Optional PvP,green,Europe,176,118,holdout,274,True,False,random_forest
+Kanda,2026-02-18,2026-05-08,2026-07-30,Optional PvP,green,Europe,83,52,holdout,162,True,False,random_forest
+Escura,2025-08-27,2025-09-03,2026-07-27,Retro Open PvP,green,Europe,323,191,train,337,True,True,random_forest
+Mystera,2025-08-27,2025-09-05,2026-07-29,Retro Open PvP,green,North America,323,223,train,337,True,True,random_forest
+Penumbra,2025-08-27,2025-09-04,2026-07-27,Retro Open PvP,green,South America,322,170,validation,337,True,True,random_forest
+Ignibra,2026-02-18,2026-05-07,2026-07-26,Retro Open PvP,green,South America,80,37,holdout,162,True,True,random_forest
