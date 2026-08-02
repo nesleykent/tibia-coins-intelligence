@@ -80,7 +80,10 @@ def _load() -> dict:
         "episodesPerMonth": fund["strategy"]["occurrence"]["episodes_per_month"],
         "episodes": fund["strategy"]["occurrence"]["n_episodes"],
         "capacityGpPerMonth": fund["strategy"]["capacity"]["gp_per_month"],
-        "bazaarOverMarket": ms["bazaar_over_market"],
+        "bazaarOverMarket": ms["bazaar_over_market_comparable"],
+        "bazaarOverMarketNaive": ms["bazaar_over_market_naive"],
+        "marketCoverage": ms["coverage"],
+        "marketTcScaled": ms["market_tc_scaled"],
         "marketTcYear": ms["market_tc_year"],
         "bazaarTcYear": ms["bazaar_tc_year"],
         "venueYear": ms["year"],
@@ -239,14 +242,16 @@ def claims() -> list[Claim]:
             heading="The priced venue is the smaller one",
             section="5.8",
             text=(
-                f"In {F['venueYear']} the in-game Market cleared {gp(F['marketTcYear'])} TC while "
-                f"the Char Bazaar moved {gp(F['bazaarTcYear'])} TC - "
-                f"{F['bazaarOverMarket']:.1f} times more. The gold price is formed in the thin "
-                f"venue and consumed in the thick one, so the marginal price-setter is a small "
-                f"population."),
+                f"In {F['venueYear']} the Char Bazaar moved {gp(F['bazaarTcYear'])} TC against a "
+                f"Market that clears {gp(F['marketTcScaled'])} TC once observed volume is scaled "
+                f"to every world and day - {F['bazaarOverMarket']:.1f} times more. Dividing the "
+                f"raw sums instead would say {F['bazaarOverMarketNaive']:.1f} times, but that "
+                f"measures this study's {F['marketCoverage']:.0%} coverage rather than the two "
+                f"venues. The gold price is formed in the thin venue and consumed in the thick "
+                f"one, so the marginal price-setter is a small population."),
             tiles=[
                 Tile("Char Bazaar vs Market", f"{F['bazaarOverMarket']:.1f}×",
-                     "coins changing hands in a year"),
+                     "coins in a year, on comparable coverage"),
                 Tile("Cleared per world-day", f"{gp(F['tcPerWorldDay'])} TC",
                      f"converted at the {F['lotSize']}-coin lot"),
                 Tile("Book depth", f"{F['bookDaysOfTrade']:.0f} days",

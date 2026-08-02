@@ -4,6 +4,9 @@
 D = R["desc"]; IX = R["index"]; AR = R["arbitrage"]; IN = R["integration"]
 VN = R["venues"]
 MS = VN["market_size"]
+BZH = VN["bazaar_history"]
+BZY = pd.DataFrame(BZH["history"])
+BZR = pd.DataFrame(BZH["ratio_by_year"])
 FN = R["finance"]; AD = R["advanced"]; FE = R["fees"]
 ST = R["stationarity"]; EVR = R["events"]; CS = R["cross_section"]; PN = R["panel"]
 YG = R["young"]; MG = R["merge"]; MI = R["micro"]; TC = R["technical"]; FCR = R["forecast"]
@@ -2227,12 +2230,22 @@ para(tag("econ") + f"Set against that flow, the token venue is real but small: t
      f"and circulate for characters, which is the demand that gives the coin its gold price in "
      f"the first place - and it is why the in-game price this report measures remains the "
      f"economically meaningful one, notwithstanding the venue caveat.")
-para(tag("stat") + f"<b>Put the two venues on the same scale and the in-game Market is the "
-     f"smaller one by an order of magnitude.</b> In {MS['year']}, across {MS['n_worlds']} "
-     f"worlds carrying data, the Market cleared {gp(MS['market_tc_year'])} TC. The Bazaar moved "
-     f"{gp(MS['bazaar_tc_year'])} TC in the same year - <b>{MS['bazaar_over_market']:.1f} times "
-     f"more</b>. The venue this report has spent six chapters measuring is not where most coins "
-     f"change hands.")
+para(tag("stat") + f"<b>Putting the two venues on the same scale needs care, and the naive "
+     f"comparison is wrong.</b> The Bazaar total is complete - every world, every day of the "
+     f"year - while the Market side is only the world-days this study observes, which in "
+     f"{MS['year']} is {MS['coverage']:.0%} of the possible ones. Dividing one by the other "
+     f"measures coverage rather than the venues: the quotient reads "
+     f"{float(BZR[BZR.year == 2024].ratio_naive.iloc[0]):.1f} times in 2024, when coverage was "
+     f"{float(BZR[BZR.year == 2024].coverage.iloc[0]):.0%}, and "
+     f"{MS['bazaar_over_market_naive']:.1f} times in {MS['year']}. The ratio moved because the "
+     f"data collection did.")
+para(tag("stat") + f"<b>On comparable coverage the Bazaar is "
+     f"{MS['bazaar_over_market_comparable']:.1f} times the Market</b>, scaling the observed "
+     f"mean per world-day to the full world count and calendar: "
+     f"{gp(MS['market_tc_scaled'])} TC against {gp(MS['bazaar_tc_year'])} TC in {MS['year']}, "
+     f"and {float(BZR[BZR.year == 2024].ratio_comparable.iloc[0]):.1f} times in 2024. The venue "
+     f"this report has spent six chapters measuring is still the smaller one, by a factor "
+     f"between four and six rather than the order of magnitude a raw division suggests.")
 para(tag("econ") + f"<b>That reframes what the price series is.</b> The GP price of a coin is "
      f"set on the Market, but the Market is a minority of coin movement; the Bazaar moves an "
      f"order of magnitude more coins without ever quoting a gold price, because characters are "
@@ -2240,10 +2253,36 @@ para(tag("econ") + f"<b>That reframes what the price series is.</b> The GP price
      f"in the thick one - which is consistent with the mechanism in Section 7.6 and sharpens "
      f"it: the marginal price-setter is a small population, and the demand that gives coins "
      f"their value is largely invisible to the price that this report models.")
+para(tag("obs") + f"<b>And the Bazaar is not one number: it has a published history.</b> Year "
+     f"pages exist from {int(BZY.year.min())} onward, giving {len(BZY)} annual totals and "
+     f"{BZH['n_monthly_observations']} monthly observations of auction activity. Value is "
+     f"published annually only, so the monthly series is counts rather than coins.")
+table([["Year", "Auctions created", "Completed", "TC exchanged", "Mean TC per auction",
+        "Completion"]] +
+      [[f"{int(r.year)}" + (" (partial)" if r.partial_year else ""),
+        gp(r.auctions_created), gp(r.auctions_completed), gp(r.tc_exchanged),
+        gp(r.mean_tc_per_auction), f"{r.completion_rate:.0%}"]
+       for _, r in BZY.iterrows()],
+      [26 * mm, 30 * mm, 24 * mm, 30 * mm, 30 * mm, AVAIL - 140 * mm], fs=7,
+      align=[None, "R", "R", "R", "R", "R"],
+      caption="Table 5.17 - The Char Bazaar as published by NabBot, from the first year with "
+              "statistics. Coins exchanged is an annual figure; auction counts are also "
+              "published monthly.")
+para(tag("econ") + f"<b>The venue is not growing, and its composition has changed.</b> Auctions "
+     f"created fell from {gp(float(BZY[BZY.year == 2021].auctions_created.iloc[0]))} in 2021 to "
+     f"{gp(float(BZY[BZY.year == 2025].auctions_created.iloc[0]))} in 2025, a decline of "
+     f"{1 - float(BZY[BZY.year == 2025].auctions_created.iloc[0]) / float(BZY[BZY.year == 2021].auctions_created.iloc[0]):.0%}, "
+     f"while the mean price per completed auction rose from "
+     f"{gp(float(BZY[BZY.year == 2021].mean_tc_per_auction.iloc[0]))} to "
+     f"{gp(float(BZY[BZY.year == 2025].mean_tc_per_auction.iloc[0]))} TC. Coins exchanged is "
+     f"therefore roughly flat between {gp(BZH['trough_tc'])} and {gp(BZH['peak_tc'])} TC a year: "
+     f"fewer character sales at higher prices, not a shrinking venue.")
 para(tag("lim") + f"<b>The larger venue is unobservable at any frequency that would let it be "
      f"tested, and that is a named gap in this study rather than a general caveat.</b> The "
-     f"Bazaar figures exist as a single annual aggregate: one observation, all worlds pooled, "
-     f"no per-world split and no time series. So the {MS['bazaar_over_market']:.1f}-to-one "
+     f"Bazaar publishes {len(BZY)} annual totals and "
+     f"{BZH['n_monthly_observations']} monthly auction counts, all worlds pooled, with no "
+     f"per-world split and no daily series - and the price panel this study models is daily. "
+     f"So the {MS['bazaar_over_market_comparable']:.1f}-to-one "
      f"venue that moves most of the coins contributes exactly zero of the "
      f"140 features tested in Chapter 6. Every statement in this report about what does and "
      f"does not forecast the price is conditional on information drawn from the venue carrying "
@@ -5256,6 +5295,7 @@ table([["Script", "Purpose"],
        ["32_scenario_backtest.py", "Walk-forward coverage test of the scenario bands"],
        ["33_strategy.py", "Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant"],
        ["46_verify_artifacts.py", "Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree"],
+       ["47_bazaar_history.py", "Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage"],
        ["narrative.py", "The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards"],
        ["34a_collect_loot.py", "Revision-audited TibiaWiki loot probabilities and quantities"],
        ["34b_collect_creatures.py", "Creature classification, boss, event and explicit no-loot evidence"],

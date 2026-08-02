@@ -226,13 +226,26 @@ _mkt_tc = float(_y.tc_sold.sum())
 _mkt_gp = float((_y.tc_sold * _y.price_gp).sum())
 _usd_tc = (res["desc"]["price_latest_median"] * res["venues"]["usd_per_gp"]
            if res["venues"]["usd_per_gp"] else None)
+# Comparable coverage, not raw sums. The Bazaar total is complete - all worlds, all year -
+# while the Market side is only the world-days this study observes, which in 2025 is 35 of 93
+# worlds on a typical day. Dividing one by the other measures our coverage, not the venues:
+# the naive ratio reads 33.5x in 2024 at 14% coverage and 11.5x in 2025 at 52%. Scaling the
+# observed mean per world-day to the full world count and calendar makes the two comparable.
+_n_worlds = int(_pan.world.nunique())
+_days = int(_y.date.nunique())
+_mkt_scaled = float(_y.tc_sold.mean()) * _n_worlds * _days
+_baz_span = float(baz["tc_exchanged"]) * _days / 365
 res["venues"]["market_size"] = {
     "year": baz["year"],
+    "coverage": len(_y) / (_n_worlds * _days),
+    "market_tc_scaled": _mkt_scaled,
+    "bazaar_over_market_naive": float(baz["tc_exchanged"]) / _mkt_tc,
+    "bazaar_over_market_comparable": _baz_span / _mkt_scaled,
     "n_worlds": int(_y.world.nunique()),
     "market_tc_year": _mkt_tc,
     "market_gp_year": _mkt_gp,
     "bazaar_tc_year": float(baz["tc_exchanged"]),
-    "bazaar_over_market": float(baz["tc_exchanged"] / _mkt_tc),
+    "bazaar_over_market": _baz_span / _mkt_scaled,
     "market_usd_year": _mkt_gp * res["venues"]["usd_per_gp"] if res["venues"]["usd_per_gp"] else None,
     "bazaar_usd_year": baz["tc_exchanged"] * _usd_tc if _usd_tc else None,
     # NOT an independent cross-check: usd_per_gp is itself the DEX price divided by the median
@@ -241,9 +254,12 @@ res["venues"]["market_size"] = {
     "usd_basis": "on-chain TIB/USDT quote, propagated through the GP price; not independent",
     "tc_usd": _usd_tc,
 }
-print(f"[SIZE] {baz['year']}: Market {_mkt_tc:,.0f} TC across {_y.world.nunique()} worlds vs "
-      f"Bazaar {baz['tc_exchanged']:,.0f} TC - the Bazaar is "
-      f"{baz['tc_exchanged'] / _mkt_tc:.1f}x larger")
+_ms = res["venues"]["market_size"]
+print(f"[SIZE] {baz['year']}: Market {_mkt_tc:,.0f} TC observed at {_ms['coverage']:.0%} "
+      f"coverage, {_ms['market_tc_scaled']:,.0f} TC scaled to all worlds; Bazaar "
+      f"{baz['tc_exchanged']:,.0f} TC")
+print(f"[SIZE] Bazaar is {_ms['bazaar_over_market_comparable']:.1f}x the Market on comparable "
+      f"coverage ({_ms['bazaar_over_market_naive']:.1f}x if the raw sums are divided)")
 if _usd_tc:
     print(f"[SIZE] at the on-chain quote of ${_usd_tc:.4f}/coin: Market "
           f"${_mkt_gp * res['venues']['usd_per_gp']:,.0f}, Bazaar "

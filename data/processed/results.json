@@ -2030,25 +2030,25 @@
    "name": "TibiaToken",
    "symbol": "TIB",
    "decimals": 18,
-   "total_supply": 5621176.0,
-   "block": 113534402
+   "total_supply": 5583427.0,
+   "block": 113667838
   },
   "book_ask_depth_tc": 3389425.0,
   "book_bid_depth_tc": 17361950.0,
   "book_total_depth_tc": 20751375.0,
   "n_book_worlds": 93,
-  "tib_over_ask_depth": 1.6584453115203905,
-  "tib_over_total_depth": 0.2708820981742174,
+  "tib_over_ask_depth": 1.6473080242223976,
+  "tib_over_total_depth": 0.2690629898018806,
   "dex": {
-   "block": 113534472,
+   "block": 113667907,
    "n_pools": 12,
-   "tib_in_pools": 2268306.1054262067,
-   "stable_depth_usd": 31602.78050181003,
-   "price_usd": 0.0401536796665865,
+   "tib_in_pools": 2204959.1816005423,
+   "stable_depth_usd": 34159.80999079453,
+   "price_usd": 0.04024363735147751,
    "price_source": "V3 USDT 0.25%",
    "price_range_usd": [
     0.04015358695466897,
-    0.04021713827937401
+    0.04024363735147751
    ],
    "n_quoting_pools": 3,
    "pools": [
@@ -2084,9 +2084,9 @@
      "fee_bps": 2500,
      "quote": "USDT",
      "pool": "0xd2acfaec0e3b556f285fbb9026ede7e87885e611",
-     "tib": 1469508.7614925362,
-     "quote_qty": 31197.933310747656,
-     "price": 0.0401536796665865
+     "tib": 1406161.8376668717,
+     "quote_qty": 33754.96279973215,
+     "price": 0.04024363735147751
     },
     {
      "venue": "V3",
@@ -2174,22 +2174,532 @@
    "highest_tc": 450251,
    "highest_name": "Great Gems"
   },
-  "usd_per_gp": 1.0244461651614726e-06,
-  "gp_per_usd": 976137.1890560795,
-  "tib_over_bazaar_year": 0.009410588338911046,
+  "usd_per_gp": 1.0267412675301377e-06,
+  "gp_per_usd": 973955.2033449821,
+  "tib_over_bazaar_year": 0.009347391545356538,
   "bazaar_completion_rate": 0.7011809909952383,
   "bazaar_mean_price_tc": 3346.8626010657076,
   "market_size": {
    "year": 2025,
+   "coverage": 0.5189276771247606,
+   "market_tc_scaled": 99980550.83025831,
+   "bazaar_over_market_naive": 11.512987890466325,
+   "bazaar_over_market_comparable": 5.974408062765188,
    "n_worlds": 82,
    "market_tc_year": 51882675.0,
    "market_gp_year": 1982477544250.0,
    "bazaar_tc_year": 597324609.0,
-   "bazaar_over_market": 11.512987890466325,
-   "market_usd_year": 2030941.517725646,
-   "bazaar_usd_year": 23984781.00675503,
+   "bazaar_over_market": 5.974408062765188,
+   "market_usd_year": 2035491.5066332796,
+   "bazaar_usd_year": 24038514.9457091,
    "usd_basis": "on-chain TIB/USDT quote, propagated through the GP price; not independent",
-   "tc_usd": 0.0401536796665865
+   "tc_usd": 0.04024363735147751
+  },
+  "bazaar_history": {
+   "years": [
+    {
+     "year": 2020,
+     "scope": "all worlds",
+     "auctions_created": 223396,
+     "auctions_completed": 130614,
+     "tc_exchanged": 243854696,
+     "tc_commission": 35673628,
+     "tc_fees": 10808350,
+     "tc_cancel_fees": 1822121,
+     "highest_tc": 300000,
+     "months": [
+      {
+       "month": "August",
+       "created": 22563,
+       "completed": 13467
+      },
+      {
+       "month": "September",
+       "created": 73602,
+       "completed": 44406
+      },
+      {
+       "month": "October",
+       "created": 49233,
+       "completed": 29115
+      },
+      {
+       "month": "November",
+       "created": 39555,
+       "completed": 22825
+      },
+      {
+       "month": "December",
+       "created": 38443,
+       "completed": 20801
+      }
+     ],
+     "partial_year": true
+    },
+    {
+     "year": 2021,
+     "scope": "all worlds",
+     "auctions_created": 413285,
+     "auctions_completed": 251723,
+     "tc_exchanged": 566166469,
+     "tc_commission": 82755096,
+     "tc_fees": 19900750,
+     "tc_cancel_fees": 4416166,
+     "highest_tc": 325000,
+     "months": [
+      {
+       "month": "January",
+       "created": 39569,
+       "completed": 25992
+      },
+      {
+       "month": "February",
+       "created": 34473,
+       "completed": 21507
+      },
+      {
+       "month": "March",
+       "created": 45239,
+       "completed": 28371
+      },
+      {
+       "month": "April",
+       "created": 40744,
+       "completed": 25467
+      },
+      {
+       "month": "May",
+       "created": 39485,
+       "completed": 24288
+      },
+      {
+       "month": "June",
+       "created": 33331,
+       "completed": 20621
+      },
+      {
+       "month": "July",
+       "created": 33070,
+       "completed": 19771
+      },
+      {
+       "month": "August",
+       "created": 32531,
+       "completed": 18758
+      },
+      {
+       "month": "September",
+       "created": 33055,
+       "completed": 19752
+      },
+      {
+       "month": "October",
+       "created": 31946,
+       "completed": 18647
+      },
+      {
+       "month": "November",
+       "created": 24531,
+       "completed": 14055
+      },
+      {
+       "month": "December",
+       "created": 25311,
+       "completed": 14494
+      }
+     ],
+     "partial_year": false
+    },
+    {
+     "year": 2022,
+     "scope": "all worlds",
+     "auctions_created": 325332,
+     "auctions_completed": 221851,
+     "tc_exchanged": 607339437,
+     "tc_commission": 88201872,
+     "tc_fees": 15603400,
+     "tc_cancel_fees": 4139692,
+     "highest_tc": 412000,
+     "months": [
+      {
+       "month": "January",
+       "created": 26756,
+       "completed": 18640
+      },
+      {
+       "month": "February",
+       "created": 24238,
+       "completed": 16306
+      },
+      {
+       "month": "March",
+       "created": 25061,
+       "completed": 16892
+      },
+      {
+       "month": "April",
+       "created": 27155,
+       "completed": 18971
+      },
+      {
+       "month": "May",
+       "created": 28003,
+       "completed": 19643
+      },
+      {
+       "month": "June",
+       "created": 27085,
+       "completed": 18839
+      },
+      {
+       "month": "July",
+       "created": 28763,
+       "completed": 20039
+      },
+      {
+       "month": "August",
+       "created": 30837,
+       "completed": 20827
+      },
+      {
+       "month": "September",
+       "created": 29097,
+       "completed": 19727
+      },
+      {
+       "month": "October",
+       "created": 27993,
+       "completed": 19792
+      },
+      {
+       "month": "November",
+       "created": 25048,
+       "completed": 16950
+      },
+      {
+       "month": "December",
+       "created": 25296,
+       "completed": 15225
+      }
+     ],
+     "partial_year": false
+    },
+    {
+     "year": 2023,
+     "scope": "all worlds",
+     "auctions_created": 329057,
+     "auctions_completed": 184921,
+     "tc_exchanged": 527173587,
+     "tc_commission": 76616749,
+     "tc_fees": 15860700,
+     "tc_cancel_fees": 3941201,
+     "highest_tc": 1100000,
+     "months": [
+      {
+       "month": "January",
+       "created": 30310,
+       "completed": 21215
+      },
+      {
+       "month": "February",
+       "created": 30217,
+       "completed": 19449
+      },
+      {
+       "month": "March",
+       "created": 31284,
+       "completed": 20363
+      },
+      {
+       "month": "April",
+       "created": 30132,
+       "completed": 19311
+      },
+      {
+       "month": "May",
+       "created": 28604,
+       "completed": 18027
+      },
+      {
+       "month": "June",
+       "created": 24885,
+       "completed": 15965
+      },
+      {
+       "month": "July",
+       "created": 24620,
+       "completed": 16113
+      },
+      {
+       "month": "August",
+       "created": 25789,
+       "completed": 16921
+      },
+      {
+       "month": "September",
+       "created": 21785,
+       "completed": 13825
+      },
+      {
+       "month": "October",
+       "created": 28247,
+       "completed": 18100
+      },
+      {
+       "month": "November",
+       "created": 27394,
+       "completed": 5632
+      },
+      {
+       "month": "December",
+       "created": 25790,
+       "completed": 0
+      }
+     ],
+     "partial_year": false
+    },
+    {
+     "year": 2024,
+     "scope": "all worlds",
+     "auctions_created": 267141,
+     "auctions_completed": 158513,
+     "tc_exchanged": 488427724,
+     "tc_commission": 71117969,
+     "tc_fees": 12781850,
+     "tc_cancel_fees": 3732548,
+     "highest_tc": 1100000,
+     "months": [
+      {
+       "month": "January",
+       "created": 25649,
+       "completed": 9883
+      },
+      {
+       "month": "February",
+       "created": 25219,
+       "completed": 10422
+      },
+      {
+       "month": "March",
+       "created": 25386,
+       "completed": 12351
+      },
+      {
+       "month": "April",
+       "created": 23500,
+       "completed": 13478
+      },
+      {
+       "month": "May",
+       "created": 23247,
+       "completed": 14775
+      },
+      {
+       "month": "June",
+       "created": 20631,
+       "completed": 13184
+      },
+      {
+       "month": "July",
+       "created": 20412,
+       "completed": 13392
+      },
+      {
+       "month": "August",
+       "created": 19431,
+       "completed": 13057
+      },
+      {
+       "month": "September",
+       "created": 19076,
+       "completed": 13092
+      },
+      {
+       "month": "October",
+       "created": 21714,
+       "completed": 14866
+      },
+      {
+       "month": "November",
+       "created": 21664,
+       "completed": 15318
+      },
+      {
+       "month": "December",
+       "created": 21212,
+       "completed": 14695
+      }
+     ],
+     "partial_year": false
+    },
+    {
+     "year": 2025,
+     "scope": "all worlds",
+     "auctions_created": 254532,
+     "auctions_completed": 178473,
+     "tc_exchanged": 597324609,
+     "tc_commission": 85611877,
+     "tc_fees": 12217350,
+     "tc_cancel_fees": 3346933,
+     "highest_tc": 450251,
+     "months": [
+      {
+       "month": "January",
+       "created": 21638,
+       "completed": 15378
+      },
+      {
+       "month": "February",
+       "created": 21521,
+       "completed": 15594
+      },
+      {
+       "month": "March",
+       "created": 23360,
+       "completed": 16893
+      },
+      {
+       "month": "April",
+       "created": 22608,
+       "completed": 15971
+      },
+      {
+       "month": "May",
+       "created": 21762,
+       "completed": 15134
+      },
+      {
+       "month": "June",
+       "created": 20004,
+       "completed": 13917
+      },
+      {
+       "month": "July",
+       "created": 19242,
+       "completed": 13601
+      },
+      {
+       "month": "August",
+       "created": 19266,
+       "completed": 13840
+      },
+      {
+       "month": "September",
+       "created": 19902,
+       "completed": 14040
+      },
+      {
+       "month": "October",
+       "created": 20467,
+       "completed": 14650
+      },
+      {
+       "month": "November",
+       "created": 20853,
+       "completed": 14983
+      },
+      {
+       "month": "December",
+       "created": 23909,
+       "completed": 14472
+      }
+     ],
+     "partial_year": false
+    }
+   ],
+   "history": [
+    {
+     "year": 2020,
+     "auctions_created": 223396,
+     "auctions_completed": 130614,
+     "tc_exchanged": 243854696,
+     "mean_tc_per_auction": 1866.987428606428,
+     "completion_rate": 0.5846747479811635,
+     "partial_year": true
+    },
+    {
+     "year": 2021,
+     "auctions_created": 413285,
+     "auctions_completed": 251723,
+     "tc_exchanged": 566166469,
+     "mean_tc_per_auction": 2249.1646333469726,
+     "completion_rate": 0.6090784809514016,
+     "partial_year": false
+    },
+    {
+     "year": 2022,
+     "auctions_created": 325332,
+     "auctions_completed": 221851,
+     "tc_exchanged": 607339437,
+     "mean_tc_per_auction": 2737.600628349658,
+     "completion_rate": 0.6819218521387382,
+     "partial_year": false
+    },
+    {
+     "year": 2023,
+     "auctions_created": 329057,
+     "auctions_completed": 184921,
+     "tc_exchanged": 527173587,
+     "mean_tc_per_auction": 2850.8043272532595,
+     "completion_rate": 0.5619725457899392,
+     "partial_year": false
+    },
+    {
+     "year": 2024,
+     "auctions_created": 267141,
+     "auctions_completed": 158513,
+     "tc_exchanged": 488427724,
+     "mean_tc_per_auction": 3081.310201686928,
+     "completion_rate": 0.5933682961432353,
+     "partial_year": false
+    },
+    {
+     "year": 2025,
+     "auctions_created": 254532,
+     "auctions_completed": 178473,
+     "tc_exchanged": 597324609,
+     "mean_tc_per_auction": 3346.8626010657076,
+     "completion_rate": 0.7011809909952383,
+     "partial_year": false
+    }
+   ],
+   "n_monthly_observations": 65,
+   "monthly_span": "2020-2025",
+   "value_is_annual_only": true,
+   "monthly_tc_note": "monthly TC is estimated by holding the year's mean price per completed auction constant; only auction counts are published monthly",
+   "ratio_by_year": [
+    {
+     "year": 2024,
+     "market_world_days_observed": 4486,
+     "market_world_days_possible": 32829,
+     "coverage": 0.13664747631667123,
+     "market_tc_observed": 14568375.0,
+     "market_tc_scaled": 106612836.12906823,
+     "bazaar_tc_year": 488427724.0,
+     "bazaar_tc_same_span": 472369826.22465754,
+     "ratio_naive": 33.52657547598823,
+     "ratio_comparable": 4.430703125210876
+    },
+    {
+     "year": 2025,
+     "market_world_days_observed": 17615,
+     "market_world_days_possible": 33945,
+     "coverage": 0.5189276771247606,
+     "market_tc_observed": 51882675.0,
+     "market_tc_scaled": 99980550.83025831,
+     "bazaar_tc_year": 597324609.0,
+     "bazaar_tc_same_span": 597324609.0,
+     "ratio_naive": 11.512987890466325,
+     "ratio_comparable": 5.974408062765188
+    }
+   ],
+   "ratio_comparable_latest": 5.974408062765188,
+   "ratio_naive_latest": 11.512987890466325,
+   "coverage_latest": 0.5189276771247606,
+   "peak_year": 2022,
+   "peak_tc": 607339437.0,
+   "trough_year": 2024,
+   "trough_tc": 488427724.0
   }
  }
 }

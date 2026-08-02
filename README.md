@@ -15,8 +15,8 @@ content and are checked for coverage and numerical agreement across artifacts.
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.
 
-**Technical report:** `reports/tibia_coin_market_report.pdf` — 180 pages, 8 chapters,
-34 exhibits, 110 tables, 5 appendices.
+**Technical report:** `reports/tibia_coin_market_report.pdf` — 181 pages, 8 chapters,
+34 exhibits, 111 tables, 5 appendices.
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
 
@@ -67,6 +67,11 @@ there makes it appear in both; there is nothing to port across. `scripts/46_veri
 runs last in the pipeline as a backstop: it computes each headline fact once and fails the
 build if any artifact that states it disagrees, reporting facts an artifact simply omits as
 coverage gaps rather than failures.
+
+**The Char Bazaar, six years of it.** NabBot publishes a year page from 2020 onward: six annual
+TC totals and 65 monthly auction counts. The venue is not growing — auctions created fell 38%
+from 2021 to 2025 while the mean price per completed auction rose from 2,249 to 3,347 TC, so
+coins exchanged sit flat between 488M and 607M a year. Fewer character sales at higher prices.
 
 **A units error, found late and corrected throughout.** `day_sold` / `day_bought` count
 25-coin lots, not coins: the values run 1, 2, 3 with only 3.7% multiples of 25, which a coin
