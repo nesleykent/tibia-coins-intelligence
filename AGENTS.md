@@ -222,6 +222,21 @@ rather than displayed as an unexplained blank.
   - **GP** always means Tibia gold pieces;
   - **TC** always means Tibia Coins;
   - **GP/TC** is the price of one Tibia Coin measured in gold pieces.
+- Do not collapse market microstructure into one ambiguous “price” when
+  side-specific data exists. Use these reader-facing definitions consistently:
+  - **Buy TC price:** GP a player pays to obtain TC; for a live book, the best
+    ask (cheapest sell offer); historically, the seller-side executed average.
+  - **Sell TC price:** GP a player receives for selling TC; for a live book,
+    the best bid (highest buy offer); historically, the buyer-side executed
+    average.
+  - **Mid:** `(buy TC price + sell TC price) / 2`; a reference value, not
+    necessarily executable.
+  - **Quoted spread:** `(best ask - best bid) / mid`; use only for a valid
+    simultaneous order-book snapshot.
+  - **Executed-side gap:** difference between daily executed averages; never
+    label it a bid-ask or quoted spread.
+  - **Demand depth:** TC wanted by buyers; **supply depth:** TC offered by
+    sellers. Always show the snapshot/as-of time for live depth.
   Never expand GP as “gold price.” GP names the in-game currency; price is a
   relationship between units.
   Never shorten gold-piece output to “coins,” because readers may interpret it

@@ -40,12 +40,14 @@ def main() -> None:
     launch_comparison = pd.read_csv(P / "launch_model_comparison.csv")
     forecasts = pd.read_csv(P / "forecasts_sa.csv")
     strategy = pd.read_csv(P / "strategy_holdout.csv")
+    order_books = pd.read_csv(P / "order_books.csv")
     figures = json.loads((ROOT / "figures" / "manifest.json").read_text())
 
     assert "__DATA__" not in html
     assert "<script src=" not in html, "hub must remain self-contained"
     assert len(payload["worlds"]) == len(worlds) == 93
     assert len(payload["worldSeries"]) == panel.price_gp.notna().sum()
+    assert len(payload["orderBooks"]) == len(order_books) == 93
     valid_index = index.index_valid.astype(bool) & index.ew_price.notna()
     assert len(payload["marketIndex"]) == valid_index.sum()
     assert len(payload["predictions"]) == len(predictions)
@@ -105,6 +107,7 @@ def main() -> None:
         "../data/processed/market_index.csv",
         "../data/processed/world_summary.csv",
         "../data/processed/panel_daily.csv",
+        "../data/processed/order_books.csv",
         "../data/processed/forecasts_sa.csv",
         "../data/processed/latest_predictions.csv",
         "../data/processed/latest_specific_predictions.csv",
@@ -126,14 +129,20 @@ def main() -> None:
     )
     assert '$("#emissionFrame").src="gold_emission_dashboard.html"' in html
     assert 'href="tibia_coin_market_report.pdf"' in html
-    assert 'data-mode="price">Price (GP)</button>' in html
+    assert 'data-mode="mid">Mid</button>' in html
+    assert 'data-mode="buy">Buy TC</button>' in html
+    assert 'data-mode="sell">Sell TC</button>' in html
     assert 'data-mode="return">Return (%)</button>' in html
     assert 'id="worldStart" type="date"' in html
     assert 'id="worldEnd" type="date"' in html
     assert '$("#worldStart").value=$("#overviewStart").value' in html
     assert '$("#overviewStart").value=$("#worldStart").value' in html
     assert 'const start=$("#worldStart").value,end=$("#worldEnd").value' in html
-    assert "Actual daily market price in GP per Tibia Coin." in html
+    assert "Mean of the valid daily buyer-side and seller-side executed averages." in html
+    assert "Buy TC now" in html and "Sell TC now" in html
+    assert "Quoted spread" in html
+    assert "Demand depth" in html and "Supply depth" in html
+    assert "Book snapshot" in html
     assert "comparisonDates=[...new Set(data.worldSeries.map(row=>row.date))].sort()" in html
     assert "missing history is left blank" in html
     assert "const linePath=key=>" in html

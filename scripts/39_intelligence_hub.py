@@ -94,8 +94,18 @@ def build_payload() -> dict:
     )
     world_series = records(
         P / "panel_daily.csv",
-        ["world", "date", "price_gp", "tc_sold", "tc_bought"],
+        [
+            "world", "date", "price_gp", "px_sell", "px_buy",
+            "executed_gap_pct", "tc_sold", "tc_bought",
+        ],
         where=lambda frame: frame[frame["price_gp"].notna()],
+    )
+    order_books = records(
+        P / "order_books.csv",
+        [
+            "world", "update_time", "best_bid", "best_ask", "mid",
+            "quoted_spread_pct", "bid_depth_tc", "ask_depth_tc",
+        ],
     )
     forecasts = records(
         P / "forecasts_sa.csv",
@@ -245,6 +255,7 @@ def build_payload() -> dict:
         "marketIndex": market_index,
         "worlds": worlds,
         "worldSeries": world_series,
+        "orderBooks": order_books,
         "forecasts": forecasts,
         "predictions": predictions,
         "specificPredictions": specific_predictions,
@@ -606,10 +617,10 @@ HTML = r"""<!doctype html>
           <div class="filters"><div class="field"><label for="worldA">Primary world</label><select id="worldA"></select></div><div class="field"><label for="worldB">Compare with</label><select id="worldB"></select></div><div class="field wide"><label>Date range</label><div class="date-pair"><input id="worldStart" type="date" aria-label="World comparison start date"><input id="worldEnd" type="date" aria-label="World comparison end date"></div></div></div>
         </div>
         <div class="world-layout">
-          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p id="worldChartDescription">Actual daily market price in GP per Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="World chart measure"><button class="segment active" data-mode="price">Price (GP)</button><button class="segment" data-mode="return">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
+          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p id="worldChartDescription">Daily executed midpoint in GP per Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="World chart measure"><button class="segment active" data-mode="mid">Mid</button><button class="segment" data-mode="buy">Buy TC</button><button class="segment" data-mode="sell">Sell TC</button><button class="segment" data-mode="return">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
           <aside id="worldFacts" class="panel world-facts"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>All worlds</h2><p>Click a row to make it the primary world.</p></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Latest</th><th>Region</th><th>PvP</th><th>Population</th><th>Total return</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Executable prices now</h2><p>“Buy TC” is the cheapest current sell offer; “Sell TC” is the highest current buy offer. Mid is only a reference and may not be executable.</p></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Buy TC</th><th>Sell TC</th><th>Mid</th><th>Spread</th><th>Demand depth</th><th>Supply depth</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
       </section>
 
       <section id="view-forecasts" class="view" hidden>
@@ -716,6 +727,7 @@ const DATA_FILES = {
   marketIndex:"../data/processed/market_index.csv",
   worlds:"../data/processed/world_summary.csv",
   worldSeries:"../data/processed/panel_daily.csv",
+  orderBooks:"../data/processed/order_books.csv",
   forecasts:"../data/processed/forecasts_sa.csv",
   predictions:"../data/processed/latest_predictions.csv",
   specificPredictions:"../data/processed/latest_specific_predictions.csv",
@@ -737,6 +749,7 @@ const pct1 = new Intl.NumberFormat("en-US",{style:"percent",maximumFractionDigit
 let data = structuredClone(EMBEDDED);
 let worldMap = new Map();
 let seriesMap = new Map();
+let orderBookMap = new Map();
 let comparisonDates = [];
 let predictionMap = new Map();
 let specificPredictionMap = new Map();
@@ -746,7 +759,7 @@ let launchRegistryMap = new Map();
 let forecastMap = new Map();
 let activeView = "overview";
 let selectedForecastHorizon = "1m";
-let selectedWorldChartMode = "price";
+let selectedWorldChartMode = "mid";
 let selectedStrategyHorizon = 7;
 let selectedExhibit = "";
 let liveMode = false;
@@ -765,7 +778,17 @@ function uniqueIndexes(count,length){if(length<=1)return[0];return[...new Set(Ar
 function niceMax(value){const e=Math.floor(Math.log10(Math.max(value,1)));const u=10**e;const n=value/u;return(n<=1?1:n<=2?2:n<=5?5:10)*u}
 
 function rebuildIndexes(){
+  const latestByWorld=new Map();
+  for(const row of data.worldSeries){
+    const previous=latestByWorld.get(row.world);
+    if(!previous||row.date>previous.date)latestByWorld.set(row.world,row);
+  }
+  for(const row of data.worlds){
+    const latest=latestByWorld.get(row.world);
+    if(latest){row.buy_tc_gp=latest.px_sell;row.sell_tc_gp=latest.px_buy;row.executed_gap_pct=latest.executed_gap_pct}
+  }
   worldMap=new Map(data.worlds.map(row=>[row.world,row]));
+  orderBookMap=new Map((data.orderBooks||[]).map(row=>[row.world,row]));
   seriesMap=new Map();
   for(const row of data.worldSeries){
     if(!seriesMap.has(row.world))seriesMap.set(row.world,[]);
@@ -812,7 +835,7 @@ function initialize(){
   $("#worldStart").value=$("#overviewStart").value;
   $("#worldEnd").value=$("#overviewEnd").value;
   selectedForecastHorizon=["2w","1m","3m","6m"].includes(params.get("horizon"))?params.get("horizon"):"1m";
-  selectedWorldChartMode=["price","return"].includes(params.get("worldMeasure"))?params.get("worldMeasure"):"price";
+  selectedWorldChartMode=["mid","buy","sell","return"].includes(params.get("worldMeasure"))?params.get("worldMeasure"):"mid";
   selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
   bindEvents();
   populateLibraryChapters();
@@ -1101,11 +1124,15 @@ function commonSeries(worldA,worldB){
   const firstA=dates.find(item=>aMap.has(item)),firstB=dates.find(item=>bMap.has(item));
   const a0=firstA?num(aMap.get(firstA).price_gp):null,b0=firstB?num(bMap.get(firstB).price_gp):null;
   return dates.map(item=>{
-    const aPrice=aMap.has(item)?num(aMap.get(item).price_gp):null;
-    const bPrice=bMap.has(item)?num(bMap.get(item).price_gp):null;
-    return{date:item,aPrice,bPrice,
-      aReturn:aPrice!==null&&a0?(aPrice/a0-1)*100:null,
-      bReturn:bPrice!==null&&b0?(bPrice/b0-1)*100:null};
+    const ar=aMap.get(item),br=bMap.get(item);
+    const aMid=ar?num(ar.price_gp):null,bMid=br?num(br.price_gp):null;
+    return{date:item,aMid,bMid,
+      aBuy:ar&&ar.px_sell!==null?num(ar.px_sell):null,
+      bBuy:br&&br.px_sell!==null?num(br.px_sell):null,
+      aSell:ar&&ar.px_buy!==null?num(ar.px_buy):null,
+      bSell:br&&br.px_buy!==null?num(br.px_buy):null,
+      aReturn:aMid!==null&&a0?(aMid/a0-1)*100:null,
+      bReturn:bMid!==null&&b0?(bMid/b0-1)*100:null};
   });
 }
 
@@ -1114,9 +1141,13 @@ function renderWorldChart(){
   $$("#worldChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedWorldChartMode));
   const start=$("#worldStart").value,end=$("#worldEnd").value;
   const fixedWindow=start&&end?`${isoDate(start)} to ${isoDate(end)}`:"invalid date range";
-  $("#worldChartDescription").textContent=selectedWorldChartMode==="price"
-    ?`Actual daily market price in GP per Tibia Coin. Selected window: ${fixedWindow}; missing history is left blank.`
-    :`Percentage gain or loss from each world's first observation inside the selected window. Selected window: ${fixedWindow}; 0% means no change.`;
+  const descriptions={
+    mid:`Mean of the valid daily buyer-side and seller-side executed averages. Selected window: ${fixedWindow}; missing history is left blank.`,
+    buy:`Average GP paid on the seller side—the closest historical measure of what it cost to buy TC. Selected window: ${fixedWindow}; missing history is left blank.`,
+    sell:`Average GP paid on the buyer side—the closest historical measure of what a player received for selling TC. Selected window: ${fixedWindow}; missing history is left blank.`,
+    return:`Percentage gain or loss in the executed midpoint from each world's first observation inside the selected window. Selected window: ${fixedWindow}; 0% means no change.`
+  };
+  $("#worldChartDescription").textContent=descriptions[selectedWorldChartMode];
   $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
   drawTwoSeries($("#worldChart"),$("#worldTooltip"),rows,{a:worldA,b:worldB},selectedWorldChartMode);
 }
@@ -1125,7 +1156,8 @@ function drawTwoSeries(svg,tooltip,rows,labels,mode){
   svg.innerHTML="";
   if(!rows.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No observations for this selection");return}
   const width=Math.max(320,svg.clientWidth||900),height=340,m={top:22,right:18,bottom:42,left:58},iw=width-m.left-m.right,ih=height-m.top-m.bottom;
-  const aKey=mode==="return"?"aReturn":"aPrice",bKey=mode==="return"?"bReturn":"bPrice";
+  const suffix={mid:"Mid",buy:"Buy",sell:"Sell",return:"Return"}[mode];
+  const aKey=`a${suffix}`,bKey=`b${suffix}`;
   const values=rows.flatMap(row=>[row[aKey],row[bKey]]).filter(Number.isFinite);
   if(!values.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No observations for this selection");return}
   const rawLow=Math.min(...values),rawHigh=Math.max(...values),padding=Math.max((rawHigh-rawLow)*.08,mode==="return"?1:100);
@@ -1138,33 +1170,41 @@ function drawTwoSeries(svg,tooltip,rows,labels,mode){
   const linePath=key=>{let d="",open=false;rows.forEach((row,i)=>{if(!Number.isFinite(row[key])){open=false;return}d+=`${open?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)} `;open=true});return d.trim()};
   for(const [key,color] of [[aKey,COLORS.blue],[bKey,COLORS.gold]])addSvg(svg,"path",{d:linePath(key),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
-  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive world comparison by ${mode==="return"?"percentage return":"actual GP price"}`});
-  const reading=(price,ret)=>price===null?"No observation":`${fmt.format(price)} GP · ${signed(ret,1)} since start`;
-  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${escapeHtml(labels.a)}: ${reading(row.aPrice,row.aReturn)}<br>${escapeHtml(labels.b)}: ${reading(row.bPrice,row.bReturn)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
+  const measureLabel={mid:"executed midpoint",buy:"historical buy TC price",sell:"historical sell TC price",return:"percentage return"}[mode];
+  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive world comparison by ${measureLabel}`});
+  const reading=(value,ret)=>value===null?"No observation":mode==="return"?`${signed(value,1)} since start`:`${fmt.format(value)} GP${mode==="mid"?` · ${signed(ret,1)} since start`:""}`;
+  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${escapeHtml(labels.a)}: ${reading(row[aKey],row.aReturn)}<br>${escapeHtml(labels.b)}: ${reading(row[bKey],row.bReturn)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
   capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
 }
 
 function renderWorldFacts(){
-  const name=$("#worldA").value,row=worldMap.get(name)||{},prediction=predictionMap.get(name);
+  const name=$("#worldA").value,row=worldMap.get(name)||{},book=orderBookMap.get(name)||{},prediction=predictionMap.get(name);
   $("#worldFacts").innerHTML=`<h2>${escapeHtml(name)}</h2>
-    <div class="fact"><span>Latest price</span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
-    <div class="fact"><span>Region</span><strong>${escapeHtml(row.region||"—")}</strong></div>
-    <div class="fact"><span>PvP type</span><strong>${escapeHtml(row.pvp_type||"—")}</strong></div>
-    <div class="fact"><span>Population proxy</span><strong>${row.population?fmt.format(row.population):"—"}</strong></div>
-    <div class="fact"><span>Observed range</span><strong>${row.px_min?fmt.format(row.px_min)+" – "+fmt.format(row.px_max):"—"}</strong></div>
+    <div class="fact"><span>Buy TC now</span><strong>${book.best_ask?fmt.format(book.best_ask)+" GP":"No sell offer"}</strong></div>
+    <div class="fact"><span>Sell TC now</span><strong>${book.best_bid?fmt.format(book.best_bid)+" GP":"No buy offer"}</strong></div>
+    <div class="fact"><span>Reference mid</span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
+    <div class="fact"><span>Quoted spread</span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
+    <div class="fact"><span>Demand / supply depth</span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
+    <div class="fact"><span>Book snapshot</span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
+    <div class="fact"><span>Latest executed midpoint</span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
+    <div class="fact"><span>Latest executed buy / sell</span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>
     <div class="fact"><span>Total return</span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
     <div class="fact"><span>7-day prediction</span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"No model"}</strong></div>`;
 }
 
 function renderWorldTable(){
   const term=$("#worldSearch").value.trim().toLowerCase();
-  const rows=[...data.worlds].filter(row=>row.world.toLowerCase().includes(term)).sort((a,b)=>num(b.px_last)-num(a.px_last));
+  const rows=[...data.worlds].filter(row=>row.world.toLowerCase().includes(term)).sort((a,b)=>num(orderBookMap.get(b.world)?.mid)-num(orderBookMap.get(a.world)?.mid));
   $("#worldTable").innerHTML=rows.map(row=>`<tr data-world="${escapeHtml(row.world)}" class="${row.world===$("#worldA").value?"selected":""}">
-    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td><td data-label="Latest">${row.px_last?fmt.format(row.px_last):"—"}</td>
-    <td data-label="Region">${escapeHtml(row.region||"—")}</td><td data-label="PvP">${escapeHtml(row.pvp_type||"—")}</td>
-    <td data-label="Population">${row.population?fmt.format(row.population):"—"}</td><td data-label="Total return" class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</td></tr>`).join("");
+    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
+    <td data-label="Buy TC">${orderBookMap.get(row.world)?.best_ask?fmt.format(orderBookMap.get(row.world).best_ask):"—"}</td>
+    <td data-label="Sell TC">${orderBookMap.get(row.world)?.best_bid?fmt.format(orderBookMap.get(row.world).best_bid):"—"}</td>
+    <td data-label="Mid">${orderBookMap.get(row.world)?.mid?fmt.format(orderBookMap.get(row.world).mid):"—"}</td>
+    <td data-label="Spread">${orderBookMap.get(row.world)?.quoted_spread_pct!==null&&orderBookMap.get(row.world)?.quoted_spread_pct!==undefined?num(orderBookMap.get(row.world).quoted_spread_pct).toFixed(1)+"%":"—"}</td>
+    <td data-label="Demand depth">${orderBookMap.get(row.world)?.bid_depth_tc?compact(orderBookMap.get(row.world).bid_depth_tc)+" TC":"—"}</td>
+    <td data-label="Supply depth">${orderBookMap.get(row.world)?.ask_depth_tc?compact(orderBookMap.get(row.world).ask_depth_tc)+" TC":"—"}</td></tr>`).join("");
   $$("#worldTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;renderWorlds();updateURL()}));
 }
 
@@ -1420,7 +1460,7 @@ function updateURL(){
   if($("#overviewEnd").value!==$("#overviewEnd").max)params.set("end",$("#overviewEnd").value);
   if($("#worldA").value!=="Antica")params.set("a",$("#worldA").value);
   if($("#worldB").value!=="Belobra")params.set("b",$("#worldB").value);
-  if(selectedWorldChartMode!=="price")params.set("worldMeasure",selectedWorldChartMode);
+  if(selectedWorldChartMode!=="mid")params.set("worldMeasure",selectedWorldChartMode);
   if($("#forecastWorld").value!=="Belobra")params.set("forecast",$("#forecastWorld").value);
   if(selectedForecastHorizon!=="1m")params.set("horizon",selectedForecastHorizon);
   if($("#modelPvp").value!=="all")params.set("modelPvp",$("#modelPvp").value);
