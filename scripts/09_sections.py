@@ -5084,6 +5084,15 @@ table([["Script", "Purpose"],
        ["31_participants.py", "Demand decomposed by participant type from the order-book size distribution"],
        ["32_scenario_backtest.py", "Walk-forward coverage test of the scenario bands"],
        ["33_strategy.py", "Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; the long-only variant"],
+       ["34a_collect_loot.py", "Revision-audited TibiaWiki loot probabilities and quantities"],
+       ["34b_collect_creatures.py", "Creature classification, boss, event and explicit no-loot evidence"],
+       ["34_gold_emission.py", "Creature-level gold value and daily world monetary-emission reconstruction"],
+       ["35_gold_emission_models.py", "Fixed-effects, lag, holdout and sensitivity tests for gold emission"],
+       ["36_gold_emission_report.py", "Validated technical report artifact for the monetary reconstruction"],
+       ["37_verify_gold_emission.py", "Data, model, report and dashboard integrity checks for gold emission"],
+       ["38_gold_emission_dashboard.py", "Self-contained interactive world-by-time gold-emission explorer"],
+       ["39_intelligence_hub.py", "Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits"],
+       ["40_verify_intelligence_hub.py", "Structural and data-integrity checks for the interactive workspace"],
        ["14_venues.py", "Token contract, liquidity pools and Char Bazaar turnover "
                         "(Section 5.8); network reads are cached and block-stamped"],
        ["12_art.py / 13_icons.py", "Duotone artwork treatment; executive-summary pictograms"],
@@ -5464,7 +5473,7 @@ table([["File", "Contents"],
        ["data/processed/forecast_backtest*.csv", "Rolling-origin backtest and summaries"],
        ["data/processed/world_summary.csv", "Per-world descriptive statistics"],
        ["data/processed/results.json", "Every statistic reported in this document"],
-       ["figures/*.png", "16 main figures"],
+       ["figures/*.png", "34 analytical exhibits"],
        ["figures/sa/*.png", "34 per-world South American panels"],
        ["data/processed/roll_spread.csv", "Roll effective spread per world"],
        ["data/processed/variance_decomposition.csv", "Systematic and idiosyncratic variance"],
@@ -5489,6 +5498,8 @@ table([["File", "Contents"],
                                       "conformal interval and metadata"],
        ["data/processed/latest_predictions.csv", "Current prediction for every "
                                                  "converged world"],
+       ["reports/gold_emission_dashboard.html", "Interactive world-by-time monetary-emission explorer"],
+       ["reports/intelligence_hub.html", "Unified interactive market-intelligence workspace"],
        ["scripts/run_all.py", "Runs every stage in dependency order and verifies the result "
                               "blocks"],
        ["scripts/*.py", "Complete reproducible pipeline (Table 8.3)"]],
@@ -5597,4 +5608,3 @@ para(tag("lim") + "Tibia is a registered trademark of CipSoft GmbH. All game con
      "materials are copyright CipSoft GmbH. The analysis, opinions and any errors in this "
      "report are the author's alone.")
 story.append(PageBreak())
-
