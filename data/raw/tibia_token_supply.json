@@ -1,0 +1,10 @@
+{
+ "contract": "0x111B95C2b65CbA53aB4E0AaDA12f55985045E446",
+ "chain": "BNB Smart Chain",
+ "standard": "BEP-20",
+ "name": "TibiaToken",
+ "symbol": "TIB",
+ "decimals": 18,
+ "total_supply": 5621176.0,
+ "block": 113534402
+}

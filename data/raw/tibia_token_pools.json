@@ -1,0 +1,113 @@
+{
+ "block": 113534472,
+ "pools": [
+  {
+   "venue": "V2",
+   "fee_bps": null,
+   "quote": "USDT",
+   "pool": "0xf236aad09087ccdb289b6b888ca5bda9fb593c6a",
+   "tib": 2605.8074530799786,
+   "quote_qty": 104.63251615437139,
+   "price": 0.04015358695466897
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 100,
+   "quote": "USDT",
+   "pool": "0x0bd9fe7b622ab25f747d072a5a96d58dcfadc96e",
+   "tib": 0.018566809370788563,
+   "quote_qty": 0.001638074655116361,
+   "price": 0.0372845596881155
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 500,
+   "quote": "USDT",
+   "pool": "0x8f575827309042e6b4f6f387064c7c366d57b32a",
+   "tib": 31.486775575126803,
+   "quote_qty": 0.3825721824804265,
+   "price": 0.039801981749904874
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 2500,
+   "quote": "USDT",
+   "pool": "0xd2acfaec0e3b556f285fbb9026ede7e87885e611",
+   "tib": 1469508.7614925362,
+   "quote_qty": 31197.933310747656,
+   "price": 0.0401536796665865
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 10000,
+   "quote": "USDT",
+   "pool": "0x367de268ca3549b22dda52493c73c7ca02befefd",
+   "tib": 796082.7773239526,
+   "quote_qty": 299.7939302387775,
+   "price": 0.04021713827937401
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 100,
+   "quote": "USDC",
+   "pool": "0x25762c895cbbfd701b355b4469871d7cd4ce59f1",
+   "tib": 0.0,
+   "quote_qty": 0.0,
+   "price": 10.01806025351868
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 500,
+   "quote": "USDC",
+   "pool": "0xf61db06c9d92f87bde82c4f58897364e59be96d0",
+   "tib": 0.0,
+   "quote_qty": 0.0,
+   "price": 10.01806025351868
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 2500,
+   "quote": "USDC",
+   "pool": "0xbc43bfa2a56660057ed328303981060ffa7e4734",
+   "tib": 0.0,
+   "quote_qty": 1e-18,
+   "price": 10.01806025351868
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 10000,
+   "quote": "USDC",
+   "pool": "0xc5fdab520725c7ddd6bfdaf626d33e895a092125",
+   "tib": 0.027827028287191743,
+   "quote_qty": 0.03653441209052982,
+   "price": 0.04234230269238342
+  },
+  {
+   "venue": "V2",
+   "fee_bps": null,
+   "quote": "WBNB",
+   "pool": "0x619d3a79a35c4ce53ce6118c661e126cef47031d",
+   "tib": 15.702072930445258,
+   "quote_qty": 0.00109018311945526,
+   "price": 6.942924824540004e-05
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 2500,
+   "quote": "WBNB",
+   "pool": "0xf7e4925a2a3e428c4d8dd211c5da07b1e5408356",
+   "tib": 0.24402009115636483,
+   "quote_qty": 1.3621558603241e-05,
+   "price": 6.188567191451709e-05
+  },
+  {
+   "venue": "V3",
+   "fee_bps": 10000,
+   "quote": "WBNB",
+   "pool": "0x209b52272024901e844f9fbec2e7d9381cd7110c",
+   "tib": 61.279894203339886,
+   "quote_qty": 0.003793844262490685,
+   "price": 6.823782975797567e-05
+  }
+ ]
+}

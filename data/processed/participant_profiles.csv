@@ -1,0 +1,7 @@
+profile,side,stimulus,prediction,evidence
+Gold buyer (money to gold),Supply,GP received per unit of money,"Sells more coins when the GP price is high, which caps rallies","Sell-side depth is only 16% of resting coins, so this side is thin and its withdrawal would move the price"
+Consumer (gold to services),Demand,"Need for premium, boosts, mounts","Buys in Store-sized lots, insensitive to price, on a monthly cycle",64% of offers are under 500 TC but only 1.6% of coins
+Investor or speculator,Demand,Expected appreciation,Buys on momentum; would show as return autocorrelation,"Momentum carries no out-of-sample value (Section 6.6.2), so this motive leaves no detectable footprint in prices"
+Arbitrageur,Both,Price gap between worlds,Trades only when the gap clears the fee,"The band sits at 1.79%; the average trade nets below zero while the strongest decile held a month does not (Sections 6.6.10, 7.7)"
+"Farmer, gold to coin to money",Demand,Farm hours against the coin price and the outside money price,Buys coins to export value; would show as coins leaving the game,token supply unavailable
+Farmer selling gold directly,Absent,Outside price of gold,Never touches the coin market; is pure gold supply,"Invisible in this data by construction, and a standing limitation"

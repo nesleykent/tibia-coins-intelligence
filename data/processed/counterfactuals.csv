@@ -1,0 +1,9 @@
+feature,n_considered,n_flipped,flip_rate,median_move
+rel_premium,200,0,0.0,
+ret_ew3,200,0,0.0,
+dist_ma90,200,0,0.0,
+ret_sd30,200,0,0.0,
+ret_mean30,200,0,0.0,
+ret_ew14,200,0,0.0,
+ret_ew7,200,0,0.0,
+ret_lag1,200,0,0.0,

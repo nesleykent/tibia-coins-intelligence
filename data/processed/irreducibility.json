@@ -1,0 +1,74 @@
+{
+ "entropy": {
+  "permutation_entropy": 0.9925229998741751,
+  "pe_surrogate_mean": 0.9900000746586923,
+  "pe_p": 0.36,
+  "sample_entropy": 1.6764272385178447,
+  "se_surrogate_mean": 1.8643126130379872,
+  "se_p": 0.0,
+  "n_surrogates": 200,
+  "note": "1.0 permutation entropy means no ordinal structure at all"
+ },
+ "bds": [
+  {
+   "embedding": 2,
+   "statistic": 11.87302642663839,
+   "p": 1.634459321804485e-32
+  },
+  {
+   "embedding": 3,
+   "statistic": 12.88061187232729,
+   "p": 5.78749020666217e-38
+  },
+  {
+   "embedding": 4,
+   "statistic": 13.396702090352354,
+   "p": 6.321010589797698e-41
+  }
+ ],
+ "martingale": {
+  "returns": [
+   {
+    "index": 5,
+    "lb_stat": 73.12349981279692,
+    "lb_pvalue": 2.291029743645614e-14
+   },
+   {
+    "index": 10,
+    "lb_stat": 123.2424296064149,
+    "lb_pvalue": 1.1107070368794307e-21
+   },
+   {
+    "index": 20,
+    "lb_stat": 163.3961242670065,
+    "lb_pvalue": 1.6561395826075523e-24
+   }
+  ],
+  "squared_returns": [
+   {
+    "index": 5,
+    "lb_stat": 66.59510277984795,
+    "lb_pvalue": 5.229411137681407e-13
+   },
+   {
+    "index": 10,
+    "lb_stat": 77.11138065553389,
+    "lb_pvalue": 1.8442542643676223e-12
+   },
+   {
+    "index": 20,
+    "lb_stat": 88.45691908748728,
+    "lb_pvalue": 1.3779932627591048e-10
+   }
+  ]
+ },
+ "latent_state": {
+  "n_worlds": 12,
+  "n_dates": 717,
+  "r2_factor_forecast": 0.0,
+  "r2_factor_filtered": 0.08987655487840363,
+  "r2_factor_smoothed": 0.08817769468943859,
+  "retrospect_gap": 0.08817769468943859,
+  "reading": "the smoothed figure is what a perfectly informed observer of the common driver could explain; the forecast figure is what is available in advance. The gap is the size of the prize for observing the hidden state, and the remainder above the smoothed figure is irreducible"
+ }
+}

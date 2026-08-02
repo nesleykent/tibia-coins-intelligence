@@ -1,0 +1,197 @@
+merge_world,merge_date,region,predecessor,predecessor_created
+Kenora,2014-07-24,Europe,Kyra,2005-04-01
+Kenora,2014-07-24,Europe,Nebula,2005-12-01
+Kenora,2014-07-24,Europe,Thoria,2005-07-01
+Kronera,2014-08-14,North America,Empera,2005-04-01
+Kronera,2014-08-14,North America,Ocera,2005-12-01
+Kronera,2014-08-14,North America,Lucera,2004-10-01
+Garnera,2014-08-14,North America,Jamera,2004-12-01
+Garnera,2014-08-14,North America,Shanera,2005-04-01
+Garnera,2014-08-14,North America,Balera,2005-07-01
+Thera,2014-08-14,North America,Samera,2004-08-01
+Thera,2014-08-14,North America,Trimera,2003-02-01
+Thera,2014-08-14,North America,Keltera,2006-02-01
+Rowana,2014-08-14,Europe,Hiberna,2003-12-01
+Rowana,2014-08-14,Europe,Isara,2003-07-01
+Rowana,2014-08-14,Europe,Eternia,2003-02-01
+Nika,2014-08-14,Europe,Aldora,2004-05-01
+Nika,2014-08-14,Europe,Arcania,2004-12-01
+Nika,2014-08-14,Europe,Xerena,2006-02-01
+Umera,2014-11-10,North America,Libera,2002-11-01
+Umera,2014-11-10,North America,Mythera,2004-05-01
+Umera,2014-11-10,North America,Rubera,2003-07-01
+Justera,2014-11-10,North America,Chimera,2004-03-01
+Justera,2014-11-10,North America,Grimera,2005-04-30
+Justera,2014-11-10,North America,Malvera,2005-08-01
+Iona,2014-11-10,Europe,Lunara,2002-12-01
+Iona,2014-11-10,Europe,Nova,2001-12-01
+Iona,2014-11-10,Europe,Titania,2004-03-01
+Efidia,2014-11-10,Europe,Azura,2004-03-01
+Efidia,2014-11-10,Europe,Danubia,2003-04-01
+Efidia,2014-11-10,Europe,Galana,2004-09-01
+Irmada,2014-11-10,Europe,Berylia,2005-05-01
+Irmada,2014-11-10,Europe,Iridia,2005-02-01
+Irmada,2014-11-10,Europe,Morgana,2005-03-01
+Bellona,2014-11-10,Europe,Furora,2005-07-01
+Bellona,2014-11-10,Europe,Obsidia,2005-08-01
+Bellona,2014-11-10,Europe,Selena,2005-03-01
+Yanara,2014-11-10,Europe,Askara,2005-08-01
+Yanara,2014-11-10,Europe,Pandoria,2005-01-01
+Yanara,2014-11-10,Europe,Saphira,2005-04-01
+Zeluna,2016-05-02,Europe,Aurea,2004-08-10
+Zeluna,2016-05-02,Europe,Elysia,2004-06-29
+Zeluna,2016-05-02,Europe,Valoria,2003-11-05
+Laudera,2016-05-02,North America,Elera,2005-02-16
+Laudera,2016-05-02,North America,Tenebra,
+Laudera,2016-05-02,North America,Vinera,2005-08-11
+Estela,2017-10-19,Europe,Bellona,2014-11-10
+Estela,2017-10-19,Europe,Irmada,2014-11-10
+Estela,2017-10-19,Europe,Verlana,2016-11-22
+Estela,2017-10-19,Europe,Xylana,2016-05-06
+Peloria,2017-10-19,Europe,Efidia,2014-11-10
+Peloria,2017-10-19,Europe,Iona,2014-11-10
+Peloria,2017-10-19,Europe,Nika,2014-08-14
+Peloria,2017-10-19,Europe,Quilia,2014-08-28
+Vunira,2017-10-19,Europe,Rowana,2014-08-14
+Vunira,2017-10-19,Europe,Yanara,2014-11-10
+Vunira,2017-10-19,Europe,Zeluna,2016-05-02
+Impera,2017-10-19,North America,Kronera,2014-08-14
+Impera,2017-10-19,North America,Osera,2016-05-06
+Impera,2017-10-19,North America,Pythera,2004-11-24
+Quintera,2017-10-19,North America,Danera,2005-10-20
+Quintera,2017-10-19,North America,Hydera,2014-08-28
+Quintera,2017-10-19,North America,Neptera,2005-07-06
+Zuna,2017-10-26,Europe,Calva,2013-06-04
+Zuna,2017-10-26,Europe,Inferna,2004-06-29
+Zuna,2017-10-26,Europe,Aurora,2012-06-13
+Zunera,2017-10-26,North America,Calvera,2013-06-04
+Zunera,2017-10-26,North America,Dolera,2004-06-29
+Zunera,2017-10-26,North America,Aurera,2012-06-13
+Bona,2018-04-19,Europe,Guardia,2005-05-24
+Bona,2018-04-19,Europe,Nerana,2007-01-25
+Bona,2018-04-19,Europe,Tavara,2016-12-13
+Epoca,2018-04-19,Europe,Morta,2014-10-15
+Epoca,2018-04-19,Europe,Chrona,2014-11-12
+Monza,2018-04-19,Europe,Beneva,2015-11-17
+Monza,2018-04-19,Europe,Candia,2006-07-13
+Monza,2018-04-19,Europe,Olympa,2009-11-24
+Firmera,2018-04-19,North America,Eldera,2014-11-12
+Firmera,2018-04-19,North America,Mortera,2014-10-15
+Gladera,2018-04-19,North America,Fidera,2009-11-24
+Gladera,2018-04-19,North America,Magera,2014-10-15
+Gladera,2018-04-19,North America,Veludera,2015-11-17
+Lobera,2018-04-19,North America,Laudera,2016-05-02
+Lobera,2018-04-19,North America,Thera,2014-08-14
+Lobera,2018-04-19,North America,Umera,2014-11-10
+Nefera,2018-04-19,North America,Honera,2005-05-24
+Nefera,2018-04-19,North America,Unitera,2007-01-25
+Solidera,2018-04-19,North America,Amera,2002-10-07
+Solidera,2018-04-19,North America,Silvera,2005-03-30
+Solidera,2018-04-19,North America,Zanera,2005-03-30
+Talera,2018-04-19,North America,Fortera,2004-10-20
+Talera,2018-04-19,North America,Justera,2014-11-10
+Talera,2018-04-19,North America,Shivera,2005-01-25
+Wintera,2018-04-19,North America,Julera,2003-11-05
+Wintera,2018-04-19,North America,Solera,2004-03-16
+Wintera,2018-04-19,North America,Xantera,2004-06-29
+Visabra,2021-04-28,South America,Assombra,2019-02-06
+Visabra,2021-04-28,South America,Macabra,2017-08-08
+Mercera,2021-04-28,North America,Cosera,2019-02-06
+Mercera,2021-04-28,North America,Olera,2017-12-07
+Juva,2021-04-28,Europe,Belluma,2019-04-16
+Juva,2021-04-28,Europe,Faluna,2018-04-10
+Juva,2021-04-28,Europe,Vita,2017-04-17
+Unisera,2021-04-28,North America,Jonera,2018-04-10
+Unisera,2021-04-28,North America,Torpera,2019-04-16
+Unisera,2021-04-28,North America,Noctera,2017-04-17
+Nexa,2021-04-28,Europe,Furia,2019-02-06
+Nexa,2021-04-28,Europe,Tortura,2017-08-08
+Fervora,2021-04-28,Europe,Duna,2017-05-15
+Fervora,2021-04-28,Europe,Pyra,2018-08-08
+Fera,2021-04-28,North America,Helera,2017-08-08
+Fera,2021-04-28,North America,Funera,2019-02-06
+Batabra,2021-12-06,South America,Relembra,2017-05-12
+Batabra,2021-12-06,South America,Javibra,2020-02-26
+Collabra,2021-12-06,South America,Pacembra,2020-03-27
+Collabra,2021-12-06,South America,Serenebra,2019-09-25
+Mykera,2021-12-06,North America,Emera,2020-02-26
+Mykera,2021-12-06,North America,Carnera,2018-08-08
+Seanera,2021-12-06,North America,Unisera,2017-04-17
+Seanera,2021-12-06,North America,Ysolera,2020-05-27
+Marbera,2021-12-06,North America,Mercera,2017-12-07
+Marbera,2021-12-06,North America,Mitigera,2019-09-25
+Havera,2021-12-06,North America,Impera,2004-10-20
+Havera,2021-12-06,North America,Garnera,2004-12-22
+Suna,2021-12-06,Europe,Juva,2017-04-17
+Suna,2021-12-06,Europe,Xylona,2020-05-27
+Olima,2021-12-06,Europe,Concorda,2019-09-25
+Olima,2021-12-06,Europe,Relania,2019-02-06
+Bastia,2021-12-06,Europe,Nexa,2017-08-08
+Bastia,2021-12-06,Europe,Ragna,2020-07-29
+Impulsa,2021-12-06,Europe,Unica,2020-02-26
+Impulsa,2021-12-06,Europe,Fervora,2017-05-15
+Thyria,2021-12-06,Europe,Estela,2005-02-16
+Thyria,2021-12-06,Europe,Kenora,2005-04-19
+Pulsera,2023-08-28,North America,Illusera,2021-10-21
+Pulsera,2023-08-28,North America,Wizera,2020-10-21
+Pulsera,2023-08-28,North America,Seanera,2017-04-17
+Yovera,2023-08-28,North America,Optera,2021-02-24
+Yovera,2023-08-28,North America,Marbera,2017-12-07
+Wildera,2023-08-28,North America,Fera,2017-08-08
+Wildera,2023-08-28,North America,Ardera,2021-08-18
+Kendria,2023-08-28,Europe,Trona,2021-10-21
+Kendria,2023-08-28,Europe,Marcia,2021-05-19
+Kendria,2023-08-28,Europe,Adra,2020-10-21
+Kendria,2023-08-28,Europe,Suna,2017-04-17
+Nevia,2023-08-28,North America,Famosa,2021-05-19
+Nevia,2023-08-28,North America,Karna,2021-02-24
+Nevia,2023-08-28,North America,Olima,2019-02-06
+Retalia,2023-08-28,Europe,Versa,2021-08-18
+Retalia,2023-08-28,Europe,Bastia,2017-08-08
+Jadebra,2023-08-28,South America,Ocebra,2021-10-21
+Jadebra,2023-08-28,South America,Alumbra,2021-05-19
+Jadebra,2023-08-28,South America,Dibra,2019-04-16
+Rasteibra,2023-08-28,South America,Zenobra,2020-05-27
+Rasteibra,2023-08-28,South America,Xandebra,2020-03-27
+Ustebra,2023-08-28,South America,Tembra,2021-05-19
+Ustebra,2023-08-28,South America,Reinobra,2021-02-24
+Obscubra,2023-08-28,South America,Cadebra,2021-08-18
+Obscubra,2023-08-28,South America,Visabra,2017-08-08
+Obscubra,2023-08-28,South America,Libertabra,2020-07-29
+Guerribra,2023-08-28,South America,Mudabra,2021-02-24
+Guerribra,2023-08-28,South America,Nossobra,2018-08-08
+Guerribra,2023-08-28,South America,Batabra,2017-05-15
+Quidera,2024-09-09,North America,Axera,2022-06-14
+Quidera,2024-09-09,North America,Pulsera,2023-08-28
+Fibera,2024-09-09,North America,Kardera,2022-08-17
+Fibera,2024-09-09,North America,Mykera,2018-08-08
+Ourobra,2024-09-09,South America,Bombra,2022-06-14
+Ourobra,2024-09-09,South America,Utobra,2020-10-21
+Gladibra,2024-09-09,South America,Guerribra,2023-08-28
+Gladibra,2024-09-09,South America,Ousabra,2022-08-17
+Xyla,2024-09-09,Europe,Kendria,2023-08-28
+Xyla,2024-09-09,Europe,Castela,2022-06-14
+Karmeya,2024-09-09,Europe,Damora,2017-12-07
+Karmeya,2024-09-09,Europe,Nadora,2022-03-23
+Malivora,2024-09-09,Europe,Impulsa,2017-05-15
+Malivora,2024-09-09,Europe,Syrena,2022-08-17
+Xymera,2025-11-06,North America,Vandera,2024-05-15
+Xymera,2025-11-06,North America,Runera,2023-08-23
+Blumera,2025-11-06,North America,Ulera,2024-02-14
+Blumera,2025-11-06,North America,Vitera,2023-02-08
+Blumera,2025-11-06,North America,Esmera,2022-03-23
+Monstera,2025-11-06,North America,Wildera,2023-08-28
+Monstera,2025-11-06,North America,Gravitera,2023-05-17
+Tempestera,2025-11-06,North America,Flamera,2023-10-18
+Tempestera,2025-11-06,North America,Temera,2024-08-21
+Tempestera,2025-11-06,North America,Fibera,2024-09-09
+Terribra,2025-11-06,South America,Jacabra,2023-05-17
+Terribra,2025-11-06,South America,Obscubra,2023-08-28
+Sombra,2025-11-06,South America,Quebra,2024-08-21
+Sombra,2025-11-06,South America,Ambra,2023-10-18
+Eclipta,2025-11-06,Europe,Divina,2024-08-21
+Eclipta,2025-11-06,Europe,Malivora,2024-09-09
+Kalanta,2025-11-06,Europe,Zephyra,2024-02-14
+Kalanta,2025-11-06,Europe,Wadira,2023-10-18
+Citra,2025-11-06,Europe,Yara,2024-05-15
+Citra,2025-11-06,Europe,Jaguna,2023-08-23

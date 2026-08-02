@@ -1,0 +1,19 @@
+# Local Python environment and caches
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local machine and editor state
+.DS_Store
+Thumbs.db
+.claude/
+.vscode/
+.idea/
+
+# Local secrets and runtime logs
+.env
+.env.*
+*.log

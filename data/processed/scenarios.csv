@@ -1,0 +1,4 @@
+scenario,range,probability,conditional_median
+Base,"37,000 to 42,000 GP/TC",0.728,39750.610122769314
+Upside,"above 42,000 GP/TC",0.1892,42991.6339389997
+Downside,"below 37,000 GP/TC",0.0828,36215.88072484317

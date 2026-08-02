@@ -1,0 +1,33 @@
+check,entity,value,unit,context
+extreme_expected_value,Urmahlullu the Weakened,43895.69892473118,GP per kill,boss_separate; 186 source samples; low confidence
+extreme_expected_value,Timira the Many-Headed,40948.60813704497,GP per kill,boss_separate; 467 source samples; low confidence
+extreme_expected_value,Earl Osam,40620.0,GP per kill,boss_separate; 100 source samples; low confidence
+extreme_expected_value,Ushuriel,36997.44827586208,GP per kill,boss_separate; 638 source samples; low confidence
+extreme_expected_value,Lord Azaram,36897.02970297029,GP per kill,boss_separate; 101 source samples; low confidence
+extreme_expected_value,Annihilon,33238.2,GP per kill,boss_separate; 375 source samples; low confidence
+extreme_expected_value,Ratmiral Blackwhiskers,32473.910256410258,GP per kill,boss_separate; 156 source samples; low confidence
+extreme_expected_value,Mitmah Vanguard,31911.317567567577,GP per kill,boss_separate; 296 source samples; low confidence
+extreme_expected_value,The Count of the Core,28796.62921348314,GP per kill,boss_separate; 178 source samples; low confidence
+extreme_expected_value,The Baron From Below,28498.888888888887,GP per kill,boss_separate; 135 source samples; low confidence
+extreme_expected_value,Duke Krule,27595.192307692305,GP per kill,boss_separate; 104 source samples; low confidence
+extreme_expected_value,The Many,27215.575620767497,GP per kill,boss_separate; 443 source samples; low confidence
+extreme_expected_value,The Duke of the Depths,26536.03896103897,GP per kill,boss_separate; 154 source samples; low confidence
+extreme_expected_value,Ethershreck,24718.423312883435,GP per kill,boss_separate; 326 source samples; low confidence
+extreme_expected_value,Ravenous Hunger,24451.000000000004,GP per kill,boss_separate; 116 source samples; low confidence
+extreme_expected_value,Horadron,24337.198347107435,GP per kill,boss_separate; 605 source samples; low confidence
+extreme_expected_value,Zavarash,23242.02564102564,GP per kill,boss_separate; 585 source samples; low confidence
+extreme_expected_value,Megasylvan Yselda,22292.857142857145,GP per kill,boss_separate; 210 source samples; low confidence
+extreme_expected_value,The Source of Corruption,22244.238095238103,GP per kill,boss_separate; 105 source samples; low confidence
+extreme_expected_value,Scarlett Etzel,21294.573643410848,GP per kill,boss_separate; 258 source samples; low confidence
+top_emission_creature_share,world-day distribution,0.19414519971238722,99th percentile share,median=0.0419
+top_kill_creature_share,world-day distribution,0.10976773495730976,99th percentile share,median=0.0190
+world_emission_per_activity,Yonabra,5914384.53113409,estimated GP per average online player-day,mean online=162.2; mean coverage=95.9%
+world_emission_per_activity,Terribra,5113131.940275679,estimated GP per average online player-day,mean online=81.5; mean coverage=96.3%
+world_emission_per_activity,Gentebra,4753642.330393453,estimated GP per average online player-day,mean online=218.8; mean coverage=96.6%
+world_emission_per_activity,Collabra,4580636.625005452,estimated GP per average online player-day,mean online=161.9; mean coverage=95.5%
+world_emission_per_activity,Celebra,4472317.354825651,estimated GP per average online player-day,mean online=169.7; mean coverage=96.5%
+world_emission_per_activity,Issobra,4210424.466984063,estimated GP per average online player-day,mean online=100.9; mean coverage=96.0%
+world_emission_per_activity,Kalibra,4146698.5770343696,estimated GP per average online player-day,mean online=189.4; mean coverage=95.9%
+world_emission_per_activity,Inabra,3894098.6594028505,estimated GP per average online player-day,mean online=286.4; mean coverage=95.9%
+world_emission_per_activity,Jadebra,3790270.378850666,estimated GP per average online player-day,mean online=184.5; mean coverage=96.2%
+world_emission_per_activity,Quelibra,3559535.2431207513,estimated GP per average online player-day,mean online=263.2; mean coverage=95.6%

@@ -1,0 +1,5 @@
+band,range_tc,n_offers,share_of_offers,tc_in_band,share_of_tc,n_buy,n_sell,buy_share_of_offers,tc_buy,tc_sell,buy_share_of_tc,median_size,median_fee_rate_pct,note
+Consumption-shaped,0-500,2641,0.6444607125427038,327025,0.01575919667973809,2055,586,0.7781143506247633,257950,69075,0.7887776163901843,75.0,2.0,One or two Store purchases; the size a player buying premium would post
+Heavy consumption,"500-1,500",375,0.09150805270863836,316625,0.01525802507062785,282,93,0.752,241625,75000,0.7631267272009475,800.0,2.0,"Several purchases at once, or a season of premium bought ahead"
+Above the fee cap,"1,500-10,000",574,0.14006832601268912,2536825,0.12224852570010421,425,149,0.740418118466899,1843150,693675,0.7265578035536546,3950.0,0.8080038407505007,"Large enough that the 1,000,000 GP fee cap binds (1,350 TC), which is where arbitrage and speculation become cost-efficient"
+Wholesale,"10,000-",508,0.12396290873596877,17570900,0.8467342525495298,404,104,0.7952755905511811,15019225,2551675,0.8547783551212517,31462.5,0.16219768590353975,"Tens of thousands of coins; consistent with converting money to gold at scale, or with an inventory position"

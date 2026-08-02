@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="460.8pt" height="108pt" viewBox="0 0 460.8 108" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-08-02T13:45:41.620741</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.1, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 108 
+L 460.8 108 
+L 460.8 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="FillBetweenPolyCollection_1">
+    <defs>
+     <path id="md947d0043f" d="M 20.945455 -37.636364 
+L 20.945455 -37.636364 
+L 160.581818 -26.727273 
+L 300.218182 -15.818182 
+L 439.854545 -4.909091 
+L 439.854545 -103.090909 
+L 439.854545 -103.090909 
+L 300.218182 -77.636364 
+L 160.581818 -55.818182 
+L 20.945455 -37.636364 
+z
+"/>
+    </defs>
+    <g clip-path="url(#pca9b72b809)">
+     <use xlink:href="#md947d0043f" x="0" y="108" style="fill: #f28e2b; fill-opacity: 0.22"/>
+    </g>
+   </g>
+   <g id="line2d_1">
+    <path d="M 20.945455 70.363636 
+L 160.581818 66.727273 
+L 300.218182 61.272727 
+L 439.854545 54 
+" clip-path="url(#pca9b72b809)" style="fill: none; stroke: #4e79a7; stroke-width: 1.6; stroke-linecap: round"/>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pca9b72b809">
+   <rect x="0" y="0" width="460.8" height="108"/>
+  </clipPath>
+ </defs>
+</svg>

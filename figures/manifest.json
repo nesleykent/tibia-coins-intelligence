@@ -1,0 +1,206 @@
+{
+ "fig00_price_distribution": {
+  "title": "Settled worlds price within a narrow band; the spread is all young worlds",
+  "subtitle": "Latest Tibia Coin price on every world, ranked",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "One point per world on the last date it is observed. Converged worlds span 36,668 to 43,884 GP/TC, a cross-world standard deviation of 4.9% in logs. Including worlds still in launch-phase price discovery widens that to 26.4% and stretches the range from 12,030 to 54,001 - the dispersion in this market is a statement about young worlds, not about disagreement among established ones."
+ },
+ "fig01_index": {
+  "title": "The market has risen 8.6% since April 2024, not 44%",
+  "subtitle": "Aggregate Tibia Coin price, GP per TC, converged worlds",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "The archive's cross-section grows from a median of 1 world per date in 2023 to 85 in 2026, so a basket mean mixes price change with composition change. The headline index is chain-linked: each day's return is the mean log return across worlds observed on both that day and the previous day, which is invariant to entry and exit. Shown from the first date carrying at least 10 converged worlds. Converged = 200+ observations, regular world type, not a launch inside the window."
+ },
+ "fig02_dispersion": {
+  "title": "Dispersion settles just above the cost of arbitraging it away",
+  "subtitle": "Cross-world standard deviation of log price, percent",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "The 4% reference line is twice the documented 2% Market offer fee, the round trip a small offer pays; it is not a fitted parameter, and larger offers pay far less because the fee is capped (Exhibit 5.5). Converged worlds only, restricted to dates carrying at least 10 observed worlds."
+ },
+ "fig03_arbitrage_band": {
+  "title": "Gaps only close once they exceed the cost of closing them",
+  "subtitle": "Next-day movement of the cross-world price gap, percentage points per day",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Positive means the gap narrowed. Bars show means with 95% Newey-West intervals. The deviation is lagged one day, since a contemporaneous gap is mechanically correlated with the same-day return. Bin edges are chosen by hand and can only locate the threshold to within a bucket; a threshold autoregression estimates it formally at 1.79% (Exhibit 6.2). No fee figure was supplied to the estimator."
+ },
+ "fig04_halflife": {
+  "title": "Measurement noise makes the one-day half-life look far too short",
+  "subtitle": "Implied half-life of a cross-world price gap, by estimation horizon",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Half-life implied by rho(h) in dev(t+h) = rho(h) x dev(t) with world fixed effects. The monotone rise with h is the signature of classical measurement error in the daily price. Mean daily return autocorrelation is -0.119, confirming transitory noise. Converged worlds, dates with at least 10 observed worlds."
+ },
+ "fig05_diurnal_bias": {
+  "title": "A single-instant player count misstates even concurrent activity",
+  "subtitle": "Snapshot bias factor for concurrent players online, by hour of day and region",
+  "source": "Source: GuildStats.eu /online-counter (robots.txt: Allow: /).",
+  "note": "Computed from 15-minute online-counter series for all 93 worlds over the 7 days ending 30 Jul 2026. Source labels are Tibia server time (CEST) and are converted to UTC here. A value of 2.8 means a snapshot at that hour understates that world's true daily average by 2.8 times. Because the curves differ in shape and not merely in level, no single correction factor can repair an instantaneous count. Note that concurrent players online measures activity, a flow; it is not the resident population of a world, which is a stock (see Exhibit 4.2)."
+ },
+ "fig05b_region_bias": {
+  "title": "The same snapshot understates one region and overstates another",
+  "subtitle": "Ratio of true daily-average players online to an instantaneous 04:45 UTC count",
+  "source": "Source: GuildStats.eu /online-counter (robots.txt: Allow: /).",
+  "note": "A value of 1.0 would mean the snapshot is unbiased. Because the error differs by region rather than being a common scale factor, no single correction can repair an instantaneous count - it rotates the cross-section. Computed from 15-minute online-counter series for all 93 worlds over the 7 days ending 30 Jul 2026. The full numeric detail, including peak hours and a second snapshot time, is in Appendix E."
+ },
+ "fig06_events": {
+  "title": "Coin prices are weaker on event days, but the cause is not identifiable",
+  "subtitle": "Difference in daily return versus non-event days, converged worlds",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "World fixed effects with standard errors two-way clustered by world and date; bars show 95% intervals. Every event label is global with no world dimension, so these coefficients are confounded with anything else occurring on the same dates and are absorbed entirely once date fixed effects are added. Association, not causation."
+ },
+ "fig07_young_worlds": {
+  "title": "Provenance, not age, sets a new world's opening price",
+  "subtitle": "First observed price against world age, worlds created inside the window",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Worlds are classified by documented creation date from GuildStats plus absence from the merge register, never by observed price, which would select on the outcome. Points at age zero are jittered horizontally for visibility. Merge destinations open at mature prices despite being days old; genuine launches open one to two orders of magnitude lower and converge over roughly 500 days."
+ },
+ "fig08_worldtype": {
+  "title": "Optional-PvP worlds trade about 4% above Open-PvP worlds",
+  "subtitle": "Mean latest price by PvP type, converged worlds",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Points are group means with 95% confidence intervals; the dashed line is the all-world mean. Groups are defined by documented world attributes, never by price. A regression controlling for BattlEye cohort and engagement puts the Optional-PvP premium at 4.3% (Table 5.7). BattlEye status partitions the same worlds a second way and is reported there rather than here, since plotting both on one axis would count every world twice."
+ },
+ "fig09_orderbook": {
+  "title": "Counting orders is not measuring depth",
+  "subtitle": "Order-count ratio against true quantity depth, one point per world, log scales",
+  "source": "Source: TibiaMarket.top /market_board, item_id 22118, single snapshot 30 Jul 2026.",
+  "note": "Each point is one world's live order book. Counts of standing orders are not depth: a long tail of tiny non-executable bids far below market inflates the count without contributing executable size. Any demand imbalance inferred from order-count ratios is an artefact."
+ },
+ "fig10_seasonality": {
+  "title": "Autumn is the strongest stretch; day of week barely matters",
+  "subtitle": "Mean daily log return by calendar bucket, converged worlds",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Unconditional means by bucket. Days are UTC-floored, but the Tibia economic day begins at server save, so day-of-week buckets carry a known misalignment. Event days are not excluded and CipSoft's events cluster seasonally, so the monthly pattern and the event effects are largely the same variation viewed two ways."
+ },
+ "fig11_clustering": {
+  "title": "Ignoring cross-world dependence overstates precision by 3.6 times",
+  "subtitle": "Standard error of the arbitrage coefficient under four clustering assumptions",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "The point estimate is identical in all four columns; only the standard error changes. Arbitrage links worlds, so observations on the same date are not independent across worlds, and observations on the same world are not independent across dates."
+ },
+ "fig12_forecast_fan": {
+  "title": "The informative output is the interval width, not the central path",
+  "subtitle": "Inabra: observed price and bootstrapped forecast, 50/80/90% intervals",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Bootstrapped random walk, 5,000 moving-block paths with block length 10 days drawn from the world's own trailing-year returns. Drift is shrunk empirical-Bayes and capped at 0.04% per day, with no imposed level mean reversion. Because the level carries a unit root, the median path is flat by construction."
+ },
+ "fig13_population": {
+  "title": "Population is irrelevant to the price; engagement is not",
+  "subtitle": "Latest price against the character roster, concurrent activity, and their ratio",
+  "source": "Sources: price archive item_id 22118; TibiaVIP world list (Total column); GuildStats.eu /online-counter.",
+  "note": "Population is the world's full character roster, 6,222,595 characters across the 93 worlds. Concurrent players online is an activity flow. Engagement is their ratio. Annotations are coefficients on log price controlling for PvP type and BattlEye cohort; the engagement coefficient also controls for population. Roster size alone carries no relationship with price, while engagement does - so what matters is how much of a world's roster is actually playing, not how large the roster is."
+ },
+ "fig14_drawdown": {
+  "title": "A 15% drawdown has already occurred once inside the sample",
+  "subtitle": "Drawdown of the chain-linked index from its running peak, percent",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Computed on the chain-linked index level. Descriptive only: the level is non-stationary, so drawdown depth carries no implication for the speed or the likelihood of recovery."
+ },
+ "fig15_volatility": {
+  "title": "Most established worlds move about 1% a day",
+  "subtitle": "Distribution of daily return volatility, one observation per converged world",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Computed over each world's full history. Returns are taken only between consecutive observed days; gaps are not bridged. Thin worlds sit in the right tail, consistent with the liquidity relationships in Section 5.6."
+ },
+ "fig16_population_history": {
+  "title": "Activity history extends far beyond the price window",
+  "subtitle": "Total daily-average concurrent players online across the 93 sampled worlds",
+  "source": "Source: GuildStats.eu /online-counter (robots.txt: Allow: /).",
+  "note": "Sums only the 93 worlds present in the price sample, so worlds that merged away before the window are excluded and the early level understates the true whole-game total. The level is therefore not comparable across time; the series establishes coverage rather than measuring the game's growth. This is concurrent activity, a flow, not the resident population of the game."
+ },
+ "fig17_fee_schedule": {
+  "title": "The 4% arbitrage band is the small trader's cost, not everyone's",
+  "subtitle": "Round-trip Market fee against offer size, at the median quoted price",
+  "source": "Sources: documented Market mechanics; TibiaMarket.top /market_board, 4,098 live offers across 93 worlds, 30 Jul 2026.",
+  "note": "Each offer costs 2% of value, floored at 20 GP and capped at 1,000,000 GP, so the effective rate falls once an offer exceeds 50,000,000 GP - about 1,333 TC at the median price. Orange points are the observed median round-trip cost by offer-size decile. The cap binds on 21% of live offers by count but 96% by value. Offer sizes are themselves capped at 64,000 units, a limit 45 live offers sit exactly on."
+ },
+ "fig18_tar_profile": {
+  "title": "The friction point is estimated at 1.8%, not imposed at 4%",
+  "subtitle": "Hansen threshold search: likelihood ratio against each candidate threshold",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Band-threshold autoregression on 30,044 world-days across 61 converged worlds. The threshold is the value minimising the residual sum of squares; the shaded region is Hansen's 95% confidence set, the values whose likelihood ratio falls below the 7.35 critical value. Linearity is rejected decisively (F = 81, bootstrap p < 0.001, 300 replications). The 4% line is the round-trip Market fee faced by a small offer; the fee cap means larger offers pay far less (Exhibit 5.3), so a threshold below 4% is what the capped fee schedule predicts."
+ },
+ "fig19_tar_regimes": {
+  "title": "Inside the band the gap is a random walk; outside it, it reverts",
+  "subtitle": "Persistence against the random-walk benchmark, with 95% intervals",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Bars are the estimated autoregressive coefficient in each regime; the vertical rule is the random-walk benchmark of 1.00 and the thin line is the 95% interval. Standard errors clustered by world. Inside the band the coefficient is 1.043, indistinguishable from the benchmark (t = +1.88), so there is no restoring force. Outside it the coefficient is 0.890, decisively below it (t = -11.9). 13% of world-days sit inside the band."
+ },
+ "fig19b_band_stability": {
+  "title": "Small gaps widen and large gaps close, in every year of the sample",
+  "subtitle": "Mean next-day gap closure (percentage points per day) by year and gap size",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Blue is a closing gap, red a widening one, and the colour scale is centred on zero so the sign is read directly. Every row changes sign in the same place, which is what makes the threshold a stable feature rather than an artefact of one period. 2023 is omitted: the archive observes too few worlds per date that year for a cross-world mean to be defined."
+ },
+ "fig20_spread_decomposition": {
+  "title": "Traders pay far less than the quoted spread suggests",
+  "subtitle": "Cost of a Tibia Coin round trip under five measures, percent of value",
+  "source": "Sources: price archive item_id 22118; TibiaMarket.top /market_board; documented Market mechanics.",
+  "note": "The Roll (1984) effective spread is inferred from the negative first-order autocovariance of returns and measures what trades actually pay; at 0.84% it is about 20% of the quoted spread, which is what one expects when most volume executes inside the quotes via resting limit orders. Medians across 61 converged worlds (interquartile range 0.53% to 1.51%); the autocovariance is negative, as Roll's model requires, on 45 of them. The dashed line is the friction point estimated in Section 6.3.1 from prices alone - it falls between the capped and uncapped fee, not at either."
+ },
+ "fig21_variance_decomposition": {
+  "title": "Daily coin returns are almost entirely local, not market-wide",
+  "subtitle": "Systematic share of return variance, and principal components",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Left: R-squared from regressing each world's daily return on a leave-one-out mean of all other worlds, so no world is regressed on itself. Right: share of total variance explained by each principal component of the standardised return matrix (44 worlds, 324 dates). The contrast with the level is the point: prices share a single common stochastic trend (Section 6.3.2), yet day-to-day movement is overwhelmingly idiosyncratic."
+ },
+ "fig22_variance_ratio": {
+  "title": "Prices revert at short horizons, but inside the spread",
+  "subtitle": "Lo-MacKinlay variance ratios across converged worlds, interquartile band",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "A variance ratio of one is a random walk; below one indicates mean reversion at that horizon. The heteroskedasticity-robust statistic rejects the random walk at q = 2 on 19 of 52 worlds. The reversion is the bid-ask bounce identified in Exhibit 5.6: a Roll effective spread of 0.84% mechanically produces negative return autocorrelation without implying any profit opportunity, since the reversal happens between the bid and the ask rather than across it."
+ },
+ "fig23_quantile": {
+  "title": "Adjustment to the cross-world gap is concentrated in large up-moves",
+  "subtitle": "Quantile regression of the daily return on the lagged deviation, world effects absorbed",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "A more negative coefficient means faster correction of the gap. Adjustment at the 90th percentile of the return distribution is roughly three times that at the 10th, so the band is enforced mainly by episodes of sharp upward repricing rather than by steady drift. Shaded band is the 95% interval; the dashed line is the mean-regression estimate of Table 6.1."
+ },
+ "fig26_venue_map": {
+  "title": "A coin can be sold three ways; this report prices one of them",
+  "subtitle": "Settlement venues for a Tibia Coin, and the friction each imposes",
+  "source": "Sources: documented Market mechanics; Tibia Token Service Agreement (tibia.com); TibiaToken contract 0x111B95C2b65CbA53aB4E0AaDA12f55985045E446, BNB Smart Chain.",
+  "note": "Schematic, not an estimate. The three venues are not perfect substitutes - they differ in settlement asset, speed and who carries counterparty risk - so a seller picks the lowest effective cost rather than the best technology. The in-game Market is the only venue this study observes, and every price, band and forecast in this report is therefore a within-venue result. The token venue is measurable in one respect: 5,621,176 TIB existed at block 113,534,402, each corresponding to a Tibia Coin held outside the in-game system."
+ },
+ "fig27_fundamentals_skill": {
+  "title": "Fundamentals do not make the level predictable, and barely move the relative price",
+  "subtitle": "Out-of-sample R\u00b2 against a random walk; above zero beats the benchmark",
+  "source": "Sources: price archive item_id 22118; tibiamaps/tibia-kill-stats; GuildStats.eu /online-counter. Expanding-origin walk-forward, 6 folds, horizon purged.",
+  "note": "Bars below the line are models that lose to predicting no change. On the level, every model loses at every horizon. On the relative price the picture is better but small: of 42 model-horizon comparisons, 4 survives a Benjamini-Hochberg correction at 5% - the starred bar, a random forest at 7 days, which beat the random walk in 5 of 6 folds with an out-of-sample R\u00b2 of 0.017. 61 converged worlds, 2025-12-05 to 2026-07-30."
+ },
+ "fig28_scenarios": {
+  "title": "Three months out, the most likely outcome is the price it is at now",
+  "subtitle": "Chain-linked index with its simulated distribution, and the probability of each range",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Block bootstrap of 40,000 paths in ten-day blocks, so volatility clustering and fat tails survive resampling, propagated at the shrunk and capped drift of +0.0031% per day. The bands are computed from the simulated paths, not assigned. The probability the index sits below today's level in three months is 49% - a near-symmetric distribution is what an unforecastable level looks like."
+ },
+ "fig29_live_predictions": {
+  "title": "What the model says today: every world ranked by expected convergence",
+  "subtitle": "Predicted 7-day change in relative position, with an 80% conformal interval",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Output of models/deviation_model.pkl, the artefact shipped with this report. Bars are point predictions and whiskers the 80% interval, whose width was calibrated on held-out residuals rather than assumed. Worlds outside the arbitrage band are highlighted; Section 7.5.3 gives the rule for when a gap is wide enough to act on. The 12 most and least favoured of 61 worlds are shown; the full ranking is in latest_predictions.csv. The model predicts relative position only - it emits no forecast of the price level, because Section 6.6.2 finds none is supportable."
+ },
+ "fig30_participants": {
+  "title": "The book holds weeks of intent; a day's trade is one ordinary order",
+  "subtitle": "Live order book by order size, and resting depth against executed volume",
+  "source": "Source: TibiaMarket.top /market_board, item_id 22118, single snapshot 30 Jul 2026. Executed volumes from the price archive, item_id 22118.",
+  "note": "Left: orders under 500 TC - the size of a month of premium - are 64% of orders but 1.6% of coins, while orders above 10,000 TC are 85% of coins. Right: the median world rests 137,850 TC of bids and executes 2,575 TC a day - the book is 54 times a day's flow, and 42% of wholesale bids sit more than 20% below the mid where they cannot fill. A resting order is an intention, not a trade: a consumer buying at the going price never appears in the book at all. Executed volumes are lot counts converted at the 25-coin lot the Market enforces."
+ },
+ "fig31_stability": {
+  "title": "The edge is real early and absent late, which the average hides",
+  "subtitle": "Out-of-sample skill fold by fold, and the market states the model was trading through",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Left: the random forest on the cross-world relative return. At seven days it runs +0.060 in the first fold and -0.004 in the last; at thirty the average of +0.079 falls to +0.022 once the first fold is removed. The rank correlation between fold order and skill is negative at every horizon. With five or six folds that trend is not itself significant, so decay and a favourable early sample cannot be separated - which is the reason Section 6.6.3 warns against reading the averages as what the next quarter would deliver. Right: the 4 states a Gaussian hidden Markov model selects by BIC, with mean persistence 0.92."
+ },
+ "fig32_strategy_horizon": {
+  "title": "The cost is paid once, so the trade becomes profitable by being held",
+  "subtitle": "Gross return on the cross-world convergence trade against a flat round-trip cost",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Deviations past the estimated band, sorted into deciles of size. The shaded area is return kept after the cheapest documented round trip. The median-gap line shows the same trade on an ordinary signal, which never clears the cost. Figures are means over overlapping windows; significance is assessed with Newey-West standard errors in the accompanying table, not from this chart."
+ },
+ "fig33_holdout": {
+  "title": "The quarterly figure is the largest and the least supported",
+  "subtitle": "Net return of the top-decile convergence trade, and the out-of-sample sample behind it",
+  "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
+  "note": "Left: mean net return after the cheapest documented round trip, in the training period and in a holdout that was never inspected while the rule was formed; only the decile cutoff crosses the split. Right: the holdout's effective sample, being its length divided by the holding period, since daily observations of an h-day return share h-1 days of data. At ninety-one days the holdout contains a single independent window, so the t-statistic reported for it carries no information whatever its size."
+ }
+}

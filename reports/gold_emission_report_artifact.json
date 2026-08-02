@@ -1,0 +1,4887 @@
+{
+ "surface": "report",
+ "manifest": {
+  "version": 1,
+  "surface": "report",
+  "title": "Reconstructing Gold Emission from Tibia Kill Statistics",
+  "description": "Technical reconstruction of direct, potential, and realization-adjusted GP emission.",
+  "generatedAt": "2026-08-02T17:51:25.096398+00:00",
+  "sources": [
+   {
+    "id": "src_daily",
+    "label": "Daily world emission series",
+    "path": "data/processed/gold_emission_daily.csv"
+   },
+   {
+    "id": "src_creatures",
+    "label": "Canonical creature GP values",
+    "path": "data/processed/creature_gold_value.csv"
+   },
+   {
+    "id": "src_models",
+    "label": "Equivalent econometric models",
+    "path": "data/processed/gold_emission_model_comparison.csv"
+   },
+   {
+    "id": "src_metrics",
+    "label": "Report headline metrics",
+    "path": "reports/gold_emission_report_artifact.json",
+    "query": {
+     "description": "Read the single reviewed headline-metrics row assembled by the report generator.",
+     "engine": "SQLite",
+     "language": "sql",
+     "sql": "SELECT * FROM report_metrics;",
+     "tables_used": [
+      "report_metrics"
+     ],
+     "metric_definitions": [
+      "Coverage is the share of non-boss deaths with a reliable loot model or source-verified zero.",
+      "Best holdout improvement is 1 - model RMSE / random-walk RMSE."
+     ]
+    }
+   },
+   {
+    "id": "src_daily_chart",
+    "label": "Daily normalized emission query",
+    "path": "data/processed/gold_emission_daily.csv",
+    "query": {
+     "description": "Aggregate direct and 50%-realization GP per average online player by date.",
+     "engine": "SQLite",
+     "language": "sql",
+     "sql": "SELECT date, 'Direct coins' AS series, SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date UNION ALL SELECT date, 'Realized estimate (50%)' AS series, SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date ORDER BY date, series;",
+     "tables_used": [
+      "gold_emission_daily"
+     ],
+     "filters": [
+      "low_quality_flag = 0"
+     ],
+     "metric_definitions": [
+      "GP per average online player = summed world GP / summed world average-online players for each date."
+     ]
+    }
+   },
+   {
+    "id": "src_headline_models",
+    "label": "Matched-horizon coefficient query",
+    "path": "data/processed/gold_emission_model_comparison.csv",
+    "query": {
+     "description": "Select matched shock-lag headline models and convert coefficients to percentage points.",
+     "engine": "SQLite",
+     "language": "sql",
+     "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct coins' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n FROM gold_emission_model_comparison WHERE model_type = 'shock_lag' AND lag_or_window_days = horizon_days AND horizon_days IN (1, 7, 30) AND series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+     "tables_used": [
+      "gold_emission_model_comparison"
+     ],
+     "filters": [
+      "model_type = shock_lag",
+      "lag equals outcome horizon",
+      "horizons 1, 7, and 30 days"
+     ],
+     "metric_definitions": [
+      "Coefficient_pp is the log-return coefficient multiplied by 100."
+     ]
+    }
+   },
+   {
+    "id": "src_oos_chart",
+    "label": "Holdout forecast query",
+    "path": "data/processed/gold_emission_oos.csv",
+    "query": {
+     "description": "Select comparable holdout models and convert RMSE improvement to percentage points.",
+     "engine": "SQLite",
+     "language": "sql",
+     "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct coins' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, rmse_improvement_pct * 100.0 AS rmse_improvement_pp, random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n FROM gold_emission_oos WHERE series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+     "tables_used": [
+      "gold_emission_oos"
+     ],
+     "metric_definitions": [
+      "RMSE improvement = 1 - model RMSE / zero-return random-walk RMSE."
+     ]
+    }
+   },
+   {
+    "id": "src_coverage_table",
+    "label": "Creature coverage query",
+    "path": "data/processed/creature_gold_value.csv",
+    "query": {
+     "description": "Count canonical creatures and deaths by modeled coverage category.",
+     "engine": "SQLite",
+     "language": "sql",
+     "sql": "SELECT coverage_category, COUNT(*) AS creatures, SUM(total_kills) AS deaths, CAST(SUM(total_kills) AS REAL) / (SELECT SUM(total_kills) FROM creature_gold_value) AS death_share FROM creature_gold_value GROUP BY coverage_category ORDER BY deaths DESC;",
+     "tables_used": [
+      "creature_gold_value"
+     ],
+     "metric_definitions": [
+      "Death share uses all positive creature kills in the archive as denominator."
+     ]
+    }
+   },
+   {
+    "id": "src_top_creatures",
+    "label": "Highest potential GP creature query",
+    "path": "data/processed/creature_gold_value.csv",
+    "query": {
+     "description": "Rank reliable non-boss creatures by expected potential GP per kill.",
+     "engine": "SQLite",
+     "language": "sql",
+     "sql": "SELECT canonical_name, total_kills, loot_samples, loot_confidence, expected_direct_coin_gp_per_kill, expected_npc_sale_gp_per_kill, expected_total_potential_gp_per_kill, loot_source_url FROM creature_gold_value WHERE coverage_category = 'modeled' AND expected_total_potential_gp_per_kill IS NOT NULL ORDER BY expected_total_potential_gp_per_kill DESC LIMIT 15;",
+     "tables_used": [
+      "creature_gold_value"
+     ],
+     "filters": [
+      "coverage_category = modeled",
+      "top 15"
+     ],
+     "metric_definitions": [
+      "Potential GP per kill = direct coin GP + maximum guaranteed NPC-sale GP."
+     ]
+    }
+   }
+  ],
+  "blocks": [
+   {
+    "id": "title",
+    "type": "markdown",
+    "body": "# Reconstructing Gold Emission from Tibia Kill Statistics"
+   },
+   {
+    "id": "summary",
+    "type": "markdown",
+    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 96.2% of non-boss deaths across 21,412 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.17% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
+    "sourceId": "src_models"
+   },
+   {
+    "id": "metrics",
+    "type": "metric-strip",
+    "cardIds": [
+     "coverage_card",
+     "world_days_card",
+     "median_emission_card",
+     "holdout_card"
+    ]
+   },
+   {
+    "id": "production_finding",
+    "type": "markdown",
+    "body": "## The reconstructed series measures economic scale, not observed sales\n\nThe direct-coin line is the narrowest emission estimate. The 50% line adds half of the expected NPC-sale value and therefore remains a scenario, not an observation. Normalizing by average online players makes worlds comparable, while the daily archive coverage field prevents missing loot tables from being mistaken for zero production."
+   },
+   {
+    "id": "daily_chart_block",
+    "type": "chart",
+    "chartId": "daily_chart"
+   },
+   {
+    "id": "model_finding",
+    "type": "markdown",
+    "body": "## Monetary weighting does not create a stable price signal\n\nAt matched horizons, raw kills, direct coins, potential emission, and the 50% realization scenario all have small coefficients relative to their clustered uncertainty. Isolated significance elsewhere in the lag grid is not robust across coverage thresholds, boss treatment, realization rates, and holdout evaluation. This supports a descriptive null, not proof that gold supply can never matter.",
+    "sourceId": "src_models"
+   },
+   {
+    "id": "coefficient_chart_block",
+    "type": "chart",
+    "chartId": "coefficient_chart"
+   },
+   {
+    "id": "holdout_finding",
+    "type": "markdown",
+    "body": "## Holdout forecasts reject the apparent in-sample improvements\n\nA positive bar means lower RMSE than a zero-return random walk. Nearly every monetary specification is at or below zero, and the deterioration grows at 30 days. The appropriate conclusion is that the reconstructed production variables do not add dependable directional forecast information in this sample.",
+    "sourceId": "src_models"
+   },
+   {
+    "id": "oos_chart_block",
+    "type": "chart",
+    "chartId": "oos_chart"
+   },
+   {
+    "id": "scope",
+    "type": "markdown",
+    "body": "## Scope, definitions, and economic boundary\n\n- **GP (gold pieces):** Tibia's in-game monetary unit.\n- **NPC:** a non-player character. Only guaranteed prices paid by an NPC to a player count.\n- **Loot table:** possible drops plus empirical frequency and quantity evidence.\n- **Direct emission:** nominal Gold, Platinum, and Crystal Coins expected to drop.\n- **Potential emission:** direct emission plus the maximum guaranteed NPC value of sellable loot.\n- **Realized emission estimate:** direct emission plus 25%, 50%, 75%, or 100% of potential NPC sales.\n- **Cumulative emission index:** summed modeled flow since each world's first sample date; it is not the true money stock.\n\nInter-player Market values are zero because they transfer existing GP between accounts. No net-flow or true monetary-stock claim is made because measurable sink data are unavailable."
+   },
+   {
+    "id": "creature_method",
+    "type": "markdown",
+    "body": "## Canonical creatures and loot values remain auditable\n\nNames are normalized with the kill archive's explicit alias map and stable identifiers. The latest TibiaWiki `Loot2` block supplies empirical kills, times dropped, quantities, and item totals. Tables below 100 source kills remain insufficient rather than receiving an invented value. Bosses are identified from TibiaWiki plus the Bosstiary list and retained outside the main series.",
+    "sourceId": "src_creatures"
+   },
+   {
+    "id": "coverage_table_block",
+    "type": "table",
+    "tableId": "coverage_table"
+   },
+   {
+    "id": "examples",
+    "type": "markdown",
+    "body": "## High-value examples are mostly low-frequency encounters\n\nThe audit table ranks standard, non-boss creatures by potential GP per kill. Large values must be read alongside source sample size and confidence. Across world-days, the largest single-creature contribution reaches only 19.4% at the 99th percentile, so the aggregate result is usually not driven by one creature.",
+    "sourceId": "src_creatures"
+   },
+   {
+    "id": "creature_table_block",
+    "type": "table",
+    "tableId": "creature_table"
+   },
+   {
+    "id": "methodology",
+    "type": "markdown",
+    "body": "## Methodology maps the fourteen requested steps to reproducible outputs\n\n1. Canonicalize every positive kill-stat creature and preserve aliases.\n2. Cache complete loot-statistics pages with revision IDs and collection timestamps.\n3. Classify coins, NPC-sellable items, and zero-valued player-only items.\n4. Compute item and creature expected GP per kill with auditable components.\n5. Separate direct, potential, and four realization scenarios.\n6. Aggregate world-day flows and cumulative indices.\n7. Measure death coverage and flag sub-80% or partial-date observations.\n8. Separate bosses and retain event/special-creature flags.\n9. Normalize by average online players, active characters, and 1,000 kills.\n10. Test 1/7/14/30/60/90-day lags and 7/14/30/60/90-day moving averages.\n11. Build cumulative gross-emission indices without calling them true stocks.\n12. Reestimate equivalent world/date fixed-effects specifications.\n13. Vary realization, coverage, NPC access assumptions, and boss inclusion.\n14. Inspect extreme creatures, concentration, and per-player world rankings."
+   },
+   {
+    "id": "limitations",
+    "type": "markdown",
+    "body": "## Limitations define what the estimates cannot establish\n\n- Fan-site probabilities are empirical and revision-specific; rare boss loot remains noisy.\n- NPC buyer metadata does not fully encode travel, faction, reputation, or quest access. The maximum-price scenario is potential; the conservative scenario therefore uses direct coins only.\n- Collection and actual NPC sale behavior are unobserved, so realization rates are parameters.\n- Event flags are retained without multiplying loot because event-specific mechanics are not encoded in the source cache.\n- Summoned or training creatures receive zero only with source evidence; unmatched entries remain uncovered.\n- Gold sinks and the initial gold stock are unavailable, preventing a net-stock estimate.\n- Fixed-effects and temporal precedence do not identify causality."
+   },
+   {
+    "id": "next_steps",
+    "type": "markdown",
+    "body": "## Recommended next steps\n\n1. Collect item pickup and NPC-sale telemetry, if accessible, to estimate realization rates instead of parameterizing them.\n2. Build a reviewed NPC-access dimension so the conservative item scenario can include broadly accessible buyers.\n3. Measure major sinks—Market fees, blessings, imbuements, travel, and NPC purchases—to construct a net-flow index.\n4. Extend the kill archive before drawing conclusions at 60- and 90-day horizons.\n5. Monitor coverage and source revisions automatically; do not silently backfill missing creatures."
+   },
+   {
+    "id": "further_questions",
+    "type": "markdown",
+    "body": "## Further questions\n\n- Do realization rates vary systematically by item weight, unit value, or world activity?\n- Are event-period emission shocks absorbed through Tibia Coin demand, other sinks, or gold hoarding?\n- Does a measured net-flow index explain the common price level better than gross emission?\n- Can longer history distinguish a slow stock effect from the short-horizon predictive null?"
+   }
+  ],
+  "cards": [
+   {
+    "id": "coverage_card",
+    "dataset": "metrics",
+    "metrics": [
+     {
+      "label": "Modeled death coverage",
+      "field": "coverage",
+      "format": "percent"
+     },
+     {
+      "label": "Threshold",
+      "field": "coverage_threshold",
+      "format": "percent"
+     }
+    ],
+    "sourceId": "src_metrics"
+   },
+   {
+    "id": "world_days_card",
+    "dataset": "metrics",
+    "metrics": [
+     {
+      "label": "World-days reconstructed",
+      "field": "world_days",
+      "format": "number"
+     },
+     {
+      "label": "Low quality",
+      "field": "low_quality_days",
+      "format": "number"
+     }
+    ],
+    "sourceId": "src_metrics"
+   },
+   {
+    "id": "median_emission_card",
+    "dataset": "metrics",
+    "metrics": [
+     {
+      "label": "Median realized estimate, GP",
+      "field": "median_realized_gp",
+      "format": "number"
+     }
+    ],
+    "sourceId": "src_metrics"
+   },
+   {
+    "id": "holdout_card",
+    "dataset": "metrics",
+    "metrics": [
+     {
+      "label": "Best holdout RMSE improvement",
+      "field": "best_oos",
+      "format": "percent",
+      "signed": true
+     }
+    ],
+    "sourceId": "src_metrics"
+   }
+  ],
+  "charts": [
+   {
+    "id": "daily_chart",
+    "title": "Daily GP emission per average online player",
+    "description": "The 50% scenario remains an estimated realization rate, not observed item sales.",
+    "type": "line",
+    "dataset": "daily_trend",
+    "encodings": {
+     "x": {
+      "field": "date"
+     },
+     "y": {
+      "field": "gp_per_average_online_player"
+     },
+     "color": {
+      "field": "series"
+     }
+    },
+    "sourceId": "src_daily_chart"
+   },
+   {
+    "id": "coefficient_chart",
+    "title": "Emission variable coefficients at matched horizons",
+    "description": "Forward-return coefficients in percentage points; all headline estimates overlap zero after clustered uncertainty.",
+    "type": "bar",
+    "dataset": "headline_models",
+    "encodings": {
+     "x": {
+      "field": "series_label"
+     },
+     "y": {
+      "field": "coefficient_pp"
+     },
+     "color": {
+      "field": "horizon"
+     }
+    },
+    "options": {
+     "grouping": "grouped",
+     "orientation": "vertical"
+    },
+    "sourceId": "src_headline_models"
+   },
+   {
+    "id": "oos_chart",
+    "title": "Out-of-sample RMSE change versus random walk",
+    "description": "Values at or below zero indicate no forecast improvement.",
+    "type": "bar",
+    "dataset": "oos",
+    "encodings": {
+     "x": {
+      "field": "series_label"
+     },
+     "y": {
+      "field": "rmse_improvement_pp"
+     },
+     "color": {
+      "field": "horizon"
+     }
+    },
+    "options": {
+     "grouping": "grouped",
+     "orientation": "vertical"
+    },
+    "sourceId": "src_oos_chart"
+   }
+  ],
+  "tables": [
+   {
+    "id": "coverage_table",
+    "title": "Creature coverage by source status",
+    "description": "All canonical creatures and deaths in the archive window.",
+    "dataset": "coverage",
+    "columns": [
+     {
+      "field": "coverage_category",
+      "label": "Status",
+      "type": "text"
+     },
+     {
+      "field": "creatures",
+      "label": "Creatures",
+      "type": "number"
+     },
+     {
+      "field": "deaths",
+      "label": "Deaths",
+      "type": "number"
+     },
+     {
+      "field": "death_share",
+      "label": "Death share",
+      "type": "percent"
+     }
+    ],
+    "defaultSort": {
+     "field": "deaths",
+     "direction": "desc"
+    },
+    "sourceId": "src_coverage_table"
+   },
+   {
+    "id": "creature_table",
+    "title": "Highest potential GP per non-boss creature kill",
+    "description": "Standard modeled creatures only; exact values retained for audit.",
+    "dataset": "top_creatures",
+    "columns": [
+     {
+      "field": "canonical_name",
+      "label": "Creature",
+      "type": "text"
+     },
+     {
+      "field": "total_kills",
+      "label": "Archive kills",
+      "type": "number"
+     },
+     {
+      "field": "loot_samples",
+      "label": "Loot samples",
+      "type": "number"
+     },
+     {
+      "field": "loot_confidence",
+      "label": "Confidence",
+      "type": "text"
+     },
+     {
+      "field": "expected_direct_coin_gp_per_kill",
+      "label": "Direct GP/kill",
+      "type": "number"
+     },
+     {
+      "field": "expected_npc_sale_gp_per_kill",
+      "label": "NPC GP/kill",
+      "type": "number"
+     },
+     {
+      "field": "expected_total_potential_gp_per_kill",
+      "label": "Potential GP/kill",
+      "type": "number"
+     }
+    ],
+    "defaultSort": {
+     "field": "expected_total_potential_gp_per_kill",
+     "direction": "desc"
+    },
+    "sourceId": "src_top_creatures"
+   }
+  ]
+ },
+ "snapshot": {
+  "version": 1,
+  "status": "ready",
+  "generatedAt": "2026-08-02T17:51:25.096398+00:00",
+  "datasets": {
+   "metrics": [
+    {
+     "coverage": 0.9615539344352185,
+     "coverage_threshold": 0.8,
+     "world_days": 21412,
+     "low_quality_days": 1,
+     "median_realized_gp": 403346244.86615676,
+     "best_oos": 0.0016599125675098
+    }
+   ],
+   "daily_trend": [
+    {
+     "date": "2025-12-05",
+     "worlds": 87,
+     "coverage": 0.9692691779,
+     "online": 12031.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 784541.5087468677
+    },
+    {
+     "date": "2025-12-06",
+     "worlds": 87,
+     "coverage": 0.9683651886,
+     "online": 13520.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 623663.6637684455
+    },
+    {
+     "date": "2025-12-07",
+     "worlds": 87,
+     "coverage": 0.9681277063,
+     "online": 14288.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 529585.9891297664
+    },
+    {
+     "date": "2025-12-08",
+     "worlds": 87,
+     "coverage": 0.9648649724,
+     "online": 14469.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 604133.3653190911
+    },
+    {
+     "date": "2025-12-09",
+     "worlds": 87,
+     "coverage": 0.9578785737,
+     "online": 12811.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 745480.5417703352
+    },
+    {
+     "date": "2025-12-10",
+     "worlds": 87,
+     "coverage": 0.9589227515,
+     "online": 11964.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 786646.1208467047
+    },
+    {
+     "date": "2025-12-11",
+     "worlds": 87,
+     "coverage": 0.9648124294,
+     "online": 11788.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 817339.3626580586
+    },
+    {
+     "date": "2025-12-12",
+     "worlds": 87,
+     "coverage": 0.9651426933,
+     "online": 11472.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 816676.3422713897
+    },
+    {
+     "date": "2025-12-13",
+     "worlds": 87,
+     "coverage": 0.9657215886,
+     "online": 11708.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 784020.2847310476
+    },
+    {
+     "date": "2025-12-14",
+     "worlds": 87,
+     "coverage": 0.9645628755,
+     "online": 12579.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 683215.3737642803
+    },
+    {
+     "date": "2025-12-15",
+     "worlds": 87,
+     "coverage": 0.9634063435,
+     "online": 13082.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 784166.4987134315
+    },
+    {
+     "date": "2025-12-16",
+     "worlds": 87,
+     "coverage": 0.9624883588,
+     "online": 12224.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 856539.592378355
+    },
+    {
+     "date": "2025-12-17",
+     "worlds": 87,
+     "coverage": 0.9631065635,
+     "online": 12333.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 830432.8735879018
+    },
+    {
+     "date": "2025-12-18",
+     "worlds": 87,
+     "coverage": 0.9644658001,
+     "online": 12237.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 847086.5704026107
+    },
+    {
+     "date": "2025-12-19",
+     "worlds": 87,
+     "coverage": 0.96472899,
+     "online": 11965.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 860477.363424245
+    },
+    {
+     "date": "2025-12-20",
+     "worlds": 87,
+     "coverage": 0.9664478118,
+     "online": 11798.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 802166.1148241217
+    },
+    {
+     "date": "2025-12-21",
+     "worlds": 87,
+     "coverage": 0.965390851,
+     "online": 12255.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 734745.1633309475
+    },
+    {
+     "date": "2025-12-22",
+     "worlds": 87,
+     "coverage": 0.9632086266,
+     "online": 12539.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 781510.3303395757
+    },
+    {
+     "date": "2025-12-23",
+     "worlds": 87,
+     "coverage": 0.9677889418,
+     "online": 12496.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1151832.8561697975
+    },
+    {
+     "date": "2025-12-24",
+     "worlds": 87,
+     "coverage": 0.9705506423,
+     "online": 17276.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 752090.9333325851
+    },
+    {
+     "date": "2025-12-25",
+     "worlds": 87,
+     "coverage": 0.9715291697,
+     "online": 21585.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 520409.1970890837
+    },
+    {
+     "date": "2025-12-26",
+     "worlds": 87,
+     "coverage": 0.9696933626,
+     "online": 18545.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 766434.977715953
+    },
+    {
+     "date": "2025-12-27",
+     "worlds": 87,
+     "coverage": 0.9697549798,
+     "online": 20359.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 706520.66117312
+    },
+    {
+     "date": "2025-12-28",
+     "worlds": 87,
+     "coverage": 0.9689006152,
+     "online": 20362.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 748285.4006274062
+    },
+    {
+     "date": "2025-12-29",
+     "worlds": 87,
+     "coverage": 0.9656445678,
+     "online": 20678.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 483262.2541548436
+    },
+    {
+     "date": "2025-12-30",
+     "worlds": 87,
+     "coverage": 0.9619400083,
+     "online": 17046.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 544606.4356886433
+    },
+    {
+     "date": "2025-12-31",
+     "worlds": 87,
+     "coverage": 0.9656363586,
+     "online": 12802.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 589059.9867609215
+    },
+    {
+     "date": "2026-01-01",
+     "worlds": 87,
+     "coverage": 0.9665792336,
+     "online": 12027.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 474520.7325797717
+    },
+    {
+     "date": "2026-01-02",
+     "worlds": 87,
+     "coverage": 0.9635531172,
+     "online": 9396.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1017637.2775925514
+    },
+    {
+     "date": "2026-01-03",
+     "worlds": 87,
+     "coverage": 0.9636929155,
+     "online": 12477.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 765163.4345288452
+    },
+    {
+     "date": "2026-01-04",
+     "worlds": 87,
+     "coverage": 0.9621990904,
+     "online": 13295.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 701486.839000992
+    },
+    {
+     "date": "2026-01-05",
+     "worlds": 87,
+     "coverage": 0.9603085777,
+     "online": 13979.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 756990.2804819064
+    },
+    {
+     "date": "2026-01-06",
+     "worlds": 87,
+     "coverage": 0.9596282243,
+     "online": 13499.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 827278.6597850005
+    },
+    {
+     "date": "2026-01-07",
+     "worlds": 87,
+     "coverage": 0.9591108869,
+     "online": 13997.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 776310.0562611639
+    },
+    {
+     "date": "2026-01-08",
+     "worlds": 87,
+     "coverage": 0.9626376094,
+     "online": 12924.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 879899.7453298477
+    },
+    {
+     "date": "2026-01-09",
+     "worlds": 87,
+     "coverage": 0.9634374898,
+     "online": 12786.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 879650.8341878182
+    },
+    {
+     "date": "2026-01-10",
+     "worlds": 87,
+     "coverage": 0.9651863775,
+     "online": 12779.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 846240.0562889392
+    },
+    {
+     "date": "2026-01-11",
+     "worlds": 87,
+     "coverage": 0.9646896787,
+     "online": 13729.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 738090.0685094806
+    },
+    {
+     "date": "2026-01-12",
+     "worlds": 87,
+     "coverage": 0.9634560687,
+     "online": 14094.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 797875.929998538
+    },
+    {
+     "date": "2026-01-13",
+     "worlds": 87,
+     "coverage": 0.9621935528,
+     "online": 12919.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 876172.1040931513
+    },
+    {
+     "date": "2026-01-14",
+     "worlds": 87,
+     "coverage": 0.961853237,
+     "online": 0.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": null
+    },
+    {
+     "date": "2026-01-15",
+     "worlds": 87,
+     "coverage": 0.9616161809,
+     "online": 13164.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 875639.6005229573
+    },
+    {
+     "date": "2026-01-16",
+     "worlds": 87,
+     "coverage": 0.9631606006,
+     "online": 12695.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 975008.5655706458
+    },
+    {
+     "date": "2026-01-17",
+     "worlds": 87,
+     "coverage": 0.9640912862,
+     "online": 12855.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 904448.848409071
+    },
+    {
+     "date": "2026-01-18",
+     "worlds": 87,
+     "coverage": 0.9602159915,
+     "online": 13871.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 770489.7855368768
+    },
+    {
+     "date": "2026-01-19",
+     "worlds": 87,
+     "coverage": 0.9599937645,
+     "online": 14208.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 771461.0122787853
+    },
+    {
+     "date": "2026-01-20",
+     "worlds": 87,
+     "coverage": 0.9564784418,
+     "online": 12990.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 858769.1604418791
+    },
+    {
+     "date": "2026-01-21",
+     "worlds": 87,
+     "coverage": 0.9578091102,
+     "online": 12809.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 889308.3675803115
+    },
+    {
+     "date": "2026-01-22",
+     "worlds": 87,
+     "coverage": 0.9600454906,
+     "online": 12737.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 893367.6300478084
+    },
+    {
+     "date": "2026-01-23",
+     "worlds": 87,
+     "coverage": 0.9621481824,
+     "online": 12740.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 906590.1279947566
+    },
+    {
+     "date": "2026-01-24",
+     "worlds": 87,
+     "coverage": 0.9634095072,
+     "online": 13134.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 835987.5237899921
+    },
+    {
+     "date": "2026-01-25",
+     "worlds": 87,
+     "coverage": 0.9619569834,
+     "online": 14159.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 730162.0020934192
+    },
+    {
+     "date": "2026-01-26",
+     "worlds": 87,
+     "coverage": 0.9613490183,
+     "online": 14591.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 785084.1441830661
+    },
+    {
+     "date": "2026-01-27",
+     "worlds": 87,
+     "coverage": 0.9607929635,
+     "online": 13526.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 841284.7851853716
+    },
+    {
+     "date": "2026-01-28",
+     "worlds": 87,
+     "coverage": 0.9615369643,
+     "online": 13273.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 893008.2367566866
+    },
+    {
+     "date": "2026-01-29",
+     "worlds": 87,
+     "coverage": 0.9622666663,
+     "online": 13126.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 881446.3340350919
+    },
+    {
+     "date": "2026-01-30",
+     "worlds": 87,
+     "coverage": 0.9636612284,
+     "online": 12870.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 890357.0960470273
+    },
+    {
+     "date": "2026-01-31",
+     "worlds": 87,
+     "coverage": 0.9639335541,
+     "online": 12842.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 842894.4490308808
+    },
+    {
+     "date": "2026-02-01",
+     "worlds": 87,
+     "coverage": 0.9623043042,
+     "online": 13871.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 721129.5257862034
+    },
+    {
+     "date": "2026-02-02",
+     "worlds": 87,
+     "coverage": 0.96152419,
+     "online": 14342.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 801001.851137565
+    },
+    {
+     "date": "2026-02-03",
+     "worlds": 87,
+     "coverage": 0.9571937086,
+     "online": 13516.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 869350.0096729717
+    },
+    {
+     "date": "2026-02-04",
+     "worlds": 87,
+     "coverage": 0.9573560572,
+     "online": 13401.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 868228.5129290029
+    },
+    {
+     "date": "2026-02-05",
+     "worlds": 87,
+     "coverage": 0.9617543552,
+     "online": 12960.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 886821.060859518
+    },
+    {
+     "date": "2026-02-06",
+     "worlds": 87,
+     "coverage": 0.9668146425,
+     "online": 12726.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 852356.543237272
+    },
+    {
+     "date": "2026-02-07",
+     "worlds": 87,
+     "coverage": 0.9667265087,
+     "online": 13786.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 735075.8193805497
+    },
+    {
+     "date": "2026-02-08",
+     "worlds": 87,
+     "coverage": 0.966100369,
+     "online": 15231.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 604684.7255871065
+    },
+    {
+     "date": "2026-02-09",
+     "worlds": 87,
+     "coverage": 0.9620445982,
+     "online": 15589.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 639855.7794965605
+    },
+    {
+     "date": "2026-02-10",
+     "worlds": 87,
+     "coverage": 0.9604622302,
+     "online": 13109.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 827115.7496849163
+    },
+    {
+     "date": "2026-02-11",
+     "worlds": 87,
+     "coverage": 0.9599004174,
+     "online": 12270.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 909461.1218445573
+    },
+    {
+     "date": "2026-02-12",
+     "worlds": 87,
+     "coverage": 0.9612959496,
+     "online": 12396.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 900967.0531970626
+    },
+    {
+     "date": "2026-02-13",
+     "worlds": 87,
+     "coverage": 0.9624478188,
+     "online": 12351.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 884392.1412409501
+    },
+    {
+     "date": "2026-02-14",
+     "worlds": 87,
+     "coverage": 0.9653807953,
+     "online": 12345.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 802669.354002927
+    },
+    {
+     "date": "2026-02-15",
+     "worlds": 87,
+     "coverage": 0.9642040607,
+     "online": 12757.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 721778.1542484399
+    },
+    {
+     "date": "2026-02-16",
+     "worlds": 87,
+     "coverage": 0.9608128685,
+     "online": 13232.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 824896.2571713164
+    },
+    {
+     "date": "2026-02-17",
+     "worlds": 87,
+     "coverage": 0.9582209733,
+     "online": 13122.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 834924.695880472
+    },
+    {
+     "date": "2026-02-18",
+     "worlds": 90,
+     "coverage": 0.9585061403,
+     "online": 13040.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 882362.089349196
+    },
+    {
+     "date": "2026-02-19",
+     "worlds": 90,
+     "coverage": 0.9635875126,
+     "online": 13688.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 862088.6388071985
+    },
+    {
+     "date": "2026-02-20",
+     "worlds": 90,
+     "coverage": 0.9641116347,
+     "online": 13406.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 879032.8749344705
+    },
+    {
+     "date": "2026-02-21",
+     "worlds": 90,
+     "coverage": 0.9633784803,
+     "online": 13404.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 836101.9941594648
+    },
+    {
+     "date": "2026-02-22",
+     "worlds": 90,
+     "coverage": 0.9644840716,
+     "online": 14527.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 731758.8376613456
+    },
+    {
+     "date": "2026-02-23",
+     "worlds": 90,
+     "coverage": 0.9630696833,
+     "online": 15320.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 819897.6269430143
+    },
+    {
+     "date": "2026-02-24",
+     "worlds": 90,
+     "coverage": 0.9637160673,
+     "online": 14166.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 826836.6108404233
+    },
+    {
+     "date": "2026-02-25",
+     "worlds": 90,
+     "coverage": 0.9637968821,
+     "online": 12642.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1068751.9302694898
+    },
+    {
+     "date": "2026-02-26",
+     "worlds": 90,
+     "coverage": 0.9662112757,
+     "online": 13354.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1037150.0176952714
+    },
+    {
+     "date": "2026-02-27",
+     "worlds": 90,
+     "coverage": 0.9660487451,
+     "online": 13737.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 991183.6567086162
+    },
+    {
+     "date": "2026-02-28",
+     "worlds": 90,
+     "coverage": 0.9667275132,
+     "online": 13492.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 954278.4348104615
+    },
+    {
+     "date": "2026-03-01",
+     "worlds": 90,
+     "coverage": 0.9650777032,
+     "online": 14234.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 881195.6506716738
+    },
+    {
+     "date": "2026-03-02",
+     "worlds": 90,
+     "coverage": 0.9585914226,
+     "online": 14906.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 800938.7913031843
+    },
+    {
+     "date": "2026-03-03",
+     "worlds": 90,
+     "coverage": 0.9555752775,
+     "online": 13166.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 912368.7597886384
+    },
+    {
+     "date": "2026-03-04",
+     "worlds": 90,
+     "coverage": 0.9569700674,
+     "online": 12825.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 945439.1985453597
+    },
+    {
+     "date": "2026-03-05",
+     "worlds": 90,
+     "coverage": 0.9597412582,
+     "online": 12561.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 893211.3083501772
+    },
+    {
+     "date": "2026-03-06",
+     "worlds": 90,
+     "coverage": 0.9662634351,
+     "online": 12201.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1366893.6110480602
+    },
+    {
+     "date": "2026-03-07",
+     "worlds": 90,
+     "coverage": 0.9685250719,
+     "online": 16851.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1046876.2631601512
+    },
+    {
+     "date": "2026-03-08",
+     "worlds": 90,
+     "coverage": 0.9682150012,
+     "online": 23202.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 793853.3338331078
+    },
+    {
+     "date": "2026-03-09",
+     "worlds": 90,
+     "coverage": 0.9646145817,
+     "online": 24786.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 463611.3777377899
+    },
+    {
+     "date": "2026-03-10",
+     "worlds": 90,
+     "coverage": 0.9600879178,
+     "online": 17683.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 652761.292931694
+    },
+    {
+     "date": "2026-03-11",
+     "worlds": 90,
+     "coverage": 0.9620794753,
+     "online": 12235.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 997178.278730397
+    },
+    {
+     "date": "2026-03-12",
+     "worlds": 90,
+     "coverage": 0.9605660159,
+     "online": 12294.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 994445.4808359661
+    },
+    {
+     "date": "2026-03-13",
+     "worlds": 90,
+     "coverage": 0.9621279005,
+     "online": 12225.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 991397.7307260677
+    },
+    {
+     "date": "2026-03-14",
+     "worlds": 90,
+     "coverage": 0.9635163993,
+     "online": 12422.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 886727.1918342999
+    },
+    {
+     "date": "2026-03-15",
+     "worlds": 90,
+     "coverage": 0.9599432442,
+     "online": 13233.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 803341.0814969293
+    },
+    {
+     "date": "2026-03-16",
+     "worlds": 90,
+     "coverage": 0.9605206403,
+     "online": 13750.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 865446.6110946981
+    },
+    {
+     "date": "2026-03-17",
+     "worlds": 90,
+     "coverage": 0.9567306005,
+     "online": 12810.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 940600.2068726992
+    },
+    {
+     "date": "2026-03-18",
+     "worlds": 90,
+     "coverage": 0.957865892,
+     "online": 12763.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 954458.9995320602
+    },
+    {
+     "date": "2026-03-19",
+     "worlds": 90,
+     "coverage": 0.961241006,
+     "online": 12411.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 969709.7025601631
+    },
+    {
+     "date": "2026-03-20",
+     "worlds": 90,
+     "coverage": 0.9690725574,
+     "online": 12447.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 972517.2966768014
+    },
+    {
+     "date": "2026-03-21",
+     "worlds": 90,
+     "coverage": 0.9717267637,
+     "online": 12167.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 942607.1509236889
+    },
+    {
+     "date": "2026-03-22",
+     "worlds": 90,
+     "coverage": 0.9713290548,
+     "online": 13053.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 830547.1323017172
+    },
+    {
+     "date": "2026-03-23",
+     "worlds": 90,
+     "coverage": 0.9639475075,
+     "online": 13698.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 868591.5262338321
+    },
+    {
+     "date": "2026-03-24",
+     "worlds": 90,
+     "coverage": 0.9610112299,
+     "online": 12637.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1029357.9299074498
+    },
+    {
+     "date": "2026-03-25",
+     "worlds": 90,
+     "coverage": 0.9624634197,
+     "online": 12320.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1039562.5840489427
+    },
+    {
+     "date": "2026-03-26",
+     "worlds": 90,
+     "coverage": 0.9627694154,
+     "online": 12414.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 998510.3282986877
+    },
+    {
+     "date": "2026-03-27",
+     "worlds": 90,
+     "coverage": 0.9615769345,
+     "online": 12152.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1015733.4844370511
+    },
+    {
+     "date": "2026-03-28",
+     "worlds": 90,
+     "coverage": 0.9635242043,
+     "online": 12129.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 995809.2165433383
+    },
+    {
+     "date": "2026-03-29",
+     "worlds": 90,
+     "coverage": 0.9611322782,
+     "online": 13059.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 825139.9024970297
+    },
+    {
+     "date": "2026-03-30",
+     "worlds": 90,
+     "coverage": 0.9607777373,
+     "online": 13444.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 865802.0076957077
+    },
+    {
+     "date": "2026-03-31",
+     "worlds": 90,
+     "coverage": 0.9572618446,
+     "online": 12635.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 974521.645455552
+    },
+    {
+     "date": "2026-04-01",
+     "worlds": 90,
+     "coverage": 0.9570275725,
+     "online": 12226.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1004724.93345861
+    },
+    {
+     "date": "2026-04-02",
+     "worlds": 90,
+     "coverage": 0.9630186347,
+     "online": 12180.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1008087.5530660722
+    },
+    {
+     "date": "2026-04-03",
+     "worlds": 90,
+     "coverage": 0.9661795944,
+     "online": 12232.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1091417.3706717284
+    },
+    {
+     "date": "2026-04-04",
+     "worlds": 90,
+     "coverage": 0.9671708367,
+     "online": 13163.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 916126.792875755
+    },
+    {
+     "date": "2026-04-05",
+     "worlds": 90,
+     "coverage": 0.9664955392,
+     "online": 13223.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 777594.5998222324
+    },
+    {
+     "date": "2026-04-06",
+     "worlds": 90,
+     "coverage": 0.9633662397,
+     "online": 12349.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 979869.0120090363
+    },
+    {
+     "date": "2026-04-07",
+     "worlds": 90,
+     "coverage": 0.9620322129,
+     "online": 13293.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 927353.8997429342
+    },
+    {
+     "date": "2026-04-08",
+     "worlds": 90,
+     "coverage": 0.9617887069,
+     "online": 12405.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1007028.8714425949
+    },
+    {
+     "date": "2026-04-09",
+     "worlds": 90,
+     "coverage": 0.9597691969,
+     "online": 12019.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1040212.5470048047
+    },
+    {
+     "date": "2026-04-10",
+     "worlds": 90,
+     "coverage": 0.9631859594,
+     "online": 11859.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1018641.1409404271
+    },
+    {
+     "date": "2026-04-11",
+     "worlds": 90,
+     "coverage": 0.9639974807,
+     "online": 11840.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 973091.3738880976
+    },
+    {
+     "date": "2026-04-12",
+     "worlds": 90,
+     "coverage": 0.9637157849,
+     "online": 12649.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 838138.56504033
+    },
+    {
+     "date": "2026-04-13",
+     "worlds": 90,
+     "coverage": 0.9614339551,
+     "online": 13373.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 875943.8295640617
+    },
+    {
+     "date": "2026-04-14",
+     "worlds": 90,
+     "coverage": 0.958884632,
+     "online": 12524.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 977582.3969627403
+    },
+    {
+     "date": "2026-04-15",
+     "worlds": 90,
+     "coverage": 0.9580078995,
+     "online": 12043.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1048472.4302947108
+    },
+    {
+     "date": "2026-04-16",
+     "worlds": 90,
+     "coverage": 0.9618438548,
+     "online": 11741.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1039707.4467318369
+    },
+    {
+     "date": "2026-04-17",
+     "worlds": 90,
+     "coverage": 0.9603383119,
+     "online": 11585.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1038497.8736810774
+    },
+    {
+     "date": "2026-04-18",
+     "worlds": 90,
+     "coverage": 0.964703889,
+     "online": 11537.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 980031.7900321437
+    },
+    {
+     "date": "2026-04-19",
+     "worlds": 90,
+     "coverage": 0.9651774905,
+     "online": 12070.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 850509.4741386526
+    },
+    {
+     "date": "2026-04-20",
+     "worlds": 90,
+     "coverage": 0.9626379622,
+     "online": 12698.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 922755.8376813268
+    },
+    {
+     "date": "2026-04-21",
+     "worlds": 90,
+     "coverage": 0.9615463194,
+     "online": 12329.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1021789.3572729899
+    },
+    {
+     "date": "2026-04-22",
+     "worlds": 90,
+     "coverage": 0.9641013445,
+     "online": 12500.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 987690.2429797235
+    },
+    {
+     "date": "2026-04-23",
+     "worlds": 90,
+     "coverage": 0.963505583,
+     "online": 11660.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1076242.0483864986
+    },
+    {
+     "date": "2026-04-24",
+     "worlds": 90,
+     "coverage": 0.9624433818,
+     "online": 11536.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1105458.5306150427
+    },
+    {
+     "date": "2026-04-25",
+     "worlds": 90,
+     "coverage": 0.9647897679,
+     "online": 11491.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1017477.5373994289
+    },
+    {
+     "date": "2026-04-26",
+     "worlds": 90,
+     "coverage": 0.9624997188,
+     "online": 12172.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 897489.2056427097
+    },
+    {
+     "date": "2026-04-27",
+     "worlds": 90,
+     "coverage": 0.9583021767,
+     "online": 12722.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 948110.0445036724
+    },
+    {
+     "date": "2026-04-28",
+     "worlds": 90,
+     "coverage": 0.9545129716,
+     "online": 0.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": null
+    },
+    {
+     "date": "2026-04-29",
+     "worlds": 90,
+     "coverage": 0.955702857,
+     "online": 11639.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1095306.8730722994
+    },
+    {
+     "date": "2026-04-30",
+     "worlds": 90,
+     "coverage": 0.9613890379,
+     "online": 11662.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 993836.4283894742
+    },
+    {
+     "date": "2026-05-01",
+     "worlds": 90,
+     "coverage": 0.9674512167,
+     "online": 11161.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1590753.4914045807
+    },
+    {
+     "date": "2026-05-02",
+     "worlds": 90,
+     "coverage": 0.9676803919,
+     "online": 18544.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 974532.0098778679
+    },
+    {
+     "date": "2026-05-03",
+     "worlds": 90,
+     "coverage": 0.9685840825,
+     "online": 23378.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 804192.1895981947
+    },
+    {
+     "date": "2026-05-04",
+     "worlds": 90,
+     "coverage": 0.964951377,
+     "online": 23084.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 520042.8490624165
+    },
+    {
+     "date": "2026-05-05",
+     "worlds": 90,
+     "coverage": 0.9617678258,
+     "online": 16653.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 674654.2677034484
+    },
+    {
+     "date": "2026-05-06",
+     "worlds": 90,
+     "coverage": 0.9625450482,
+     "online": 10615.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1144760.2197448092
+    },
+    {
+     "date": "2026-05-07",
+     "worlds": 90,
+     "coverage": 0.9624671999,
+     "online": 10678.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1144135.1703055522
+    },
+    {
+     "date": "2026-05-08",
+     "worlds": 90,
+     "coverage": 0.9616036524,
+     "online": 11262.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1101077.3418506186
+    },
+    {
+     "date": "2026-05-09",
+     "worlds": 90,
+     "coverage": 0.9626639355,
+     "online": 11588.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1047749.528980571
+    },
+    {
+     "date": "2026-05-10",
+     "worlds": 90,
+     "coverage": 0.9636898376,
+     "online": 12509.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 790127.5704877763
+    },
+    {
+     "date": "2026-05-11",
+     "worlds": 90,
+     "coverage": 0.9616300574,
+     "online": 12429.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 955628.3639258292
+    },
+    {
+     "date": "2026-05-12",
+     "worlds": 90,
+     "coverage": 0.9587299808,
+     "online": 11861.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1054168.3612370829
+    },
+    {
+     "date": "2026-05-13",
+     "worlds": 90,
+     "coverage": 0.9579535294,
+     "online": 11737.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1100450.7124633186
+    },
+    {
+     "date": "2026-05-14",
+     "worlds": 90,
+     "coverage": 0.9626293095,
+     "online": 11785.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1171346.68406399
+    },
+    {
+     "date": "2026-05-15",
+     "worlds": 90,
+     "coverage": 0.963284509,
+     "online": 12075.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1148251.5356545993
+    },
+    {
+     "date": "2026-05-16",
+     "worlds": 90,
+     "coverage": 0.9654251236,
+     "online": 11953.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1154105.4999929515
+    },
+    {
+     "date": "2026-05-17",
+     "worlds": 90,
+     "coverage": 0.9644144155,
+     "online": 12694.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1012691.7785194106
+    },
+    {
+     "date": "2026-05-18",
+     "worlds": 90,
+     "coverage": 0.9646955369,
+     "online": 13145.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 989880.8240363289
+    },
+    {
+     "date": "2026-05-19",
+     "worlds": 90,
+     "coverage": 0.9623092279,
+     "online": 12373.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1107263.9916834657
+    },
+    {
+     "date": "2026-05-20",
+     "worlds": 93,
+     "coverage": 0.9636333665,
+     "online": 12061.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1094697.7330924207
+    },
+    {
+     "date": "2026-05-21",
+     "worlds": 93,
+     "coverage": 0.9632398518,
+     "online": 12537.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1011827.5546857895
+    },
+    {
+     "date": "2026-05-22",
+     "worlds": 93,
+     "coverage": 0.9640564622,
+     "online": 11981.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1032474.6575877771
+    },
+    {
+     "date": "2026-05-23",
+     "worlds": 93,
+     "coverage": 0.96366992,
+     "online": 11896.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 968596.1366975366
+    },
+    {
+     "date": "2026-05-24",
+     "worlds": 93,
+     "coverage": 0.9628303151,
+     "online": 12691.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 852947.6651960277
+    },
+    {
+     "date": "2026-05-25",
+     "worlds": 93,
+     "coverage": 0.9626862696,
+     "online": 13206.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 923209.7949320803
+    },
+    {
+     "date": "2026-05-26",
+     "worlds": 93,
+     "coverage": 0.9578804166,
+     "online": 12652.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1014954.4893978254
+    },
+    {
+     "date": "2026-05-27",
+     "worlds": 93,
+     "coverage": 0.9574242664,
+     "online": 12169.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1046808.8545301809
+    },
+    {
+     "date": "2026-05-28",
+     "worlds": 93,
+     "coverage": 0.9614189335,
+     "online": 12000.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1081230.1331504358
+    },
+    {
+     "date": "2026-05-29",
+     "worlds": 93,
+     "coverage": 0.9619953397,
+     "online": 11864.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1060311.7304619837
+    },
+    {
+     "date": "2026-05-30",
+     "worlds": 93,
+     "coverage": 0.9639763523,
+     "online": 11647.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1014814.4193847473
+    },
+    {
+     "date": "2026-05-31",
+     "worlds": 93,
+     "coverage": 0.9623974788,
+     "online": 12159.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 898866.5410551691
+    },
+    {
+     "date": "2026-06-01",
+     "worlds": 93,
+     "coverage": 0.9612582868,
+     "online": 12684.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 977170.0416940623
+    },
+    {
+     "date": "2026-06-02",
+     "worlds": 93,
+     "coverage": 0.9621467953,
+     "online": 12036.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1080702.1686769116
+    },
+    {
+     "date": "2026-06-03",
+     "worlds": 93,
+     "coverage": 0.9624391764,
+     "online": 11870.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1097671.3960983295
+    },
+    {
+     "date": "2026-06-04",
+     "worlds": 93,
+     "coverage": 0.9632071173,
+     "online": 11814.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1095117.459926338
+    },
+    {
+     "date": "2026-06-05",
+     "worlds": 93,
+     "coverage": 0.9682113589,
+     "online": 12994.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 932552.599418783
+    },
+    {
+     "date": "2026-06-06",
+     "worlds": 93,
+     "coverage": 0.9685616282,
+     "online": 17428.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 622768.0722699048
+    },
+    {
+     "date": "2026-06-07",
+     "worlds": 93,
+     "coverage": 0.9688582319,
+     "online": 22543.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 448799.6422388363
+    },
+    {
+     "date": "2026-06-08",
+     "worlds": 93,
+     "coverage": 0.9634019391,
+     "online": 22056.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 509767.6586154948
+    },
+    {
+     "date": "2026-06-09",
+     "worlds": 93,
+     "coverage": 0.9556622432,
+     "online": 15963.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 769094.2730973526
+    },
+    {
+     "date": "2026-06-10",
+     "worlds": 93,
+     "coverage": 0.9568855338,
+     "online": 11610.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1068379.4920410016
+    },
+    {
+     "date": "2026-06-11",
+     "worlds": 93,
+     "coverage": 0.962131654,
+     "online": 11766.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1071460.11377792
+    },
+    {
+     "date": "2026-06-12",
+     "worlds": 93,
+     "coverage": 0.9650773393,
+     "online": 11586.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1045387.2926181795
+    },
+    {
+     "date": "2026-06-13",
+     "worlds": 93,
+     "coverage": 0.9664679842,
+     "online": 11472.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 982389.1550927082
+    },
+    {
+     "date": "2026-06-14",
+     "worlds": 93,
+     "coverage": 0.9651294187,
+     "online": 12119.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 907781.8426125348
+    },
+    {
+     "date": "2026-06-15",
+     "worlds": 93,
+     "coverage": 0.9628921864,
+     "online": 12450.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 959792.1678761271
+    },
+    {
+     "date": "2026-06-16",
+     "worlds": 93,
+     "coverage": 0.9645216079,
+     "online": 12124.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1293402.8863398738
+    },
+    {
+     "date": "2026-06-17",
+     "worlds": 93,
+     "coverage": 0.9657004561,
+     "online": 13142.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1395340.4386575103
+    },
+    {
+     "date": "2026-06-18",
+     "worlds": 93,
+     "coverage": 0.9657057809,
+     "online": 13712.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1334960.6094738182
+    },
+    {
+     "date": "2026-06-19",
+     "worlds": 93,
+     "coverage": 0.9658635589,
+     "online": 13220.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1358483.208548682
+    },
+    {
+     "date": "2026-06-20",
+     "worlds": 93,
+     "coverage": 0.9687381673,
+     "online": 12897.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1329089.836665669
+    },
+    {
+     "date": "2026-06-21",
+     "worlds": 93,
+     "coverage": 0.9664008601,
+     "online": 13005.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1255922.8202858889
+    },
+    {
+     "date": "2026-06-22",
+     "worlds": 93,
+     "coverage": 0.9652598166,
+     "online": 14280.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1255706.547998681
+    },
+    {
+     "date": "2026-06-23",
+     "worlds": 93,
+     "coverage": 0.9608944811,
+     "online": 13382.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1363021.2937808775
+    },
+    {
+     "date": "2026-06-24",
+     "worlds": 93,
+     "coverage": 0.9624151725,
+     "online": 12937.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1363537.1364921369
+    },
+    {
+     "date": "2026-06-25",
+     "worlds": 93,
+     "coverage": 0.9678987749,
+     "online": 13272.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1463555.391689383
+    },
+    {
+     "date": "2026-06-26",
+     "worlds": 93,
+     "coverage": 0.9689127829,
+     "online": 11800.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1789443.172425984
+    },
+    {
+     "date": "2026-06-27",
+     "worlds": 93,
+     "coverage": 0.9684795829,
+     "online": 12777.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1661001.3922970952
+    },
+    {
+     "date": "2026-06-28",
+     "worlds": 93,
+     "coverage": 0.9684000252,
+     "online": 13672.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1497363.9537099297
+    },
+    {
+     "date": "2026-06-29",
+     "worlds": 93,
+     "coverage": 0.9662045799,
+     "online": 14091.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1449748.3589394619
+    },
+    {
+     "date": "2026-06-30",
+     "worlds": 93,
+     "coverage": 0.9658129148,
+     "online": 13394.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1577373.5406441465
+    },
+    {
+     "date": "2026-07-01",
+     "worlds": 93,
+     "coverage": 0.9671830679,
+     "online": 12779.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1680950.0186452214
+    },
+    {
+     "date": "2026-07-02",
+     "worlds": 93,
+     "coverage": 0.966421092,
+     "online": 12696.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1650398.1314973438
+    },
+    {
+     "date": "2026-07-03",
+     "worlds": 93,
+     "coverage": 0.9691063761,
+     "online": 12717.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 2295853.113249879
+    },
+    {
+     "date": "2026-07-04",
+     "worlds": 93,
+     "coverage": 0.9702042954,
+     "online": 18484.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1706321.903909678
+    },
+    {
+     "date": "2026-07-05",
+     "worlds": 93,
+     "coverage": 0.970274519,
+     "online": 24845.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1209611.9994694197
+    },
+    {
+     "date": "2026-07-06",
+     "worlds": 93,
+     "coverage": 0.9665492462,
+     "online": 24462.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 734447.0054232526
+    },
+    {
+     "date": "2026-07-07",
+     "worlds": 93,
+     "coverage": 0.9582668054,
+     "online": 16626.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1065095.7888525727
+    },
+    {
+     "date": "2026-07-08",
+     "worlds": 93,
+     "coverage": 0.9579549393,
+     "online": 12470.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1483968.0300138576
+    },
+    {
+     "date": "2026-07-09",
+     "worlds": 93,
+     "coverage": 0.9642003444,
+     "online": 12374.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1551641.4606661086
+    },
+    {
+     "date": "2026-07-10",
+     "worlds": 93,
+     "coverage": 0.9656072017,
+     "online": 12608.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1462872.2113484242
+    },
+    {
+     "date": "2026-07-11",
+     "worlds": 93,
+     "coverage": 0.9657536092,
+     "online": 12217.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1416997.626532561
+    },
+    {
+     "date": "2026-07-12",
+     "worlds": 93,
+     "coverage": 0.9647402467,
+     "online": 12969.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1257084.0118326975
+    },
+    {
+     "date": "2026-07-13",
+     "worlds": 93,
+     "coverage": 0.9644706868,
+     "online": 13256.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1267977.092885439
+    },
+    {
+     "date": "2026-07-14",
+     "worlds": 93,
+     "coverage": 0.9621165958,
+     "online": 13294.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1349293.7909173295
+    },
+    {
+     "date": "2026-07-15",
+     "worlds": 93,
+     "coverage": 0.9636343254,
+     "online": 13340.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1380487.8378124642
+    },
+    {
+     "date": "2026-07-16",
+     "worlds": 93,
+     "coverage": 0.9625013798,
+     "online": 13024.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1388030.0717627616
+    },
+    {
+     "date": "2026-07-17",
+     "worlds": 93,
+     "coverage": 0.9621657978,
+     "online": 12951.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1400320.144353936
+    },
+    {
+     "date": "2026-07-18",
+     "worlds": 93,
+     "coverage": 0.963638275,
+     "online": 12921.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1326722.1512903397
+    },
+    {
+     "date": "2026-07-19",
+     "worlds": 93,
+     "coverage": 0.9654285378,
+     "online": 13611.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1088604.0286448977
+    },
+    {
+     "date": "2026-07-20",
+     "worlds": 93,
+     "coverage": 0.9630519102,
+     "online": 13769.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1299915.7829647593
+    },
+    {
+     "date": "2026-07-21",
+     "worlds": 93,
+     "coverage": 0.9569908655,
+     "online": 12849.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1460669.3413005578
+    },
+    {
+     "date": "2026-07-22",
+     "worlds": 93,
+     "coverage": 0.9578118652,
+     "online": 13468.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1405650.1053123889
+    },
+    {
+     "date": "2026-07-23",
+     "worlds": 93,
+     "coverage": 0.9621603914,
+     "online": 13410.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1414375.7031463168
+    },
+    {
+     "date": "2026-07-24",
+     "worlds": 93,
+     "coverage": 0.9624837466,
+     "online": 13203.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1415691.8348952036
+    },
+    {
+     "date": "2026-07-25",
+     "worlds": 93,
+     "coverage": 0.9654447268,
+     "online": 13193.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1350809.467137538
+    },
+    {
+     "date": "2026-07-26",
+     "worlds": 93,
+     "coverage": 0.9643320325,
+     "online": 13774.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1189864.4868981943
+    },
+    {
+     "date": "2026-07-27",
+     "worlds": 93,
+     "coverage": 0.9621725139,
+     "online": 14024.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1295040.0590657108
+    },
+    {
+     "date": "2026-07-28",
+     "worlds": 93,
+     "coverage": 0.9615753765,
+     "online": 13417.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1422261.4636008264
+    },
+    {
+     "date": "2026-07-29",
+     "worlds": 93,
+     "coverage": 0.9624898117,
+     "online": 13024.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1434972.9434005825
+    },
+    {
+     "date": "2026-07-30",
+     "worlds": 93,
+     "coverage": 0.9622180839,
+     "online": 13031.0,
+     "series": "Direct coins",
+     "gp_per_average_online_player": 1389279.5872876006
+    },
+    {
+     "date": "2025-12-05",
+     "worlds": 87,
+     "coverage": 0.9692691779,
+     "online": 12031.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2730747.8053749646
+    },
+    {
+     "date": "2025-12-06",
+     "worlds": 87,
+     "coverage": 0.9683651886,
+     "online": 13520.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2324480.61447364
+    },
+    {
+     "date": "2025-12-07",
+     "worlds": 87,
+     "coverage": 0.9681277063,
+     "online": 14288.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2116141.9982977915
+    },
+    {
+     "date": "2025-12-08",
+     "worlds": 87,
+     "coverage": 0.9648649724,
+     "online": 14469.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1889066.8426267228
+    },
+    {
+     "date": "2025-12-09",
+     "worlds": 87,
+     "coverage": 0.9578785737,
+     "online": 12811.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2216289.1383615215
+    },
+    {
+     "date": "2025-12-10",
+     "worlds": 87,
+     "coverage": 0.9589227515,
+     "online": 11964.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2385453.463816507
+    },
+    {
+     "date": "2025-12-11",
+     "worlds": 87,
+     "coverage": 0.9648124294,
+     "online": 11788.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2487892.8856726866
+    },
+    {
+     "date": "2025-12-12",
+     "worlds": 87,
+     "coverage": 0.9651426933,
+     "online": 11472.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2515595.013780607
+    },
+    {
+     "date": "2025-12-13",
+     "worlds": 87,
+     "coverage": 0.9657215886,
+     "online": 11708.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2483312.3981903894
+    },
+    {
+     "date": "2025-12-14",
+     "worlds": 87,
+     "coverage": 0.9645628755,
+     "online": 12579.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2290084.16513881
+    },
+    {
+     "date": "2025-12-15",
+     "worlds": 87,
+     "coverage": 0.9634063435,
+     "online": 13082.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2309167.163784454
+    },
+    {
+     "date": "2025-12-16",
+     "worlds": 87,
+     "coverage": 0.9624883588,
+     "online": 12224.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2502313.552082329
+    },
+    {
+     "date": "2025-12-17",
+     "worlds": 87,
+     "coverage": 0.9631065635,
+     "online": 12333.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2476949.4036628446
+    },
+    {
+     "date": "2025-12-18",
+     "worlds": 87,
+     "coverage": 0.9644658001,
+     "online": 12237.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2521714.4600494057
+    },
+    {
+     "date": "2025-12-19",
+     "worlds": 87,
+     "coverage": 0.96472899,
+     "online": 11965.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2543259.832311549
+    },
+    {
+     "date": "2025-12-20",
+     "worlds": 87,
+     "coverage": 0.9664478118,
+     "online": 11798.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2486749.3747366327
+    },
+    {
+     "date": "2025-12-21",
+     "worlds": 87,
+     "coverage": 0.965390851,
+     "online": 12255.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2347938.5358940745
+    },
+    {
+     "date": "2025-12-22",
+     "worlds": 87,
+     "coverage": 0.9632086266,
+     "online": 12539.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2384029.0395530933
+    },
+    {
+     "date": "2025-12-23",
+     "worlds": 87,
+     "coverage": 0.9677889418,
+     "online": 12496.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3458491.6142315622
+    },
+    {
+     "date": "2025-12-24",
+     "worlds": 87,
+     "coverage": 0.9705506423,
+     "online": 17276.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2335738.4194628745
+    },
+    {
+     "date": "2025-12-25",
+     "worlds": 87,
+     "coverage": 0.9715291697,
+     "online": 21585.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1691187.3487781053
+    },
+    {
+     "date": "2025-12-26",
+     "worlds": 87,
+     "coverage": 0.9696933626,
+     "online": 18545.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2351345.114288288
+    },
+    {
+     "date": "2025-12-27",
+     "worlds": 87,
+     "coverage": 0.9697549798,
+     "online": 20359.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2194835.240589032
+    },
+    {
+     "date": "2025-12-28",
+     "worlds": 87,
+     "coverage": 0.9689006152,
+     "online": 20362.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2347344.2129977453
+    },
+    {
+     "date": "2025-12-29",
+     "worlds": 87,
+     "coverage": 0.9656445678,
+     "online": 20678.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1604515.944915907
+    },
+    {
+     "date": "2025-12-30",
+     "worlds": 87,
+     "coverage": 0.9619400083,
+     "online": 17046.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1766239.0132781982
+    },
+    {
+     "date": "2025-12-31",
+     "worlds": 87,
+     "coverage": 0.9656363586,
+     "online": 12802.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2033977.0259626664
+    },
+    {
+     "date": "2026-01-01",
+     "worlds": 87,
+     "coverage": 0.9665792336,
+     "online": 12027.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1892280.0191640172
+    },
+    {
+     "date": "2026-01-02",
+     "worlds": 87,
+     "coverage": 0.9635531172,
+     "online": 9396.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3377589.189392596
+    },
+    {
+     "date": "2026-01-03",
+     "worlds": 87,
+     "coverage": 0.9636929155,
+     "online": 12477.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2535933.4558549705
+    },
+    {
+     "date": "2026-01-04",
+     "worlds": 87,
+     "coverage": 0.9621990904,
+     "online": 13295.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2453063.1535398783
+    },
+    {
+     "date": "2026-01-05",
+     "worlds": 87,
+     "coverage": 0.9603085777,
+     "online": 13979.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2338472.2453863136
+    },
+    {
+     "date": "2026-01-06",
+     "worlds": 87,
+     "coverage": 0.9596282243,
+     "online": 13499.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2566842.0417997777
+    },
+    {
+     "date": "2026-01-07",
+     "worlds": 87,
+     "coverage": 0.9591108869,
+     "online": 13997.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2382797.8202248104
+    },
+    {
+     "date": "2026-01-08",
+     "worlds": 87,
+     "coverage": 0.9626376094,
+     "online": 12924.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2623573.4240719927
+    },
+    {
+     "date": "2026-01-09",
+     "worlds": 87,
+     "coverage": 0.9634374898,
+     "online": 12786.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2623833.4233053816
+    },
+    {
+     "date": "2026-01-10",
+     "worlds": 87,
+     "coverage": 0.9651863775,
+     "online": 12779.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2642287.584282994
+    },
+    {
+     "date": "2026-01-11",
+     "worlds": 87,
+     "coverage": 0.9646896787,
+     "online": 13729.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2388178.2464413135
+    },
+    {
+     "date": "2026-01-12",
+     "worlds": 87,
+     "coverage": 0.9634560687,
+     "online": 14094.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2327436.0887576966
+    },
+    {
+     "date": "2026-01-13",
+     "worlds": 87,
+     "coverage": 0.9621935528,
+     "online": 12919.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2559098.353079717
+    },
+    {
+     "date": "2026-01-14",
+     "worlds": 87,
+     "coverage": 0.961853237,
+     "online": 0.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": null
+    },
+    {
+     "date": "2026-01-15",
+     "worlds": 87,
+     "coverage": 0.9616161809,
+     "online": 13164.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2520169.1673814277
+    },
+    {
+     "date": "2026-01-16",
+     "worlds": 87,
+     "coverage": 0.9631606006,
+     "online": 12695.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2924617.3568472094
+    },
+    {
+     "date": "2026-01-17",
+     "worlds": 87,
+     "coverage": 0.9640912862,
+     "online": 12855.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2771294.9535609134
+    },
+    {
+     "date": "2026-01-18",
+     "worlds": 87,
+     "coverage": 0.9602159915,
+     "online": 13871.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2459221.110080269
+    },
+    {
+     "date": "2026-01-19",
+     "worlds": 87,
+     "coverage": 0.9599937645,
+     "online": 14208.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2232325.409289815
+    },
+    {
+     "date": "2026-01-20",
+     "worlds": 87,
+     "coverage": 0.9564784418,
+     "online": 12990.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2495702.4509575446
+    },
+    {
+     "date": "2026-01-21",
+     "worlds": 87,
+     "coverage": 0.9578091102,
+     "online": 12809.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2575009.5841948227
+    },
+    {
+     "date": "2026-01-22",
+     "worlds": 87,
+     "coverage": 0.9600454906,
+     "online": 12737.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2560474.9771007756
+    },
+    {
+     "date": "2026-01-23",
+     "worlds": 87,
+     "coverage": 0.9621481824,
+     "online": 12740.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2614514.7755763526
+    },
+    {
+     "date": "2026-01-24",
+     "worlds": 87,
+     "coverage": 0.9634095072,
+     "online": 13134.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2560228.218339828
+    },
+    {
+     "date": "2026-01-25",
+     "worlds": 87,
+     "coverage": 0.9619569834,
+     "online": 14159.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2302168.7139287014
+    },
+    {
+     "date": "2026-01-26",
+     "worlds": 87,
+     "coverage": 0.9613490183,
+     "online": 14591.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2257169.113639234
+    },
+    {
+     "date": "2026-01-27",
+     "worlds": 87,
+     "coverage": 0.9607929635,
+     "online": 13526.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2413303.5082385326
+    },
+    {
+     "date": "2026-01-28",
+     "worlds": 87,
+     "coverage": 0.9615369643,
+     "online": 13273.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2549576.918121877
+    },
+    {
+     "date": "2026-01-29",
+     "worlds": 87,
+     "coverage": 0.9622666663,
+     "online": 13126.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2535479.3570109853
+    },
+    {
+     "date": "2026-01-30",
+     "worlds": 87,
+     "coverage": 0.9636612284,
+     "online": 12870.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2567054.045459523
+    },
+    {
+     "date": "2026-01-31",
+     "worlds": 87,
+     "coverage": 0.9639335541,
+     "online": 12842.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2563320.4775097203
+    },
+    {
+     "date": "2026-02-01",
+     "worlds": 87,
+     "coverage": 0.9623043042,
+     "online": 13871.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2283859.099361305
+    },
+    {
+     "date": "2026-02-02",
+     "worlds": 87,
+     "coverage": 0.96152419,
+     "online": 14342.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2305731.4511463004
+    },
+    {
+     "date": "2026-02-03",
+     "worlds": 87,
+     "coverage": 0.9571937086,
+     "online": 13516.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2485232.517304063
+    },
+    {
+     "date": "2026-02-04",
+     "worlds": 87,
+     "coverage": 0.9573560572,
+     "online": 13401.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2479998.9194660382
+    },
+    {
+     "date": "2026-02-05",
+     "worlds": 87,
+     "coverage": 0.9617543552,
+     "online": 12960.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2533521.3055782514
+    },
+    {
+     "date": "2026-02-06",
+     "worlds": 87,
+     "coverage": 0.9668146425,
+     "online": 12726.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2777491.5953121926
+    },
+    {
+     "date": "2026-02-07",
+     "worlds": 87,
+     "coverage": 0.9667265087,
+     "online": 13786.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2542195.8087999355
+    },
+    {
+     "date": "2026-02-08",
+     "worlds": 87,
+     "coverage": 0.966100369,
+     "online": 15231.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2204904.0784201496
+    },
+    {
+     "date": "2026-02-09",
+     "worlds": 87,
+     "coverage": 0.9620445982,
+     "online": 15589.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1867393.296287645
+    },
+    {
+     "date": "2026-02-10",
+     "worlds": 87,
+     "coverage": 0.9604622302,
+     "online": 13109.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2345901.435841783
+    },
+    {
+     "date": "2026-02-11",
+     "worlds": 87,
+     "coverage": 0.9599004174,
+     "online": 12270.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2613820.6143083107
+    },
+    {
+     "date": "2026-02-12",
+     "worlds": 87,
+     "coverage": 0.9612959496,
+     "online": 12396.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2578559.200084178
+    },
+    {
+     "date": "2026-02-13",
+     "worlds": 87,
+     "coverage": 0.9624478188,
+     "online": 12351.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2564545.258773113
+    },
+    {
+     "date": "2026-02-14",
+     "worlds": 87,
+     "coverage": 0.9653807953,
+     "online": 12345.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2487303.609626402
+    },
+    {
+     "date": "2026-02-15",
+     "worlds": 87,
+     "coverage": 0.9642040607,
+     "online": 12757.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2354031.509977951
+    },
+    {
+     "date": "2026-02-16",
+     "worlds": 87,
+     "coverage": 0.9608128685,
+     "online": 13232.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2411126.6828869777
+    },
+    {
+     "date": "2026-02-17",
+     "worlds": 87,
+     "coverage": 0.9582209733,
+     "online": 13122.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2503664.8495187056
+    },
+    {
+     "date": "2026-02-18",
+     "worlds": 90,
+     "coverage": 0.9585061403,
+     "online": 13040.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2558495.7769630603
+    },
+    {
+     "date": "2026-02-19",
+     "worlds": 90,
+     "coverage": 0.9635875126,
+     "online": 13688.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2442347.8284578696
+    },
+    {
+     "date": "2026-02-20",
+     "worlds": 90,
+     "coverage": 0.9641116347,
+     "online": 13406.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2496952.0285948417
+    },
+    {
+     "date": "2026-02-21",
+     "worlds": 90,
+     "coverage": 0.9633784803,
+     "online": 13404.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2475492.619843757
+    },
+    {
+     "date": "2026-02-22",
+     "worlds": 90,
+     "coverage": 0.9644840716,
+     "online": 14527.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2270891.103348555
+    },
+    {
+     "date": "2026-02-23",
+     "worlds": 90,
+     "coverage": 0.9630696833,
+     "online": 15320.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2299969.2616748214
+    },
+    {
+     "date": "2026-02-24",
+     "worlds": 90,
+     "coverage": 0.9637160673,
+     "online": 14166.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2331844.996381406
+    },
+    {
+     "date": "2026-02-25",
+     "worlds": 90,
+     "coverage": 0.9637968821,
+     "online": 12642.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2949740.295157662
+    },
+    {
+     "date": "2026-02-26",
+     "worlds": 90,
+     "coverage": 0.9662112757,
+     "online": 13354.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2853773.0079065003
+    },
+    {
+     "date": "2026-02-27",
+     "worlds": 90,
+     "coverage": 0.9660487451,
+     "online": 13737.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2733864.5711443266
+    },
+    {
+     "date": "2026-02-28",
+     "worlds": 90,
+     "coverage": 0.9667275132,
+     "online": 13492.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2765175.131685556
+    },
+    {
+     "date": "2026-03-01",
+     "worlds": 90,
+     "coverage": 0.9650777032,
+     "online": 14234.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2607227.2520491607
+    },
+    {
+     "date": "2026-03-02",
+     "worlds": 90,
+     "coverage": 0.9585914226,
+     "online": 14906.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2225729.9532655883
+    },
+    {
+     "date": "2026-03-03",
+     "worlds": 90,
+     "coverage": 0.9555752775,
+     "online": 13166.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2515583.2067870544
+    },
+    {
+     "date": "2026-03-04",
+     "worlds": 90,
+     "coverage": 0.9569700674,
+     "online": 12825.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2568481.805481667
+    },
+    {
+     "date": "2026-03-05",
+     "worlds": 90,
+     "coverage": 0.9597412582,
+     "online": 12561.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2419470.918006446
+    },
+    {
+     "date": "2026-03-06",
+     "worlds": 90,
+     "coverage": 0.9662634351,
+     "online": 12201.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3765429.8327365643
+    },
+    {
+     "date": "2026-03-07",
+     "worlds": 90,
+     "coverage": 0.9685250719,
+     "online": 16851.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2933074.3362574717
+    },
+    {
+     "date": "2026-03-08",
+     "worlds": 90,
+     "coverage": 0.9682150012,
+     "online": 23202.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2218709.7889142367
+    },
+    {
+     "date": "2026-03-09",
+     "worlds": 90,
+     "coverage": 0.9646145817,
+     "online": 24786.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1338510.1885025292
+    },
+    {
+     "date": "2026-03-10",
+     "worlds": 90,
+     "coverage": 0.9600879178,
+     "online": 17683.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1767716.739569294
+    },
+    {
+     "date": "2026-03-11",
+     "worlds": 90,
+     "coverage": 0.9620794753,
+     "online": 12235.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2700732.129272261
+    },
+    {
+     "date": "2026-03-12",
+     "worlds": 90,
+     "coverage": 0.9605660159,
+     "online": 12294.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2702213.77211899
+    },
+    {
+     "date": "2026-03-13",
+     "worlds": 90,
+     "coverage": 0.9621279005,
+     "online": 12225.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2706152.693914121
+    },
+    {
+     "date": "2026-03-14",
+     "worlds": 90,
+     "coverage": 0.9635163993,
+     "online": 12422.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2623395.517633926
+    },
+    {
+     "date": "2026-03-15",
+     "worlds": 90,
+     "coverage": 0.9599432442,
+     "online": 13233.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2415844.7880628794
+    },
+    {
+     "date": "2026-03-16",
+     "worlds": 90,
+     "coverage": 0.9605206403,
+     "online": 13750.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2332203.8901653485
+    },
+    {
+     "date": "2026-03-17",
+     "worlds": 90,
+     "coverage": 0.9567306005,
+     "online": 12810.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2523336.228269974
+    },
+    {
+     "date": "2026-03-18",
+     "worlds": 90,
+     "coverage": 0.957865892,
+     "online": 12763.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2561932.6655936236
+    },
+    {
+     "date": "2026-03-19",
+     "worlds": 90,
+     "coverage": 0.961241006,
+     "online": 12411.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2611155.1793389735
+    },
+    {
+     "date": "2026-03-20",
+     "worlds": 90,
+     "coverage": 0.9690725574,
+     "online": 12447.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2708319.579283942
+    },
+    {
+     "date": "2026-03-21",
+     "worlds": 90,
+     "coverage": 0.9717267637,
+     "online": 12167.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2794345.4857865945
+    },
+    {
+     "date": "2026-03-22",
+     "worlds": 90,
+     "coverage": 0.9713290548,
+     "online": 13053.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2589123.9019841864
+    },
+    {
+     "date": "2026-03-23",
+     "worlds": 90,
+     "coverage": 0.9639475075,
+     "online": 13698.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2363300.6131251464
+    },
+    {
+     "date": "2026-03-24",
+     "worlds": 90,
+     "coverage": 0.9610112299,
+     "online": 12637.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2685313.310194552
+    },
+    {
+     "date": "2026-03-25",
+     "worlds": 90,
+     "coverage": 0.9624634197,
+     "online": 12320.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2771487.0936720604
+    },
+    {
+     "date": "2026-03-26",
+     "worlds": 90,
+     "coverage": 0.9627694154,
+     "online": 12414.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2673374.7394762174
+    },
+    {
+     "date": "2026-03-27",
+     "worlds": 90,
+     "coverage": 0.9615769345,
+     "online": 12152.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2742618.295354874
+    },
+    {
+     "date": "2026-03-28",
+     "worlds": 90,
+     "coverage": 0.9635242043,
+     "online": 12129.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2804452.488197667
+    },
+    {
+     "date": "2026-03-29",
+     "worlds": 90,
+     "coverage": 0.9611322782,
+     "online": 13059.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2466844.0719908043
+    },
+    {
+     "date": "2026-03-30",
+     "worlds": 90,
+     "coverage": 0.9607777373,
+     "online": 13444.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2371437.2024699966
+    },
+    {
+     "date": "2026-03-31",
+     "worlds": 90,
+     "coverage": 0.9572618446,
+     "online": 12635.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2582263.6675298135
+    },
+    {
+     "date": "2026-04-01",
+     "worlds": 90,
+     "coverage": 0.9570275725,
+     "online": 12226.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2694535.8602273474
+    },
+    {
+     "date": "2026-04-02",
+     "worlds": 90,
+     "coverage": 0.9630186347,
+     "online": 12180.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2716611.1959462524
+    },
+    {
+     "date": "2026-04-03",
+     "worlds": 90,
+     "coverage": 0.9661795944,
+     "online": 12232.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3085605.6576335607
+    },
+    {
+     "date": "2026-04-04",
+     "worlds": 90,
+     "coverage": 0.9671708367,
+     "online": 13163.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2676177.5802103276
+    },
+    {
+     "date": "2026-04-05",
+     "worlds": 90,
+     "coverage": 0.9664955392,
+     "online": 13223.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2405455.440950691
+    },
+    {
+     "date": "2026-04-06",
+     "worlds": 90,
+     "coverage": 0.9633662397,
+     "online": 12349.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2690354.4390957057
+    },
+    {
+     "date": "2026-04-07",
+     "worlds": 90,
+     "coverage": 0.9620322129,
+     "online": 13293.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2493229.0446742685
+    },
+    {
+     "date": "2026-04-08",
+     "worlds": 90,
+     "coverage": 0.9617887069,
+     "online": 12405.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2686646.9583980944
+    },
+    {
+     "date": "2026-04-09",
+     "worlds": 90,
+     "coverage": 0.9597691969,
+     "online": 12019.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2776428.886862827
+    },
+    {
+     "date": "2026-04-10",
+     "worlds": 90,
+     "coverage": 0.9631859594,
+     "online": 11859.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2774247.938427099
+    },
+    {
+     "date": "2026-04-11",
+     "worlds": 90,
+     "coverage": 0.9639974807,
+     "online": 11840.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2774001.6287857103
+    },
+    {
+     "date": "2026-04-12",
+     "worlds": 90,
+     "coverage": 0.9637157849,
+     "online": 12649.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2518432.6929579484
+    },
+    {
+     "date": "2026-04-13",
+     "worlds": 90,
+     "coverage": 0.9614339551,
+     "online": 13373.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2389296.6462054886
+    },
+    {
+     "date": "2026-04-14",
+     "worlds": 90,
+     "coverage": 0.958884632,
+     "online": 12524.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2645466.161656831
+    },
+    {
+     "date": "2026-04-15",
+     "worlds": 90,
+     "coverage": 0.9580078995,
+     "online": 12043.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2771053.0659283255
+    },
+    {
+     "date": "2026-04-16",
+     "worlds": 90,
+     "coverage": 0.9618438548,
+     "online": 11741.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2800875.791397468
+    },
+    {
+     "date": "2026-04-17",
+     "worlds": 90,
+     "coverage": 0.9603383119,
+     "online": 11585.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2801161.984788716
+    },
+    {
+     "date": "2026-04-18",
+     "worlds": 90,
+     "coverage": 0.964703889,
+     "online": 11537.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2787954.3031759798
+    },
+    {
+     "date": "2026-04-19",
+     "worlds": 90,
+     "coverage": 0.9651774905,
+     "online": 12070.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2546523.095170536
+    },
+    {
+     "date": "2026-04-20",
+     "worlds": 90,
+     "coverage": 0.9626379622,
+     "online": 12698.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2521937.3358565196
+    },
+    {
+     "date": "2026-04-21",
+     "worlds": 90,
+     "coverage": 0.9615463194,
+     "online": 12329.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2776066.5711784977
+    },
+    {
+     "date": "2026-04-22",
+     "worlds": 90,
+     "coverage": 0.9641013445,
+     "online": 12500.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2631787.841841089
+    },
+    {
+     "date": "2026-04-23",
+     "worlds": 90,
+     "coverage": 0.963505583,
+     "online": 11660.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2865310.6756631555
+    },
+    {
+     "date": "2026-04-24",
+     "worlds": 90,
+     "coverage": 0.9624433818,
+     "online": 11536.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2920055.3343965076
+    },
+    {
+     "date": "2026-04-25",
+     "worlds": 90,
+     "coverage": 0.9647897679,
+     "online": 11491.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2872040.314625068
+    },
+    {
+     "date": "2026-04-26",
+     "worlds": 90,
+     "coverage": 0.9624997188,
+     "online": 12172.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2622599.185846746
+    },
+    {
+     "date": "2026-04-27",
+     "worlds": 90,
+     "coverage": 0.9583021767,
+     "online": 12722.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2507749.7762295557
+    },
+    {
+     "date": "2026-04-28",
+     "worlds": 90,
+     "coverage": 0.9545129716,
+     "online": 0.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": null
+    },
+    {
+     "date": "2026-04-29",
+     "worlds": 90,
+     "coverage": 0.955702857,
+     "online": 11639.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2909252.0393717336
+    },
+    {
+     "date": "2026-04-30",
+     "worlds": 90,
+     "coverage": 0.9613890379,
+     "online": 11662.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2611790.6595288394
+    },
+    {
+     "date": "2026-05-01",
+     "worlds": 90,
+     "coverage": 0.9674512167,
+     "online": 11161.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 4376267.110225245
+    },
+    {
+     "date": "2026-05-02",
+     "worlds": 90,
+     "coverage": 0.9676803919,
+     "online": 18544.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2658618.9758218806
+    },
+    {
+     "date": "2026-05-03",
+     "worlds": 90,
+     "coverage": 0.9685840825,
+     "online": 23378.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2234695.5345713496
+    },
+    {
+     "date": "2026-05-04",
+     "worlds": 90,
+     "coverage": 0.964951377,
+     "online": 23084.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1465477.3502204793
+    },
+    {
+     "date": "2026-05-05",
+     "worlds": 90,
+     "coverage": 0.9617678258,
+     "online": 16653.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1770237.7134022915
+    },
+    {
+     "date": "2026-05-06",
+     "worlds": 90,
+     "coverage": 0.9625450482,
+     "online": 10615.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3053161.0313163744
+    },
+    {
+     "date": "2026-05-07",
+     "worlds": 90,
+     "coverage": 0.9624671999,
+     "online": 10678.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3076754.572017079
+    },
+    {
+     "date": "2026-05-08",
+     "worlds": 90,
+     "coverage": 0.9616036524,
+     "online": 11262.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2959454.512254249
+    },
+    {
+     "date": "2026-05-09",
+     "worlds": 90,
+     "coverage": 0.9626639355,
+     "online": 11588.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2950957.1705819448
+    },
+    {
+     "date": "2026-05-10",
+     "worlds": 90,
+     "coverage": 0.9636898376,
+     "online": 12509.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2441820.1855720887
+    },
+    {
+     "date": "2026-05-11",
+     "worlds": 90,
+     "coverage": 0.9616300574,
+     "online": 12429.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2621842.2984202737
+    },
+    {
+     "date": "2026-05-12",
+     "worlds": 90,
+     "coverage": 0.9587299808,
+     "online": 11861.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2792004.279847636
+    },
+    {
+     "date": "2026-05-13",
+     "worlds": 90,
+     "coverage": 0.9579535294,
+     "online": 11737.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2897947.453570288
+    },
+    {
+     "date": "2026-05-14",
+     "worlds": 90,
+     "coverage": 0.9626293095,
+     "online": 11785.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3142421.1844635787
+    },
+    {
+     "date": "2026-05-15",
+     "worlds": 90,
+     "coverage": 0.963284509,
+     "online": 12075.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3094409.069655792
+    },
+    {
+     "date": "2026-05-16",
+     "worlds": 90,
+     "coverage": 0.9654251236,
+     "online": 11953.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3164674.6019524443
+    },
+    {
+     "date": "2026-05-17",
+     "worlds": 90,
+     "coverage": 0.9644144155,
+     "online": 12694.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2898338.063348819
+    },
+    {
+     "date": "2026-05-18",
+     "worlds": 90,
+     "coverage": 0.9646955369,
+     "online": 13145.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2698135.1667300374
+    },
+    {
+     "date": "2026-05-19",
+     "worlds": 90,
+     "coverage": 0.9623092279,
+     "online": 12373.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2959853.723356528
+    },
+    {
+     "date": "2026-05-20",
+     "worlds": 93,
+     "coverage": 0.9636333665,
+     "online": 12061.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2933185.2055083867
+    },
+    {
+     "date": "2026-05-21",
+     "worlds": 93,
+     "coverage": 0.9632398518,
+     "online": 12537.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2730982.764668287
+    },
+    {
+     "date": "2026-05-22",
+     "worlds": 93,
+     "coverage": 0.9640564622,
+     "online": 11981.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2816513.3853722373
+    },
+    {
+     "date": "2026-05-23",
+     "worlds": 93,
+     "coverage": 0.96366992,
+     "online": 11896.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2812968.912866018
+    },
+    {
+     "date": "2026-05-24",
+     "worlds": 93,
+     "coverage": 0.9628303151,
+     "online": 12691.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2590657.776077659
+    },
+    {
+     "date": "2026-05-25",
+     "worlds": 93,
+     "coverage": 0.9626862696,
+     "online": 13206.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2535762.978387569
+    },
+    {
+     "date": "2026-05-26",
+     "worlds": 93,
+     "coverage": 0.9578804166,
+     "online": 12652.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2726243.5806072224
+    },
+    {
+     "date": "2026-05-27",
+     "worlds": 93,
+     "coverage": 0.9574242664,
+     "online": 12169.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2774689.4222281724
+    },
+    {
+     "date": "2026-05-28",
+     "worlds": 93,
+     "coverage": 0.9614189335,
+     "online": 12000.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2856673.3973124567
+    },
+    {
+     "date": "2026-05-29",
+     "worlds": 93,
+     "coverage": 0.9619953397,
+     "online": 11864.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2823416.402310256
+    },
+    {
+     "date": "2026-05-30",
+     "worlds": 93,
+     "coverage": 0.9639763523,
+     "online": 11647.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2832546.6022828035
+    },
+    {
+     "date": "2026-05-31",
+     "worlds": 93,
+     "coverage": 0.9623974788,
+     "online": 12159.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2651060.957858602
+    },
+    {
+     "date": "2026-06-01",
+     "worlds": 93,
+     "coverage": 0.9612582868,
+     "online": 12684.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2590227.5158726852
+    },
+    {
+     "date": "2026-06-02",
+     "worlds": 93,
+     "coverage": 0.9621467953,
+     "online": 12036.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2846781.3747986415
+    },
+    {
+     "date": "2026-06-03",
+     "worlds": 93,
+     "coverage": 0.9624391764,
+     "online": 11870.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2898917.8463337836
+    },
+    {
+     "date": "2026-06-04",
+     "worlds": 93,
+     "coverage": 0.9632071173,
+     "online": 11814.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3029729.582805457
+    },
+    {
+     "date": "2026-06-05",
+     "worlds": 93,
+     "coverage": 0.9682113589,
+     "online": 12994.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2748318.4350276412
+    },
+    {
+     "date": "2026-06-06",
+     "worlds": 93,
+     "coverage": 0.9685616282,
+     "online": 17428.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1936958.1580423214
+    },
+    {
+     "date": "2026-06-07",
+     "worlds": 93,
+     "coverage": 0.9688582319,
+     "online": 22543.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1463397.3782564541
+    },
+    {
+     "date": "2026-06-08",
+     "worlds": 93,
+     "coverage": 0.9634019391,
+     "online": 22056.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1361622.4290149715
+    },
+    {
+     "date": "2026-06-09",
+     "worlds": 93,
+     "coverage": 0.9556622432,
+     "online": 15963.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1998832.1196457217
+    },
+    {
+     "date": "2026-06-10",
+     "worlds": 93,
+     "coverage": 0.9568855338,
+     "online": 11610.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2846600.8324579387
+    },
+    {
+     "date": "2026-06-11",
+     "worlds": 93,
+     "coverage": 0.962131654,
+     "online": 11766.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2832460.842482695
+    },
+    {
+     "date": "2026-06-12",
+     "worlds": 93,
+     "coverage": 0.9650773393,
+     "online": 11586.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2822835.206524445
+    },
+    {
+     "date": "2026-06-13",
+     "worlds": 93,
+     "coverage": 0.9664679842,
+     "online": 11472.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2798991.802570686
+    },
+    {
+     "date": "2026-06-14",
+     "worlds": 93,
+     "coverage": 0.9651294187,
+     "online": 12119.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2674021.393068684
+    },
+    {
+     "date": "2026-06-15",
+     "worlds": 93,
+     "coverage": 0.9628921864,
+     "online": 12450.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2589479.2647721246
+    },
+    {
+     "date": "2026-06-16",
+     "worlds": 93,
+     "coverage": 0.9645216079,
+     "online": 12124.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3623902.054823038
+    },
+    {
+     "date": "2026-06-17",
+     "worlds": 93,
+     "coverage": 0.9657004561,
+     "online": 13142.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3802455.6312616873
+    },
+    {
+     "date": "2026-06-18",
+     "worlds": 93,
+     "coverage": 0.9657057809,
+     "online": 13712.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3607474.6087971055
+    },
+    {
+     "date": "2026-06-19",
+     "worlds": 93,
+     "coverage": 0.9658635589,
+     "online": 13220.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3637091.8464467544
+    },
+    {
+     "date": "2026-06-20",
+     "worlds": 93,
+     "coverage": 0.9687381673,
+     "online": 12897.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3703650.864066821
+    },
+    {
+     "date": "2026-06-21",
+     "worlds": 93,
+     "coverage": 0.9664008601,
+     "online": 13005.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3654627.386298803
+    },
+    {
+     "date": "2026-06-22",
+     "worlds": 93,
+     "coverage": 0.9652598166,
+     "online": 14280.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3310891.526840573
+    },
+    {
+     "date": "2026-06-23",
+     "worlds": 93,
+     "coverage": 0.9608944811,
+     "online": 13382.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3507211.877192703
+    },
+    {
+     "date": "2026-06-24",
+     "worlds": 93,
+     "coverage": 0.9624151725,
+     "online": 12937.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3579082.734911866
+    },
+    {
+     "date": "2026-06-25",
+     "worlds": 93,
+     "coverage": 0.9678987749,
+     "online": 13272.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3780086.0573776346
+    },
+    {
+     "date": "2026-06-26",
+     "worlds": 93,
+     "coverage": 0.9689127829,
+     "online": 11800.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 4562760.463300236
+    },
+    {
+     "date": "2026-06-27",
+     "worlds": 93,
+     "coverage": 0.9684795829,
+     "online": 12777.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 4328958.258949514
+    },
+    {
+     "date": "2026-06-28",
+     "worlds": 93,
+     "coverage": 0.9684000252,
+     "online": 13672.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3995849.625622868
+    },
+    {
+     "date": "2026-06-29",
+     "worlds": 93,
+     "coverage": 0.9662045799,
+     "online": 14091.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3691498.133766141
+    },
+    {
+     "date": "2026-06-30",
+     "worlds": 93,
+     "coverage": 0.9658129148,
+     "online": 13394.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3908688.940907984
+    },
+    {
+     "date": "2026-07-01",
+     "worlds": 93,
+     "coverage": 0.9671830679,
+     "online": 12779.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 4176390.3233947125
+    },
+    {
+     "date": "2026-07-02",
+     "worlds": 93,
+     "coverage": 0.966421092,
+     "online": 12696.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 4087786.783441905
+    },
+    {
+     "date": "2026-07-03",
+     "worlds": 93,
+     "coverage": 0.9691063761,
+     "online": 12717.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 5673080.533259174
+    },
+    {
+     "date": "2026-07-04",
+     "worlds": 93,
+     "coverage": 0.9702042954,
+     "online": 18484.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 4268275.095808034
+    },
+    {
+     "date": "2026-07-05",
+     "worlds": 93,
+     "coverage": 0.970274519,
+     "online": 24845.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3030513.805007779
+    },
+    {
+     "date": "2026-07-06",
+     "worlds": 93,
+     "coverage": 0.9665492462,
+     "online": 24462.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 1902547.588582023
+    },
+    {
+     "date": "2026-07-07",
+     "worlds": 93,
+     "coverage": 0.9582668054,
+     "online": 16626.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 2691288.9901039354
+    },
+    {
+     "date": "2026-07-08",
+     "worlds": 93,
+     "coverage": 0.9579549393,
+     "online": 12470.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3734200.761929326
+    },
+    {
+     "date": "2026-07-09",
+     "worlds": 93,
+     "coverage": 0.9642003444,
+     "online": 12374.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3869888.2290402814
+    },
+    {
+     "date": "2026-07-10",
+     "worlds": 93,
+     "coverage": 0.9656072017,
+     "online": 12608.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3649600.292910045
+    },
+    {
+     "date": "2026-07-11",
+     "worlds": 93,
+     "coverage": 0.9657536092,
+     "online": 12217.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3735294.480810231
+    },
+    {
+     "date": "2026-07-12",
+     "worlds": 93,
+     "coverage": 0.9647402467,
+     "online": 12969.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3471163.8857161812
+    },
+    {
+     "date": "2026-07-13",
+     "worlds": 93,
+     "coverage": 0.9644706868,
+     "online": 13256.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3262949.279906159
+    },
+    {
+     "date": "2026-07-14",
+     "worlds": 93,
+     "coverage": 0.9621165958,
+     "online": 13294.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3410835.0068193963
+    },
+    {
+     "date": "2026-07-15",
+     "worlds": 93,
+     "coverage": 0.9636343254,
+     "online": 13340.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3410249.6383436434
+    },
+    {
+     "date": "2026-07-16",
+     "worlds": 93,
+     "coverage": 0.9625013798,
+     "online": 13024.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3498954.8843795713
+    },
+    {
+     "date": "2026-07-17",
+     "worlds": 93,
+     "coverage": 0.9621657978,
+     "online": 12951.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3476951.36473001
+    },
+    {
+     "date": "2026-07-18",
+     "worlds": 93,
+     "coverage": 0.963638275,
+     "online": 12921.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3485325.5363615826
+    },
+    {
+     "date": "2026-07-19",
+     "worlds": 93,
+     "coverage": 0.9654285378,
+     "online": 13611.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3038415.532326594
+    },
+    {
+     "date": "2026-07-20",
+     "worlds": 93,
+     "coverage": 0.9630519102,
+     "online": 13769.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3262048.614313239
+    },
+    {
+     "date": "2026-07-21",
+     "worlds": 93,
+     "coverage": 0.9569908655,
+     "online": 12849.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3605543.2593618394
+    },
+    {
+     "date": "2026-07-22",
+     "worlds": 93,
+     "coverage": 0.9578118652,
+     "online": 13468.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3482708.650117358
+    },
+    {
+     "date": "2026-07-23",
+     "worlds": 93,
+     "coverage": 0.9621603914,
+     "online": 13410.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3489442.79570601
+    },
+    {
+     "date": "2026-07-24",
+     "worlds": 93,
+     "coverage": 0.9624837466,
+     "online": 13203.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3528678.7286609025
+    },
+    {
+     "date": "2026-07-25",
+     "worlds": 93,
+     "coverage": 0.9654447268,
+     "online": 13193.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3505301.127203269
+    },
+    {
+     "date": "2026-07-26",
+     "worlds": 93,
+     "coverage": 0.9643320325,
+     "online": 13774.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3216143.2635584595
+    },
+    {
+     "date": "2026-07-27",
+     "worlds": 93,
+     "coverage": 0.9621725139,
+     "online": 14024.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3210662.284825199
+    },
+    {
+     "date": "2026-07-28",
+     "worlds": 93,
+     "coverage": 0.9615753765,
+     "online": 13417.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3465342.9809145075
+    },
+    {
+     "date": "2026-07-29",
+     "worlds": 93,
+     "coverage": 0.9624898117,
+     "online": 13024.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3541132.446140859
+    },
+    {
+     "date": "2026-07-30",
+     "worlds": 93,
+     "coverage": 0.9622180839,
+     "online": 13031.0,
+     "series": "Realized estimate (50%)",
+     "gp_per_average_online_player": 3462473.255486577
+    }
+   ],
+   "headline_models": [
+    {
+     "series_label": "Raw kill count",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "coefficient_pp": -0.2338060799,
+     "std_error_two_way": 0.0020154918,
+     "p_value": 0.2460305569,
+     "r2_within": 0.0141192035,
+     "n": 13896
+    },
+    {
+     "series_label": "Direct coins",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "coefficient_pp": -0.0435360261,
+     "std_error_two_way": 0.0006060991,
+     "p_value": 0.4725730386,
+     "r2_within": 0.0139977992,
+     "n": 13896
+    },
+    {
+     "series_label": "Potential emission",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "coefficient_pp": -0.2251067127,
+     "std_error_two_way": 0.0014200994,
+     "p_value": 0.1129328178,
+     "r2_within": 0.0142522282,
+     "n": 13896
+    },
+    {
+     "series_label": "Realized estimate (50%)",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "coefficient_pp": -0.1980759071,
+     "std_error_two_way": 0.0013022731,
+     "p_value": 0.1282595055,
+     "r2_within": 0.0142349951,
+     "n": 13896
+    },
+    {
+     "series_label": "Raw kill count",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "coefficient_pp": 0.1955893398,
+     "std_error_two_way": 0.0034731659,
+     "p_value": 0.5733366616,
+     "r2_within": 0.0182249928,
+     "n": 13164
+    },
+    {
+     "series_label": "Direct coins",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "coefficient_pp": 0.0219979079,
+     "std_error_two_way": 0.0010535862,
+     "p_value": 0.8346115699,
+     "r2_within": 0.0181822272,
+     "n": 13164
+    },
+    {
+     "series_label": "Potential emission",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "coefficient_pp": 0.1274326697,
+     "std_error_two_way": 0.0027007506,
+     "p_value": 0.6370397947,
+     "r2_within": 0.0182149604,
+     "n": 13164
+    },
+    {
+     "series_label": "Realized estimate (50%)",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "coefficient_pp": 0.1008612528,
+     "std_error_two_way": 0.0023868464,
+     "p_value": 0.6726081524,
+     "r2_within": 0.0182058645,
+     "n": 13164
+    },
+    {
+     "series_label": "Raw kill count",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "coefficient_pp": -0.028535492,
+     "std_error_two_way": 0.0053191979,
+     "p_value": 0.9572170221,
+     "r2_within": 0.0197963184,
+     "n": 10358
+    },
+    {
+     "series_label": "Direct coins",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "coefficient_pp": -0.0352937466,
+     "std_error_two_way": 0.0014092026,
+     "p_value": 0.8022379039,
+     "r2_within": 0.0198057074,
+     "n": 10358
+    },
+    {
+     "series_label": "Potential emission",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "coefficient_pp": -0.1031748421,
+     "std_error_two_way": 0.0038362982,
+     "p_value": 0.7879729702,
+     "r2_within": 0.019815064,
+     "n": 10358
+    },
+    {
+     "series_label": "Realized estimate (50%)",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "coefficient_pp": -0.1051510712,
+     "std_error_two_way": 0.0033396574,
+     "p_value": 0.752871094,
+     "r2_within": 0.0198199086,
+     "n": 10358
+    }
+   ],
+   "oos": [
+    {
+     "series_label": "Raw kill count",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "rmse_improvement_pp": 0.1659912568,
+     "random_walk_rmse": 0.0127787239,
+     "model_rmse": 0.0127575123,
+     "direction_accuracy": 0.4998796051,
+     "train_n": 7974,
+     "test_n": 4153
+    },
+    {
+     "series_label": "Direct coins",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "rmse_improvement_pp": -0.1047680402,
+     "random_walk_rmse": 0.0127787239,
+     "model_rmse": 0.0127921119,
+     "direction_accuracy": 0.4941006501,
+     "train_n": 7974,
+     "test_n": 4153
+    },
+    {
+     "series_label": "Potential emission",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "rmse_improvement_pp": -0.1176079934,
+     "random_walk_rmse": 0.0127787239,
+     "model_rmse": 0.0127937527,
+     "direction_accuracy": 0.4936190706,
+     "train_n": 7974,
+     "test_n": 4153
+    },
+    {
+     "series_label": "Realized estimate (50%)",
+     "horizon": "1 day",
+     "horizon_days": 1,
+     "rmse_improvement_pp": -0.1601365332,
+     "random_walk_rmse": 0.0127787239,
+     "model_rmse": 0.0127991873,
+     "direction_accuracy": 0.4969901276,
+     "train_n": 7974,
+     "test_n": 4153
+    },
+    {
+     "series_label": "Raw kill count",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "rmse_improvement_pp": -1.4159652986,
+     "random_walk_rmse": 0.0253512489,
+     "model_rmse": 0.0257102138,
+     "direction_accuracy": 0.4483760232,
+     "train_n": 7974,
+     "test_n": 3787
+    },
+    {
+     "series_label": "Direct coins",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "rmse_improvement_pp": -1.5116568571,
+     "random_walk_rmse": 0.0253512489,
+     "model_rmse": 0.0257344728,
+     "direction_accuracy": 0.4433588593,
+     "train_n": 7974,
+     "test_n": 3787
+    },
+    {
+     "series_label": "Potential emission",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "rmse_improvement_pp": -1.4048813136,
+     "random_walk_rmse": 0.0253512489,
+     "model_rmse": 0.0257074039,
+     "direction_accuracy": 0.4510166359,
+     "train_n": 7974,
+     "test_n": 3787
+    },
+    {
+     "series_label": "Realized estimate (50%)",
+     "horizon": "7 day",
+     "horizon_days": 7,
+     "rmse_improvement_pp": -1.4260248867,
+     "random_walk_rmse": 0.0253512489,
+     "model_rmse": 0.025712764,
+     "direction_accuracy": 0.4520728809,
+     "train_n": 7974,
+     "test_n": 3787
+    },
+    {
+     "series_label": "Raw kill count",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "rmse_improvement_pp": -18.843016492,
+     "random_walk_rmse": 0.0345963644,
+     "model_rmse": 0.0411153631,
+     "direction_accuracy": 0.2151845638,
+     "train_n": 7974,
+     "test_n": 2384
+    },
+    {
+     "series_label": "Direct coins",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "rmse_improvement_pp": -19.0246553412,
+     "random_walk_rmse": 0.0345963644,
+     "model_rmse": 0.0411782035,
+     "direction_accuracy": 0.2160234899,
+     "train_n": 7974,
+     "test_n": 2384
+    },
+    {
+     "series_label": "Potential emission",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "rmse_improvement_pp": -19.0286443919,
+     "random_walk_rmse": 0.0345963644,
+     "model_rmse": 0.0411795836,
+     "direction_accuracy": 0.2168624161,
+     "train_n": 7974,
+     "test_n": 2384
+    },
+    {
+     "series_label": "Realized estimate (50%)",
+     "horizon": "30 day",
+     "horizon_days": 30,
+     "rmse_improvement_pp": -19.0624307068,
+     "random_walk_rmse": 0.0345963644,
+     "model_rmse": 0.0411912724,
+     "direction_accuracy": 0.2181208054,
+     "train_n": 7974,
+     "test_n": 2384
+    }
+   ],
+   "coverage": [
+    {
+     "coverage_category": "modeled",
+     "creatures": 848,
+     "deaths": 19191334203,
+     "death_share": 0.9597854825
+    },
+    {
+     "coverage_category": "missing_loot_table",
+     "creatures": 224,
+     "deaths": 565105558,
+     "death_share": 0.0282617198
+    },
+    {
+     "coverage_category": "insufficient_sample",
+     "creatures": 119,
+     "deaths": 202226639,
+     "death_share": 0.0101136372
+    },
+    {
+     "coverage_category": "boss_separate",
+     "creatures": 428,
+     "deaths": 36774823,
+     "death_share": 0.0018391604
+    }
+   ],
+   "top_creatures": [
+    {
+     "canonical_name": "sight of surrender",
+     "total_kills": 269832,
+     "loot_samples": 4691.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 100.0,
+     "expected_npc_sale_gp_per_kill": 10471.5519079088,
+     "expected_total_potential_gp_per_kill": 10571.5519079088,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Sight_of_Surrender"
+    },
+    {
+     "canonical_name": "percht",
+     "total_kills": 4136665,
+     "loot_samples": 20780.0,
+     "loot_confidence": "high",
+     "expected_direct_coin_gp_per_kill": 1.0,
+     "expected_npc_sale_gp_per_kill": 9931.8816169394,
+     "expected_total_potential_gp_per_kill": 9932.8816169394,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Percht"
+    },
+    {
+     "canonical_name": "hazardous phantom",
+     "total_kills": 317342,
+     "loot_samples": 255.0,
+     "loot_confidence": "low",
+     "expected_direct_coin_gp_per_kill": 6078.431372549,
+     "expected_npc_sale_gp_per_kill": 2354.9019607843,
+     "expected_total_potential_gp_per_kill": 8433.3333333333,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Hazardous_Phantom"
+    },
+    {
+     "canonical_name": "vibrant phantom",
+     "total_kills": 2552433,
+     "loot_samples": 2231.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 5589.4217839534,
+     "expected_npc_sale_gp_per_kill": 2375.1232631107,
+     "expected_total_potential_gp_per_kill": 7964.5450470641,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Vibrant_Phantom"
+    },
+    {
+     "canonical_name": "courage leech",
+     "total_kills": 3280065,
+     "loot_samples": 9892.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 6011.9288313789,
+     "expected_npc_sale_gp_per_kill": 1910.6348564497,
+     "expected_total_potential_gp_per_kill": 7922.5636878285,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Courage_Leech"
+    },
+    {
+     "canonical_name": "cloak of terror",
+     "total_kills": 5944413,
+     "loot_samples": 17564.0,
+     "loot_confidence": "high",
+     "expected_direct_coin_gp_per_kill": 5564.7916192211,
+     "expected_npc_sale_gp_per_kill": 2196.5725347301,
+     "expected_total_potential_gp_per_kill": 7761.3641539513,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Cloak_of_Terror"
+    },
+    {
+     "canonical_name": "many faces",
+     "total_kills": 2624966,
+     "loot_samples": 9963.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 5584.6632540399,
+     "expected_npc_sale_gp_per_kill": 1893.8974204557,
+     "expected_total_potential_gp_per_kill": 7478.5606744956,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Many_Faces"
+    },
+    {
+     "canonical_name": "distorted phantom",
+     "total_kills": 1604987,
+     "loot_samples": 2897.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 5764.5840524681,
+     "expected_npc_sale_gp_per_kill": 1645.7369692786,
+     "expected_total_potential_gp_per_kill": 7410.3210217466,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Distorted_Phantom"
+    },
+    {
+     "canonical_name": "mould phantom",
+     "total_kills": 8121885,
+     "loot_samples": 1107.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 5275.5194218609,
+     "expected_npc_sale_gp_per_kill": 2009.1237579042,
+     "expected_total_potential_gp_per_kill": 7284.6431797651,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Mould_Phantom"
+    },
+    {
+     "canonical_name": "infernal phantom",
+     "total_kills": 2419728,
+     "loot_samples": 191.0,
+     "loot_confidence": "low",
+     "expected_direct_coin_gp_per_kill": 4607.3298429319,
+     "expected_npc_sale_gp_per_kill": 2489.5287958115,
+     "expected_total_potential_gp_per_kill": 7096.8586387435,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Infernal_Phantom"
+    },
+    {
+     "canonical_name": "converter",
+     "total_kills": 6874929,
+     "loot_samples": 1373.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 6096.1398397669,
+     "expected_npc_sale_gp_per_kill": 905.5353241078,
+     "expected_total_potential_gp_per_kill": 7001.6751638747,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Converter"
+    },
+    {
+     "canonical_name": "darklight construct",
+     "total_kills": 4372487,
+     "loot_samples": 829.0,
+     "loot_confidence": "low",
+     "expected_direct_coin_gp_per_kill": 6151.9903498191,
+     "expected_npc_sale_gp_per_kill": 811.0373944511,
+     "expected_total_potential_gp_per_kill": 6963.0277442702,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Darklight_Construct"
+    },
+    {
+     "canonical_name": "bloated man-maggot",
+     "total_kills": 14405448,
+     "loot_samples": 3337.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 6065.328139047,
+     "expected_npc_sale_gp_per_kill": 850.0,
+     "expected_total_potential_gp_per_kill": 6915.328139047,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Bloated_Man-Maggot"
+    },
+    {
+     "canonical_name": "sopping carcass",
+     "total_kills": 2194645,
+     "loot_samples": 338.0,
+     "loot_confidence": "low",
+     "expected_direct_coin_gp_per_kill": 5059.1715976331,
+     "expected_npc_sale_gp_per_kill": 1831.8047337278,
+     "expected_total_potential_gp_per_kill": 6890.9763313609,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Sopping_Carcass"
+    },
+    {
+     "canonical_name": "wandering pillar",
+     "total_kills": 5617200,
+     "loot_samples": 1159.0,
+     "loot_confidence": "medium",
+     "expected_direct_coin_gp_per_kill": 5642.7955133736,
+     "expected_npc_sale_gp_per_kill": 1231.4754098361,
+     "expected_total_potential_gp_per_kill": 6874.2709232097,
+     "loot_source_url": "https://tibia.fandom.com/wiki/Loot_Statistics:Wandering_Pillar"
+    }
+   ]
+  }
+ },
+ "sources": [
+  {
+   "id": "src_daily",
+   "label": "Daily world emission series",
+   "path": "data/processed/gold_emission_daily.csv"
+  },
+  {
+   "id": "src_creatures",
+   "label": "Canonical creature GP values",
+   "path": "data/processed/creature_gold_value.csv"
+  },
+  {
+   "id": "src_models",
+   "label": "Equivalent econometric models",
+   "path": "data/processed/gold_emission_model_comparison.csv"
+  },
+  {
+   "id": "src_metrics",
+   "label": "Report headline metrics",
+   "path": "reports/gold_emission_report_artifact.json",
+   "query": {
+    "description": "Read the single reviewed headline-metrics row assembled by the report generator.",
+    "engine": "SQLite",
+    "language": "sql",
+    "sql": "SELECT * FROM report_metrics;",
+    "tables_used": [
+     "report_metrics"
+    ],
+    "metric_definitions": [
+     "Coverage is the share of non-boss deaths with a reliable loot model or source-verified zero.",
+     "Best holdout improvement is 1 - model RMSE / random-walk RMSE."
+    ]
+   }
+  },
+  {
+   "id": "src_daily_chart",
+   "label": "Daily normalized emission query",
+   "path": "data/processed/gold_emission_daily.csv",
+   "query": {
+    "description": "Aggregate direct and 50%-realization GP per average online player by date.",
+    "engine": "SQLite",
+    "language": "sql",
+    "sql": "SELECT date, 'Direct coins' AS series, SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date UNION ALL SELECT date, 'Realized estimate (50%)' AS series, SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date ORDER BY date, series;",
+    "tables_used": [
+     "gold_emission_daily"
+    ],
+    "filters": [
+     "low_quality_flag = 0"
+    ],
+    "metric_definitions": [
+     "GP per average online player = summed world GP / summed world average-online players for each date."
+    ]
+   }
+  },
+  {
+   "id": "src_headline_models",
+   "label": "Matched-horizon coefficient query",
+   "path": "data/processed/gold_emission_model_comparison.csv",
+   "query": {
+    "description": "Select matched shock-lag headline models and convert coefficients to percentage points.",
+    "engine": "SQLite",
+    "language": "sql",
+    "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct coins' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n FROM gold_emission_model_comparison WHERE model_type = 'shock_lag' AND lag_or_window_days = horizon_days AND horizon_days IN (1, 7, 30) AND series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+    "tables_used": [
+     "gold_emission_model_comparison"
+    ],
+    "filters": [
+     "model_type = shock_lag",
+     "lag equals outcome horizon",
+     "horizons 1, 7, and 30 days"
+    ],
+    "metric_definitions": [
+     "Coefficient_pp is the log-return coefficient multiplied by 100."
+    ]
+   }
+  },
+  {
+   "id": "src_oos_chart",
+   "label": "Holdout forecast query",
+   "path": "data/processed/gold_emission_oos.csv",
+   "query": {
+    "description": "Select comparable holdout models and convert RMSE improvement to percentage points.",
+    "engine": "SQLite",
+    "language": "sql",
+    "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct coins' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, rmse_improvement_pct * 100.0 AS rmse_improvement_pp, random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n FROM gold_emission_oos WHERE series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+    "tables_used": [
+     "gold_emission_oos"
+    ],
+    "metric_definitions": [
+     "RMSE improvement = 1 - model RMSE / zero-return random-walk RMSE."
+    ]
+   }
+  },
+  {
+   "id": "src_coverage_table",
+   "label": "Creature coverage query",
+   "path": "data/processed/creature_gold_value.csv",
+   "query": {
+    "description": "Count canonical creatures and deaths by modeled coverage category.",
+    "engine": "SQLite",
+    "language": "sql",
+    "sql": "SELECT coverage_category, COUNT(*) AS creatures, SUM(total_kills) AS deaths, CAST(SUM(total_kills) AS REAL) / (SELECT SUM(total_kills) FROM creature_gold_value) AS death_share FROM creature_gold_value GROUP BY coverage_category ORDER BY deaths DESC;",
+    "tables_used": [
+     "creature_gold_value"
+    ],
+    "metric_definitions": [
+     "Death share uses all positive creature kills in the archive as denominator."
+    ]
+   }
+  },
+  {
+   "id": "src_top_creatures",
+   "label": "Highest potential GP creature query",
+   "path": "data/processed/creature_gold_value.csv",
+   "query": {
+    "description": "Rank reliable non-boss creatures by expected potential GP per kill.",
+    "engine": "SQLite",
+    "language": "sql",
+    "sql": "SELECT canonical_name, total_kills, loot_samples, loot_confidence, expected_direct_coin_gp_per_kill, expected_npc_sale_gp_per_kill, expected_total_potential_gp_per_kill, loot_source_url FROM creature_gold_value WHERE coverage_category = 'modeled' AND expected_total_potential_gp_per_kill IS NOT NULL ORDER BY expected_total_potential_gp_per_kill DESC LIMIT 15;",
+    "tables_used": [
+     "creature_gold_value"
+    ],
+    "filters": [
+     "coverage_category = modeled",
+     "top 15"
+    ],
+    "metric_definitions": [
+     "Potential GP per kill = direct coin GP + maximum guaranteed NPC-sale GP."
+    ]
+   }
+  }
+ ],
+ "package_info": {
+  "audience": "technical",
+  "required_structure_map": {
+   "technical_summary": "summary",
+   "key_findings": [
+    "production_finding",
+    "model_finding",
+    "holdout_finding"
+   ],
+   "scope_and_definitions": "scope",
+   "methodology": [
+    "creature_method",
+    "methodology"
+   ],
+   "limitations_and_robustness": "limitations",
+   "recommended_next_steps": "next_steps",
+   "further_questions": "further_questions"
+  },
+  "chart_map": [
+   {
+    "section": "production_finding",
+    "question": "How do direct and realization-adjusted emissions move over time per player?",
+    "type": "line",
+    "dataset": "daily_trend"
+   },
+   {
+    "section": "model_finding",
+    "question": "Do monetary variables change matched-horizon coefficients?",
+    "type": "grouped bar",
+    "dataset": "headline_models"
+   },
+   {
+    "section": "holdout_finding",
+    "question": "Do production variables beat a random walk out of sample?",
+    "type": "grouped bar",
+    "dataset": "oos"
+   }
+  ]
+ }
+}
