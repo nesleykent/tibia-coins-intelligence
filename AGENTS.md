@@ -217,7 +217,9 @@ rather than displayed as an unexplained blank.
 - Use units as part of the meaning, not as decoration:
   - **GP** always means Tibia gold pieces;
   - **TC** always means Tibia Coins;
-  - **GP/TC** is the gold price of one Tibia Coin.
+  - **GP/TC** is the price of one Tibia Coin measured in gold pieces.
+  Never expand GP as “gold price.” GP names the in-game currency; price is a
+  relationship between units.
   Never shorten gold-piece output to “coins,” because readers may interpret it
   as Tibia Coins. Use labels such as “Direct GP drops,” “Potential GP maximum,”
   and “Realized GP estimate.”

@@ -154,14 +154,14 @@ def claims() -> list[Claim]:
             heading="What sets the price",
             section="7.6",
             text=(
-                f"The gold price of a Tibia Coin is an exchange rate, not an asset price. Coin "
+                f"The price of a Tibia Coin measured in GP is an exchange rate, not an asset price. Coin "
                 f"supply is perfectly elastic at a money price CipSoft fixes, so nothing on the "
                 f"coin side can move it; neither leg pays a yield; and a {pc(F['feeRatePct'], 0)} "
                 f"fee capped at {gp(F['feeCapGp'])} GP holds a {pc(F['bandThresholdPct'])} band "
                 f"open around every relation in the market. That model, not a preference for "
                 f"efficient markets, is why the level does not forecast."),
             summary=(
-                f"The gold price of a Tibia Coin is an exchange rate, not an asset price: supply "
+                f"The price of a Tibia Coin measured in GP is an exchange rate, not an asset price: supply "
                 f"is elastic at a fixed money price, neither leg pays a yield, and a "
                 f"{pc(F['feeRatePct'], 0)} fee holds a {pc(F['bandThresholdPct'])} band open."),
             tiles=[
@@ -247,7 +247,7 @@ def claims() -> list[Claim]:
                 f"to every world and day - {F['bazaarOverMarket']:.1f} times more. Dividing the "
                 f"raw sums instead would say {F['bazaarOverMarketNaive']:.1f} times, but that "
                 f"measures this study's {F['marketCoverage']:.0%} coverage rather than the two "
-                f"venues. The gold price is formed in the thin venue and consumed in the thick "
+                f"venues. The GP/TC price is formed in the thin venue and consumed in the thick "
                 f"one, so the marginal price-setter is a small population."),
             tiles=[
                 Tile("Char Bazaar vs Market", f"{F['bazaarOverMarket']:.1f}×",

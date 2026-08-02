@@ -20,7 +20,7 @@ overview, worlds, forecasts, general-versus-specific models, strategy, gold emis
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
 
-**Headline:** the gold price of a Tibia Coin is an exchange rate, not an asset price. Coin
+**Headline:** the price of a Tibia Coin measured in GP is an exchange rate, not an asset price. Coin
 supply is perfectly elastic at a money price CipSoft fixes, neither leg pays a yield, and a 2%
 fee holds a 1.79% band open — a friction point recovered from prices alone, with no fee figure
 supplied to the estimator. Seven established facts have exactly one joint explanation, and that
@@ -215,7 +215,7 @@ a rebuild reproduces the same figures and does not depend on the network.
 
 ## What the report will not tell you
 
-The driver of the common gold price level is unidentified. Gross monster-loot emission can now
+The driver of the common GP/TC price level is unidentified. Gross monster-loot emission can now
 be estimated, but the initial gold stock, actual NPC-sale realization, and measurable sink
 history remain unavailable. The leading explanation — gold accumulating faster than it is
 destroyed — therefore remains plausible but untested as a net-stock mechanism. The report says

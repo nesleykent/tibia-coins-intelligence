@@ -47,7 +47,9 @@ because the default layer is simpler.
 
 | Technical or financial term | Player-first label | Plain explanation |
 |---|---|---|
-| GP/TC | Gold price of one Tibia Coin | How many GP are needed to buy 1 TC |
+| GP | Gold pieces | Tibia’s regular in-game currency |
+| TC | Tibia Coins | The premium currency sold by CipSoft |
+| GP/TC | Price of one TC in GP | How many gold pieces are needed to buy 1 TC |
 | Market index | Typical price across worlds | A combined line showing the general TC price across the tracked worlds |
 | Cross-world dispersion | Difference between world prices | Whether worlds are selling TC at similar or very different prices |
 | Relative deviation | Price versus other worlds | How expensive or cheap this world is compared with the market |
