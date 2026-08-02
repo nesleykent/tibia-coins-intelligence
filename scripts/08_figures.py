@@ -1154,6 +1154,9 @@ axs[0].set_ylim(-0.65, 0.12)
 axs[0].legend(frameon=False, fontsize=LEG_FS, loc="lower left", ncol=3,
               handletextpad=.4, columnspacing=.9)
 FR = json.load(open(P / "fundamentals_results.json"))
+# The sentence below is about one specific model, so bind that row rather than
+# iloc[0], which is the 1-day ElasticNet and carries a different R-squared.
+_rf7 = ms.query("target == 'rel' and horizon == 7 and model == 'RandomForest'").iloc[0]
 finish(fig, "fig27_fundamentals_skill.png",
        "Fundamentals do not make the level predictable, and barely move the relative price",
        "Out-of-sample R² against a random walk; above zero beats the benchmark",
@@ -1162,9 +1165,10 @@ finish(fig, "fig27_fundamentals_skill.png",
        f"Bars below the line are models that lose to predicting no change. On the level, every "
        f"model loses at every horizon. On the relative price the picture is better but small: "
        f"of {FR['n_comparisons']} model-horizon comparisons, "
-       f"{FR['n_beating_rw_after_bh']} survives a Benjamini-Hochberg correction at 5% - the "
-       f"starred bar, a random forest at 7 days, which beat the random walk in 5 of 6 folds "
-       f"with an out-of-sample R² of {ms.query("beats_rw == True").r2_oos.iloc[0]:.3f}. "
+       f"{FR['n_beating_rw_after_bh']} survive a Benjamini-Hochberg correction at 5% - the "
+       f"starred bars, all of them on the relative price. The strongest at seven days is a "
+       f"random forest with an out-of-sample R² of {_rf7.r2_oos:.3f}, which beat the random "
+       f"walk in {int(_rf7.folds_better)} of {int(_rf7.folds)} folds. "
        f"61 converged worlds, 2025-12-05 to 2026-07-30.", outdir=FIG, left=0.11)
 
 

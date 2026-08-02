@@ -143,6 +143,49 @@ _stale = [b for b in _bind if "gold" in b.lower() and "at the time" not in b.low
 check("only one gap is described as binding", not _stale,
       f"{[b.strip()[:70] for b in _stale]}" if _stale else f"{len(_bind)} mentions, consistent")
 
+# The action threshold. The executive summary told the reader to act on cross-world gaps above
+# 6% while every decision table said 4%, so a reader following the summary skipped a region the
+# report's own evidence calls tradable. Every statement of the rule must name the same number.
+_act = set(re.findall(r"(?:act (?:only )?on gaps above|act across worlds only past|"
+                      r"gap exceeds about|Above \+?)(\d+(?:\.\d+)?)%", doc))
+_fres = json.load(open(ROOT / "data" / "processed" / "fundamentals_results.json"))
+_act_expect = f"{_fres['scenarios']['levels']['arb_act_gap_pct']:.0f}"
+_act_bad = sorted(a for a in _act if a.rstrip("0").rstrip(".") not in
+                  (_act_expect, f"{float(_act_expect):.1f}".rstrip("0").rstrip(".")))
+check("the cross-world action threshold is one number everywhere", not _act_bad,
+      f"expected {_act_expect}%, also found {_act_bad}" if _act_bad
+      else f"{_act_expect}% in {len(_act)} statement(s)")
+
+# Fold counts asserted in prose must match the computed table. "beat the random walk in every
+# one of its six folds" stood beside a table cell reading 5 of 6 for the same model.
+_ms = _pd.read_csv(ROOT / "data" / "processed" / "model_summary.csv")
+# Fold counts are reported from three separate model tables - the main comparison, the extra
+# model classes and the neural sequence models, which run a different number of folds - so a
+# prose claim is valid if it appears in any of them.
+_real = set()
+for _f in ("model_summary.csv", "extra_models_summary.csv", "deep_summary.csv"):
+    _t = _pd.read_csv(ROOT / "data" / "processed" / _f)
+    if "folds_better" in _t.columns:
+        _real |= {(int(a), int(b)) for a, b in
+                  zip(_t.folds_better.dropna(), _t.folds.dropna())}
+_claimed = {(int(a), int(b)) for a, b in re.findall(r"(\d+) of (\d+) folds", doc)}
+_fold_bad = sorted(_claimed - _real)
+check("fold counts in prose match the model table", not _fold_bad,
+      f"not in model_summary: {_fold_bad}" if _fold_bad else f"{len(_claimed)} claim(s) checked")
+
+# A figure caption that names one model must quote that model's own numbers. The skill exhibit
+# described the 7-day forest and printed the 1-day ElasticNet's R-squared, because it took
+# whichever row sorted first.
+_mf = json.load(open(ROOT / "figures" / "manifest.json"))
+_skill = _mf.get("fig27_fundamentals_skill", {}).get("note", "")
+_r2_claimed = re.findall(r"out-of-sample R.{0,3} of (\d\.\d+)", _skill)
+_rf7 = _ms.query("target == 'rel' and horizon == 7 and model == 'RandomForest'")
+_r2_bad = (_r2_claimed and len(_rf7)
+           and abs(float(_r2_claimed[0]) - float(_rf7.iloc[0].r2_oos)) > 0.0006)
+check("the skill exhibit quotes the model it names", not _r2_bad,
+      f"caption {_r2_claimed}, row {float(_rf7.iloc[0].r2_oos):.3f}" if _r2_bad
+      else f"R2 {_r2_claimed[0] if _r2_claimed else 'n/a'} matches the 7d forest")
+
 labels = re.findall(r"Exhibit (\d+\.\d+)\n", txt)
 check("no exhibit number used twice", len(labels) == len(set(labels)))
 

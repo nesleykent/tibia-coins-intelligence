@@ -26,6 +26,10 @@ MAXP = FD["max_predictability"]
 IRR = FD["irreducibility"]
 IRRB = pd.DataFrame(IRR["bds"])
 SVD = FD["supply_vs_demand"]
+GEM = json.load(open(P / "gold_emission_results.json"))
+GEQ = json.load(open(P / "gold_emission_quality.json"))
+GEH = pd.DataFrame(GEM["headline_models"])
+GEO = pd.DataFrame(GEM["oos"])
 SVDR = pd.DataFrame(SVD["horse_race"])
 SVDE = pd.DataFrame(SVD["supply_elasticity"])
 SCN = FD["scenarios"]
@@ -274,7 +278,8 @@ para(tag("judg") + "The mechanism implies a different action for each kind of re
 icon_cards([
     ("trader", "Cross-world trader",
      f"Ignore gaps below about {pc(R['advanced']['tar']['threshold_pct'])}; act only on gaps "
-     f"above 6%, and size the trade at {gp(FE['cap_binds_at_lot_tc'])} TC or more so the fee "
+     f"above {pc(LV['arb_act_gap_pct'], 0)}, and size the trade at "
+     f"{gp(FE['cap_binds_at_lot_tc'])} TC or more so the fee "
      f"cap binds.",
      "Sections 5.2.2, 5.2.4, 6.3.1",
      f"CipSoft changes the fee rate or the {gp(FE['cap_gp'])} GP cap"),
@@ -385,7 +390,7 @@ para(tag("judg") + f"The binding constraint has changed since this study began, 
      f"{FD['panel']['rows']:,} world-days of kill statistics - and Section 6.6.14 tests the "
      f"supply channel against it directly. The channel is <b>not there</b>: the elasticity is "
      f"negligible and the level relationship carries the wrong sign on all {SVD['gold_stock']['n_worlds']} worlds. What "
-     f"remains unidentified is the driver itself, and Section 6.6.15 bounds what any driver "
+     f"remains unidentified is the driver itself, and Section 6.6.16 bounds what any driver "
      f"could ever explain - a perfectly observed common state accounts for "
      f"{IRR['latent_state']['r2_factor_smoothed']:.0%} of daily variance and none of it one "
      f"step ahead. Section 7.6 builds the positive account those nulls imply, and Section 7.7 "
@@ -2251,7 +2256,7 @@ para(tag("lim") + f"<b>The larger venue is unobservable at any frequency that wo
      f"the minority of coin movement.")
 para(tag("stat") + f"<b>How much could that missing venue matter? The study already bounds "
      f"it.</b> Bazaar flow is an aggregate quantity, so it could only enter as a driver common "
-     f"to all worlds. Section 6.6.13 estimates the ceiling on any such driver directly: a "
+     f"to all worlds. Section 6.6.16 estimates the ceiling on any such driver directly: a "
      f"common state observed <i>perfectly and in retrospect</i> explains "
      f"{IRR['latent_state']['r2_factor_smoothed']:.1%} of daily return variance across "
      f"{IRR['latent_state']['n_worlds']} worlds, and "
@@ -2997,9 +3002,15 @@ para(tag("stat") + f"The strongest is a random forest at thirty days - out-of-sa
      f"{FDM.query('beats_rw == True').nlargest(1, 'r2_oos').iloc[0].r2_oos:.3f}, "
      f"directional accuracy "
      f"{FDM.query('beats_rw == True').nlargest(1, 'r2_oos').iloc[0].dir_acc:.1%} - "
-     f"but the most convincing is the seven-day model, which beat the random walk in every one "
-     f"of its six folds. Consistency across folds is the harder test, and it is the one that "
-     f"distinguishes a real effect from a lucky sample.")
+     f"but no model in the table sweeps its folds: the seven-day forest and both one-day models "
+     f"each beat the random walk in "
+     f"{int(FDM.query('target == \'rel\' and horizon == 7 and model == \'RandomForest\'').iloc[0].folds_better)} "
+     f"of {int(FDM.query('target == \'rel\' and horizon == 7 and model == \'RandomForest\'').iloc[0].folds)}, "
+     f"and the thirty-day forest in "
+     f"{int(FDM.query('target == \'rel\' and horizon == 30 and model == \'RandomForest\'').iloc[0].folds_better)} "
+     f"of {int(FDM.query('target == \'rel\' and horizon == 30 and model == \'RandomForest\'').iloc[0].folds)}. "
+     f"Consistency across folds is the harder test and none of them passes it cleanly, which is "
+     f"the first reason to treat the whole block as small rather than as a result.")
 _ST = {r["horizon"]: r for r in FD["fold_stability"]}
 para(tag("lim") + f"<b>The edge is not stable across the window, and that qualifies "
      f"everything above.</b> Tracking the best model fold by fold shows skill concentrated "
@@ -3386,7 +3397,75 @@ para(tag("judg") + "<b>The report's economic interpretation needs correcting, an
      "one. The missing series named in Section 6.1.3 would still be worth having, but the "
      "expectation that it would explain the level should be lowered.")
 
-h3("6.6.15 Unpredictable in principle, or only with the data we have?")
+h3("6.6.15 The same null on the money, not just on the bodies")
+para(tag("judg") + "<b>The obvious objection to the section above is that a kill count is not a "
+     "gold series.</b> Creatures differ by orders of magnitude in what they drop, so counting "
+     "deaths measures activity and only proxies for emission. If the supply channel were real "
+     "and merely mismeasured, replacing the count with actual gold would recover it. That "
+     "series has now been built, and it does not.")
+para(tag("mech") + f"<b>How the emission series is constructed.</b> Two channels enter and no "
+     f"others: currency a creature drops directly, and loot with a guaranteed player-to-NPC "
+     f"sale price. Player-market values are set to zero throughout, because a market price is "
+     f"an opinion rather than an emission. Drop frequencies and quantities come from "
+     f"{GEQ['loot_statistics_pages']:,} TibiaWiki empirical loot-statistics pages matched "
+     f"against {GEQ['canonical_creatures']:,} canonical creatures; "
+     f"{GEQ['matched_complete_creatures']:,} have a sufficiently sampled table at the "
+     f"{GEQ['minimum_reliable_loot_samples']}-observation minimum and the rest stay explicitly "
+     f"uncovered rather than being imputed. Bosses are held out. Coverage is "
+     f"{GEQ['covered_deaths_pct_all']:.1%} of the "
+     f"{GEQ['total_deaths'] / 1e9:.1f} billion recorded deaths.")
+para(tag("stat") + f"<b>Four measures of the same thing, none of which moves the price.</b> The "
+     f"count is compared against direct coin drops, against the maximum realisable value if "
+     f"every sellable item were sold, and against realisation rates between a quarter and all "
+     f"of it. Specification as in the section above: world and date fixed effects, a lagged "
+     f"return, an activity control, and Cameron-Gelbach-Miller standard errors clustered on "
+     f"world and date.")
+table([["Series", "1 day", "7 days", "30 days"]] +
+      [[{"kill_count": "Kill count", "direct_coin": "Coin dropped directly",
+         "potential_max": "Maximum realisable value",
+         "realized_50": "Half of realisable value"}[ser]]
+       + [f"{float(GEH[(GEH.series == ser) & (GEH.horizon_days == h)].coefficient.iloc[0]):+.4f} "
+          f"({float(GEH[(GEH.series == ser) & (GEH.horizon_days == h)].p_value.iloc[0]):.2f})"
+          for h in (1, 7, 30)]
+       for ser in ("kill_count", "direct_coin", "potential_max", "realized_50")],
+      [56 * mm, 30 * mm, 30 * mm, AVAIL - 116 * mm], fs=7.2,
+      align=[None, "R", "R", "R"],
+      caption="Table 6.24 - Elasticity of the forward price to each emission measure, with the "
+              "two-way clustered p-value in brackets. No cell is significant at 5%.")
+para(tag("stat") + f"<b>Out of sample the monetary series does not beat a random walk either.</b> "
+     f"Across {len(GEO)} series-horizon pairs the best root-mean-square error improvement is "
+     f"{GEM['best_oos_rmse_improvement_pct']:+.2%} and the worst is "
+     f"{GEM['worst_oos_rmse_improvement_pct']:+.1%}. The best figure belongs to the kill count "
+     f"rather than to any of the money measures and is small enough to be noise; the worst is "
+     f"a fifth worse than doing nothing.")
+para(tag("stat") + f"<b>Directional accuracy makes the point more sharply, and not in the way a "
+     f"reader might expect.</b> It is "
+     f"{float(GEO[GEO.horizon_days == 1].direction_accuracy.mean()):.1%} at one day - a coin "
+     f"flip - then falls to {float(GEO[GEO.horizon_days == 7].direction_accuracy.mean()):.1%} "
+     f"at seven and {float(GEO[GEO.horizon_days == 30].direction_accuracy.mean()):.1%} at "
+     f"thirty. At the longer horizons these models call the direction wrong more often than "
+     f"right. That is not a usable signal inverted - the errors are large as well as "
+     f"mis-signed, which is what the negative RMSE numbers say - but it does close off the "
+     f"gentlest reading of the null, that emission carries weak information the specification "
+     f"failed to extract.")
+para(tag("judg") + "<b>So the correction in Section 6.6.14 holds on the better variable.</b> "
+     "That matters more than another null would normally: the production channel was the "
+     "report's own long-held explanation, the count was the weakest possible test of it, and "
+     "the natural defence was that the proxy was too crude. Built properly, from drop tables "
+     "and NPC prices rather than from body counts, the channel is still absent. The claim in "
+     "Section 7.6 that this market is not a monetary phenomenon rests on this measurement, not "
+     "on the proxy.")
+para(tag("lim") + f"<b>What the emission series is not.</b> It bounds gold <i>created</i>, and "
+     f"says nothing about gold destroyed - NPC purchases, repairs, death penalties - so it is "
+     f"a flow and not a stock. Non-coin NPC value is set to zero wherever buyer access "
+     f"prerequisites are not encoded in the item source, which makes every figure conservative "
+     f"by construction. And {GEQ['insufficient_sample_creatures']:,} creatures carry loot "
+     f"tables too thinly sampled to use, plus {GEQ['absent_creatures']:,} with none at all; "
+     f"they are excluded rather than estimated, which is why coverage is reported as a "
+     f"percentage of deaths rather than assumed complete.")
+story.append(PageBreak())
+
+h3("6.6.16 Unpredictable in principle, or only with the data we have?")
 para(tag("judg") + "Everything to this point answers a narrower question than it appears to. "
      "Testing 140 observable features against a random walk establishes whether <i>this</i> "
      "information predicts the price. It says nothing about whether some other information - "
@@ -3414,7 +3493,7 @@ table([["What the observer knows", "Share of world return variance explained"],
        ["The factor smoothed with the whole sample - perfect hindsight",
         f"{IRR['latent_state']['r2_factor_smoothed']:.1%}"]],
       [92 * mm, AVAIL - 92 * mm], align=[None, "R"],
-      caption="Table 6.24 - A common-factor state-space model. The smoothed row is the ceiling "
+      caption="Table 6.25 - A common-factor state-space model. The smoothed row is the ceiling "
               "for any observer of the common driver, however well informed; the first row is "
               "what is available in advance.")
 para(tag("econ") + f"That is the answer to the broader question, and it is sharper than the "
@@ -3731,7 +3810,7 @@ para(tag("judg") + f"<b>Limitation 17 is the binding one, and it displaced limit
      f"number a year.")
 para(tag("stat") + f"<b>That gap is bounded rather than open-ended, which is the useful thing "
      f"to say about it.</b> Bazaar flow could only act as a driver common to all worlds, and "
-     f"Section 6.6.13 measures the ceiling on that whole class: perfectly observed and in "
+     f"Section 6.6.16 measures the ceiling on that whole class: perfectly observed and in "
      f"retrospect, a common state explains "
      f"{IRR['latent_state']['r2_factor_smoothed']:.1%} of daily variance and "
      f"{IRR['latent_state']['r2_factor_forecast']:.1%} one step ahead. So the missing series "
@@ -5167,7 +5246,8 @@ table([["Script", "Purpose"],
        ["43_build_group_model_notebook.py", "Builds and executes the reproducible general-versus-specific model notebook"],
        ["31_participants.py", "Demand decomposed by participant type from the order-book size distribution"],
        ["32_scenario_backtest.py", "Walk-forward coverage test of the scenario bands"],
-       ["33_strategy.py", "Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; the long-only variant"],
+       ["33_strategy.py", "Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant"],
+       ["46_verify_artifacts.py", "Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree"],
        ["34a_collect_loot.py", "Revision-audited TibiaWiki loot probabilities and quantities"],
        ["34b_collect_creatures.py", "Creature classification, boss, event and explicit no-loot evidence"],
        ["34_gold_emission.py", "Creature-level gold value and daily world monetary-emission reconstruction"],
@@ -5412,7 +5492,7 @@ REFS = [
      'Supremum-Wald break test and critical value (Section 7.2.4)'),
     ('Bandt, C. and Pompe, B. (2002)',
      'Permutation entropy: a natural complexity measure for time series. <i>Physical Review Letters</i> 88(17), 174102.',
-     'Ordinal complexity of the market return (Section 6.6.15)'),
+     'Ordinal complexity of the market return (Section 6.6.16)'),
     ('Benjamini, Y. and Hochberg, Y. (1995)',
      'Controlling the false discovery rate: a practical and powerful approach to multiple testing. <i>Journal of the Royal Statistical Society B</i> 57(1), 289-300.',
      'False-discovery control across the Granger tests and the 42 model comparisons (Sections 6.6.1, 6.6.3)'),
@@ -5424,7 +5504,7 @@ REFS = [
      'The model that survives correction, and permutation importance (Sections 6.6.3, 6.6.8)'),
     ('Brock, W. A., Dechert, W. D., Scheinkman, J. A. and LeBaron, B. (1996)',
      'A test for independence based on the correlation dimension. <i>Econometric Reviews</i> 15(3), 197-235.',
-     'Test for hidden nonlinear dependence (Section 6.6.15)'),
+     'Test for hidden nonlinear dependence (Section 6.6.16)'),
     ('Cameron, A. C., Gelbach, J. B. and Miller, D. L. (2011)',
      'Robust inference with multiway clustering. <i>Journal of Business and Economic Statistics</i> 29(2), 238-249.',
      'Two-way clustered covariance estimator (Sections 6.2, 8.3.1)'),
@@ -5502,13 +5582,13 @@ REFS = [
      'Band-threshold model of the law of one price under transaction costs (Section 6.3.1)'),
     ('Richman, J. S. and Moorman, J. R. (2000)',
      'Physiological time-series analysis using approximate entropy and sample entropy. <i>American Journal of Physiology</i> 278(6), H2039-H2049.',
-     'Regularity measure against surrogates (Section 6.6.15)'),
+     'Regularity measure against surrogates (Section 6.6.16)'),
     ('Roll, R. (1984)',
      'A simple implicit measure of the effective bid-ask spread in an efficient market. <i>Journal of Finance</i> 39(4), 1127-1139.',
      'Effective spread from serial covariance (Section 5.6.4)'),
     ('Schreiber, T. and Schmitz, A. (1996)',
      'Improved surrogate data for nonlinearity tests. <i>Physical Review Letters</i> 77(4), 635-638.',
-     'Iterative amplitude-adjusted surrogates, the null for the entropy tests (Section 6.6.15)'),
+     'Iterative amplitude-adjusted surrogates, the null for the entropy tests (Section 6.6.16)'),
     ('Shleifer, A. and Vishny, R. W. (1997)',
      'The limits of arbitrage. <i>Journal of Finance</i> 52(1), 35-55.',
      'Capital-constrained arbitrage and persistent deviations (Section 5.2.6)'),
