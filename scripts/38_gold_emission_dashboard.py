@@ -203,6 +203,11 @@ HTML = r"""<!doctype html>
     .swatch { width: 11px; height: 11px; margin-top: 2px; border-radius: 2px; }
     .composition-row strong { font-variant-numeric: tabular-nums; text-align: right; }
     .composition-row small { display: block; color: var(--muted); margin-top: 3px; }
+    .world-breakdown { margin-top: 16px; overflow: hidden; }
+    .world-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--border); }
+    .world-detail { background: #fff; padding: 18px 20px; min-height: 94px; }
+    .world-detail span { display: block; color: var(--muted); font-size: 12px; line-height: 1.35; }
+    .world-detail strong { display: block; margin-top: 7px; color: var(--ink); font-size: 18px; line-height: 1.25; font-variant-numeric: tabular-nums; }
     .quality { margin-top: 16px; }
     .quality-header { display: flex; justify-content: space-between; gap: 12px; padding: 14px 16px 8px; }
     .quality-strip { display: flex; gap: 3px; overflow-x: auto; padding: 8px 16px 15px; }
@@ -258,6 +263,7 @@ HTML = r"""<!doctype html>
       .chart-wrap, #lineChart { min-height: 330px; height: 330px; }
       .legend { gap: 7px 13px; }
       .quality-header { display: block; }
+      .world-detail-grid { grid-template-columns: 1fr 1fr; }
       .quality-key { margin-top: 8px; }
       .quality-day { flex-basis: 9px; min-width: 9px; }
       .table-head { align-items: start; }
@@ -346,6 +352,8 @@ HTML = r"""<!doctype html>
         <span id="coverageMeta" class="metric-meta">—</span>
       </div>
     </section>
+
+    <section id="worldBreakdown" class="panel world-breakdown" hidden></section>
 
     <section class="main-grid">
       <article class="panel">
@@ -629,6 +637,7 @@ HTML = r"""<!doctype html>
       renderLegend();
       renderChart(filtered);
       renderComposition(filtered);
+      renderWorldBreakdown(filtered);
       renderQuality(filtered);
       renderTable(filtered);
       return;
@@ -639,6 +648,7 @@ HTML = r"""<!doctype html>
     renderLegend();
     renderChart(filtered);
     renderComposition(filtered);
+    renderWorldBreakdown(filtered);
     renderQuality(filtered);
     renderTable(filtered);
   }
@@ -825,6 +835,36 @@ HTML = r"""<!doctype html>
     $("#compositionStack").setAttribute("aria-label", segments.map(segment =>
       `${segment.label} ${potential ? percent.format(segment.value / potential) : "0%"}`
     ).join(", "));
+  }
+
+  function renderWorldBreakdown(rows) {
+    const host = $("#worldBreakdown");
+    const world = $("#worldSelect").value;
+    if (world === "all" || !rows.length) {
+      host.hidden = true;
+      host.innerHTML = "";
+      return;
+    }
+    const kills = sum(rows, "kills");
+    const direct = sum(rows, "direct");
+    const npc = sum(rows, "npc");
+    const realizedNpc = npc * numeric($("#scenarioSelect").value);
+    const nonboss = sum(rows, "nonboss");
+    const modeled = sum(rows, "modeled");
+    const flagged = rows.filter(row => qualityOf(row) !== "complete").length;
+    const top = rows.reduce((best, row) => row.topGp > best.topGp ? row : best, rows[0]);
+    host.innerHTML = `<div class="panel-inner">
+      <div class="panel-heading"><div><h2>What generated GP in ${escapeHtml(world)}</h2><p class="panel-note">Details for the selected dates. The NPC-loot estimate changes with the chosen realization scenario.</p></div></div>
+      <div class="world-detail-grid">
+        <div class="world-detail"><span>Creature deaths recorded</span><strong>${number.format(kills)}</strong></div>
+        <div class="world-detail"><span>GP dropped directly by creatures</span><strong>${number.format(direct)} GP</strong></div>
+        <div class="world-detail"><span>Estimated GP from selling loot to NPCs</span><strong>${number.format(realizedNpc)} GP</strong></div>
+        <div class="world-detail"><span>Largest creature source on one day</span><strong>${escapeHtml(top.topName || "—")}</strong><span>${isoDate(top.date)} · ${number.format(top.topGp)} GP</span></div>
+        <div class="world-detail"><span>Deaths covered by the GP model</span><strong>${percent.format(nonboss ? modeled / nonboss : 0)}</strong></div>
+        <div class="world-detail"><span>Days needing extra caution</span><strong>${number.format(flagged)} of ${number.format(rows.length)}</strong></div>
+      </div>
+    </div>`;
+    host.hidden = false;
   }
 
   function renderQuality(rows) {

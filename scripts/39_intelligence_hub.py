@@ -406,7 +406,7 @@ HTML = r"""<!doctype html>
     .model-badge.warning{background:var(--gold-soft);color:#765910}
     .strategy-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:16px}
     .bar-area{padding:16px}
-    .bar-row{display:grid;grid-template-columns:72px 1fr 72px;gap:12px;align-items:center;margin:20px 0}
+    .bar-row{display:grid;grid-template-columns:minmax(135px,180px) 1fr 72px;gap:12px;align-items:center;margin:20px 0}
     .bar-track{height:26px;background:var(--surface-soft);border-radius:4px;overflow:hidden}
     .bar-fill{height:100%;background:var(--blue);transition:width .2s}
     .bar-fill.gold{background:var(--gold)}
@@ -585,7 +585,7 @@ HTML = r"""<!doctype html>
           <div class="metric"><span class="metric-label" id="metricPriceLabel">Market index</span><strong id="metricPrice" class="metric-value">—</strong><span id="metricPriceMeta" class="metric-meta">GP per TC</span></div>
           <div class="metric"><span class="metric-label">Worlds</span><strong id="metricWorlds" class="metric-value">—</strong><span class="metric-meta">tracked</span></div>
           <div class="metric"><span class="metric-label">Median price</span><strong id="metricMedian" class="metric-value">—</strong><span class="metric-meta">GP per TC</span></div>
-          <div class="metric"><span class="metric-label">Difference between worlds</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">how spread out world prices are</span></div>
+          <div class="metric"><span class="metric-label">How different world prices are</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">0% would mean all worlds cost the same</span></div>
         </div>
         <article class="panel chart-panel">
           <div class="panel-heading"><div><h2 id="overviewChartTitle">Typical TC price and differences between worlds</h2><p id="overviewChartNote">The solid line is the combined market price. The dashed line shows whether world prices are close together or far apart. Tap, focus or move across the chart to inspect a date.</p></div><div id="overviewLegend" class="legend"></div></div>
@@ -601,8 +601,8 @@ HTML = r"""<!doctype html>
         </article>
         <div class="split">
           <article class="panel">
-            <div class="panel-heading"><div><h2>Worlds overview</h2><p id="overviewTableCount"></p></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted change</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
+            <div class="panel-heading"><div><h2>Compare worlds</h2><p><span id="overviewTableCount"></span> · Positive means the TC costs more than in other worlds. “Next 7 days” is a model estimate, not a guaranteed price.</p><details class="claim-details"><summary>What do these columns mean?</summary><p><strong>Price vs other worlds</strong> is the technical deviation from the cross-world reference. <strong>Next 7 days</strong> estimates whether that difference may shrink or grow. <strong>Meaning</strong> translates the result into plain language. These numbers do not include whether enough TC can actually be traded.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Next 7 days</option><option value="price">Price</option><option value="deviation">Price vs other worlds</option><option value="world">World name</option></select></div></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Price vs other worlds</th><th>Next 7 days</th><th>Meaning</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
           </article>
           <aside class="panel signal">
             <div class="signal-block"><h2>Signal summary</h2><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
@@ -685,17 +685,17 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-strategy" class="view" hidden>
-        <div class="view-header"><div><h1>Strategy</h1><p class="view-intro">See what happened when trading only the strongest 10% of price gaps after Market costs. Results from later dates the rule never saw are shown separately from the period used to build it.</p></div>
+        <div class="view-header"><div><h1>Trading test</h1><p class="view-intro">We tested a simple rule: only investigate a trade when one world’s TC price is very different from the others, then wait the selected number of days. This page shows what happened after the Market fee. It does not show a trade available right now.</p></div>
           <div id="strategyHorizon" class="segmented"><button class="segment active" data-days="7">7 days</button><button class="segment" data-days="30">30 days</button><button class="segment" data-days="91">91 days</button></div>
         </div>
         <div class="strategy-grid">
-          <article class="panel"><div class="panel-heading"><div><h2>Return left after Market costs</h2><p>Strongest 10% of price gaps between worlds.</p></div></div><div id="strategyBars" class="bar-area"></div></article>
+          <article class="panel"><div class="panel-heading"><div><h2>Result after the Market fee</h2><p>Average percentage gained or lost when the rule selected only the largest price differences.</p></div></div><div id="strategyBars" class="bar-area"></div></article>
           <aside id="strategyEvidence" class="panel evidence"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>How to read the signal</h2><p>What the evidence permits—and what it does not.</p></div></div><div class="signal" style="grid-template-columns:repeat(3,1fr)">
-          <div class="signal-block"><h3>Use</h3><p class="signal-note">Compare each world with the typical price across worlds. Investigate only the strongest 10% of gaps that are large enough to cover Market costs.</p></div>
-          <div class="signal-block"><h3>Do not use</h3><p class="signal-note">Do not use this to predict whether TC prices everywhere will rise or fall. Fifteen model types could not improve on using today’s price as the central estimate.</p></div>
-          <div class="signal-block"><h3>What limits trade size</h3><p class="signal-note">The Market may not have enough offers to use a large amount of GP without waiting or changing the price. A promising percentage return does not mean unlimited profit.</p></div>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>The rule in three steps</h2><p>This explains the test. It is not an instruction to trade automatically.</p></div></div><div class="signal" style="grid-template-columns:repeat(3,1fr)">
+          <div class="signal-block"><h3>1 · Find an unusual price</h3><p class="signal-note">Compare the world with the others. Ignore small differences because the Market fee can consume them.</p></div>
+          <div class="signal-block"><h3>2 · Check whether the trade is possible</h3><p class="signal-note">Look at the price you really pay or receive and how many TC are available. A good-looking percentage can disappear when there are few offers.</p></div>
+          <div class="signal-block"><h3>3 · Treat it as a risky test</h3><p class="signal-note">The rule cannot predict whether TC everywhere will rise or fall. Longer periods have fewer independent tests and are less trustworthy.</p></div>
         </div></article>
       </section>
 
@@ -1072,7 +1072,7 @@ function renderOverviewChart(rows=overviewRows(),world=$("#overviewWorld").value
     index=Math.max(0,Math.min(rows.length-1,index));const row=rows[index],xx=x(index);
     cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);
     tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${world==="all"?"Market index":escapeHtml(world)}: ${fmt.format(row[priceKey])} GP`+
-      (world==="all"?`<br>Dispersion: ${num(row.disp_pct).toFixed(1)}%`:"");
+      (world==="all"?`<br>Difference between world prices: ${num(row.disp_pct).toFixed(1)}%`:"");
     tooltip.style.left=`${Math.min(Math.max(8,xx+8),Math.max(8,width-210))}px`;tooltip.style.top="28px";tooltip.classList.add("visible");
     capture.setAttribute("aria-label",tooltip.textContent);
   };
@@ -1087,9 +1087,9 @@ function joinedWorlds(){
 }
 
 function signalOf(row){
-  if(!row.prediction)return{label:"No model",className:"neutral"};
-  if(!bool(row.prediction.outside_band))return{label:"Inside band",className:"neutral"};
-  return num(row.prediction.predicted_change_pct)>=0?{label:"Converging ↑",className:"positive"}:{label:"Diverging ↓",className:"negative"};
+  if(!row.prediction)return{label:"Not enough data",className:"neutral"};
+  if(!bool(row.prediction.outside_band))return{label:"Close to other worlds",className:"neutral"};
+  return num(row.prediction.predicted_change_pct)>=0?{label:"May move closer",className:"positive"}:{label:"May move farther",className:"negative"};
 }
 
 function renderOverviewTable(){
@@ -1105,9 +1105,9 @@ function renderOverviewTable(){
   $("#overviewTable").innerHTML=rows.map(row=>{const signal=signalOf(row);return`<tr data-world="${escapeHtml(row.world)}">
     <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
     <td data-label="Price">${row.px_last?fmt.format(row.px_last):"—"}</td>
-    <td data-label="Deviation" class="${num(row.prediction?.deviation_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.deviation_pct):"—"}</td>
-    <td data-label="Predicted 7d" class="${num(row.prediction?.predicted_change_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.predicted_change_pct):"—"}</td>
-    <td data-label="Signal" class="${signal.className}">${signal.label}</td></tr>`}).join("");
+    <td data-label="Price vs other worlds" class="${num(row.prediction?.deviation_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.deviation_pct):"—"}</td>
+    <td data-label="Next 7 days" class="${num(row.prediction?.predicted_change_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.predicted_change_pct):"—"}</td>
+    <td data-label="Meaning" class="${signal.className}">${signal.label}</td></tr>`}).join("");
   $$("#overviewTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;showView("worlds")}));
 }
 
@@ -1410,15 +1410,15 @@ function renderStrategy(){
   $$("#strategyHorizon .segment").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===selectedStrategyHorizon));
   const rows=data.strategy.filter(row=>num(row.horizon)===selectedStrategyHorizon);
   const max=Math.max(1,...rows.map(row=>num(row.net_pct)));
-  $("#strategyBars").innerHTML=rows.map(row=>`<div class="bar-row"><strong>${row.period==="train"?"Period used to build the rule":"Later unseen dates"}</strong><div class="bar-track"><div class="bar-fill ${row.period==="holdout"?"gold":""}" style="width:${Math.max(0,num(row.net_pct)/max*100)}%"></div></div><strong class="positive">${signed(row.net_pct)}</strong></div>`).join("");
+  $("#strategyBars").innerHTML=rows.map(row=>`<div class="bar-row"><strong>${row.period==="train"?"Older dates used to create the rule":"Later dates used to check the rule"}</strong><div class="bar-track"><div class="bar-fill ${row.period==="holdout"?"gold":""}" style="width:${Math.max(0,num(row.net_pct)/max*100)}%"></div></div><strong class="${num(row.net_pct)>=0?"positive":"negative"}">${signed(row.net_pct)}</strong></div>`).join("");
   const holdout=rows.find(row=>row.period==="holdout")||{},train=rows.find(row=>row.period==="train")||{};
   const caution=num(holdout.n_effective)<10?`Only ${fmt.format(holdout.n_effective)} independent later-date test window${num(holdout.n_effective)===1?"":"s"}: there is too little evidence to use this horizon for a decision.`:
     `${fmt.format(holdout.n_effective)} independent later-date test windows support this comparison.`;
-  $("#strategyEvidence").innerHTML=`<h2>${selectedStrategyHorizon}-day evidence</h2>
-    <div class="fact"><span>Net return on later unseen dates</span><strong class="positive">${signed(holdout.net_pct)}</strong></div>
-    <div class="fact"><span>Profitable signals</span><strong>${pct1.format(num(holdout.share_profitable))}</strong></div>
-    <div class="fact"><span>Independent test windows</span><strong>${fmt.format(holdout.n_effective)}</strong></div>
-    <div class="fact"><span>Training cutoff</span><strong>${num(train.cutoff_pct).toFixed(1)}% gap</strong></div>
+  $("#strategyEvidence").innerHTML=`<h2>What happened after ${selectedStrategyHorizon} days</h2>
+    <div class="fact"><span>Average result after fee on later dates</span><strong class="${num(holdout.net_pct)>=0?"positive":"negative"}">${signed(holdout.net_pct)}</strong></div>
+    <div class="fact"><span>Trades that ended with a gain</span><strong>${pct1.format(num(holdout.share_profitable))}</strong></div>
+    <div class="fact"><span>Separate later-date tests</span><strong>${fmt.format(holdout.n_effective)}</strong></div>
+    <div class="fact"><span>Minimum unusual price difference</span><strong>${num(train.cutoff_pct).toFixed(1)}%</strong></div>
     <div class="evidence-callout">${caution}</div>`;
 }
 

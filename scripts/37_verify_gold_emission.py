@@ -155,6 +155,11 @@ def main() -> None:
     assert "void refreshProjectCSV();" in dashboard
     assert "function isoDate(value)" in dashboard
     assert "function isoTimestamp(value)" in dashboard
+    assert 'id="worldBreakdown"' in dashboard
+    assert "function renderWorldBreakdown(rows)" in dashboard
+    assert "What generated GP in" in dashboard
+    assert "Largest creature source on one day" in dashboard
+    assert "Days needing extra caution" in dashboard
     assert 'Intl.DateTimeFormat("en-US"' not in dashboard
     assert 'toLocaleString("en-US")' not in dashboard
     invalid_guard = dashboard.index(
