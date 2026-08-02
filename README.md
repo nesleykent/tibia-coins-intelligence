@@ -48,6 +48,16 @@ holdout (−0.17pp at 30 days): dispersion fell across the sample, so *low dispe
 the sample* were confounded. No dispersion filter is offered. Pick the world on the raw gap. Capacity is the binding constraint: about 344M GP a month can be
 deployed into the trade — the market is too thin to take size.
 
+**Two artifacts, one source of content.** The claims the report and the site both make are
+defined once in `scripts/narrative.py`, with their numbers read from `data/processed`. The PDF
+renders each as a labelled paragraph (§7.6.4); the site renders it as a card with fact tiles
+and, where the claim names one, an interactive view of the data behind it — the full
+strategy grid by decile and horizon, or the in-sample-against-holdout table. Adding a finding
+there makes it appear in both; there is nothing to port across. `scripts/46_verify_artifacts.py`
+runs last in the pipeline as a backstop: it computes each headline fact once and fails the
+build if any artifact that states it disagrees, reporting facts an artifact simply omits as
+coverage gaps rather than failures.
+
 **A units error, found late and corrected throughout.** `day_sold` / `day_bought` count
 25-coin lots, not coins: the values run 1, 2, 3 with only 3.7% multiples of 25, which a coin
 count cannot be, since the Market accepts no other quantity. Every traded-volume figure is
