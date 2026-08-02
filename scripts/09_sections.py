@@ -1,3 +1,4 @@
+import re
 # -*- coding: utf-8 -*-
 """Report body. Executed inside 09_report.py's namespace."""
 
@@ -11,6 +12,10 @@ FN = R["finance"]; AD = R["advanced"]; FE = R["fees"]
 ST = R["stationarity"]; EVR = R["events"]; CS = R["cross_section"]; PN = R["panel"]
 YG = R["young"]; MG = R["merge"]; MI = R["micro"]; TC = R["technical"]; FCR = R["forecast"]
 FD = json.load(open(P / "fundamentals_results.json"))
+# The raw kill-statistics archive and the joined modelling panel are different
+# objects: 93 worlds against the converged subset, and different row counts.
+_KSRAW = pd.read_csv(P / "kill_stats_daily.csv")
+KS_ROWS, KS_WORLDS = len(_KSRAW), int(_KSRAW.world.nunique())
 FDM = pd.read_csv(P / "model_summary.csv")
 FDL = pd.read_csv(P / "leading_indicators.csv")
 FDR = FD["regimes"]
@@ -1110,8 +1115,11 @@ para(tag("mech") + f"CipSoft publishes a per-world kill-statistics page giving, 
      f"creature killed. A third party captures it daily and keeps the history. Monsters killed "
      f"is what produces loot and gold; player deaths destroy it; and the mix of creatures says "
      f"what kind of hunting is happening.")
-para(tag("obs") + f"The aggregated panel is {FD['panel']['rows']:,} world-days over "
-     f"93 worlds, {FD['panel']['start']} to {FD['panel']['end']}. "
+para(tag("obs") + f"The kill-statistics archive aggregates to {KS_ROWS:,} world-days over "
+     f"{KS_WORLDS} worlds. Joined to the price panel and restricted to converged worlds it "
+     f"becomes {FD['panel']['rows']:,} world-days over {FD['panel']['worlds']} worlds, "
+     f"{FD['panel']['start']} to {FD['panel']['end']} - the frame every fundamentals result is "
+     f"fitted on. "
      f"That is far shorter than the price panel because the archive begins in December 2025, "
      f"and it is the binding limitation on every fundamentals result: eight months is a single "
      f"pass through the seasonal year, so the calendar features in Section 6.6 are fitted on "
@@ -4109,10 +4117,17 @@ para(tag("mech") + f"<b>The two series are on different scales, and the Market's
      f"Converting at the lot, the median world clears "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins a day against a resting bid depth of "
      f"{gp(PX['median_resting_bid_depth_tc'])}, so the book holds <b>"
-     f"{PX['resting_over_daily_flow']:,.0f} days</b> of trade. Against a median resting offer "
-     f"of {gp(PX['median_offer_size_tc'])} coins, an ordinary order is "
-     f"{PX['median_offer_size_tc'] / PX['median_tc_sold_per_world_day']:.0%} of a day's volume "
-     f"and the book is {PX['resting_over_daily_flow']:.0f} days deep.")
+     f"{PX['resting_over_daily_flow']:,.0f} days</b> of trade.")
+para(tag("lim") + f"<b>Two daily volumes exist and they are not interchangeable.</b> The median "
+     f"world buys {gp(PX['median_executed_per_world_day_tc'])} coins a day and sells "
+     f"{gp(PX['median_tc_sold_per_world_day'])}; the two differ because they are medians of "
+     f"different distributions, not because coins appear or vanish. Every share-of-a-day "
+     f"figure in this report is quoted against the sold side, since that is the flow a buyer "
+     f"consumes: on that denominator a median resting offer of "
+     f"{gp(PX['median_offer_size_tc'])} coins is "
+     f"{PX['median_offer_size_tc'] / PX['median_tc_sold_per_world_day']:.0%} of a day and the "
+     f"{gp(FE['cap_binds_at_lot_tc'])} TC that reaches the fee cap is "
+     f"{FE['cap_binds_at_lot_tc'] / PX['median_tc_sold_per_world_day']:.0%}.")
 para(tag("econ") + f"So the two sides still describe different things, and the direction of the "
      f"asymmetry survives the units even though its magnitude does not. <b>Displayed intent is "
      f"wholesale - {PB.iloc[3].share_of_tc:.0%} of resting coins sit in orders of ten thousand "
@@ -5220,7 +5235,7 @@ table([["Source", "Endpoint or path", "Retrieved", "Records"],
         f"{VN['token']['symbol']} supply {gp(VN['token']['total_supply'])} at block "
         f"{VN['token']['block']:,}"],
        ["tibiamaps/tibia-kill-stats", "data/&lt;world&gt;/&lt;date&gt;.json", "2026-07-31",
-        f"{FD['panel']['rows']:,} world-days of kill statistics, "
+        f"{KS_ROWS:,} world-days of kill statistics across {KS_WORLDS} worlds, "
         f"{FD['panel']['start']} to {FD['panel']['end']}"],
        ["NabBot", "/stats/2025/all", "2026-07-31",
         f"Char Bazaar {VN['bazaar']['year']}: {gp(VN['bazaar']['auctions_created'])} auctions, "
@@ -5314,69 +5329,23 @@ para("Scenario probabilities come from a block bootstrap (K&uuml;nsch, 1989) of 
      "walk-forward coverage test of Section 7.5.4.")
 
 h3("8.3.10 Reproducibility")
-table([["Script", "Purpose"],
-       ["01_collect.py", "Per-world GuildStats and order-book collection"],
-       ["01b_census.py", "Per-world population census"],
-       ["02_ingest_prices.py", "Archive to snapshot-level table"],
-       ["03_build_metadata.py", "World metadata, merge register, event calendar"],
-       ["04_population.py", "Daily population panel"],
-       ["04b_diurnal.py", "Diurnal snapshot-bias profile"],
-       ["05_clean_panel.py", "Section 3.3 cleaning pipeline"],
-       ["econ.py", "Fixed-effect absorption and multi-way clustered errors"],
-       ["06_analysis.py", "All statistics and models"],
-       ["07_forecast.py", "Forecasts and rolling-origin backtest"],
-       ["chartstyle.py", "Chart system, layout bands, text-overlap checker"],
-       ["08_figures.py", "All figures"],
-       ["10_advanced.py", "Threshold, cointegration, spatial and IV models"],
-       ["11_finance.py", "Microstructure, efficiency, volatility and diagnostics"],
-       ["16_killstats.py", "Per-world daily kill statistics aggregated to a fundamentals "
-                          "panel (Section 6.6)"],
-       ["17_features.py", f"{FD['panel']['n_features']}-feature matrix with the leakage assertion"],
-       ["18_predict.py", "Leading indicators, walk-forward model comparison, "
-                         "Diebold-Mariano"],
-       ["19_regimes.py", "Hidden Markov states, change points and SHAP attribution"],
-       ["20_hierarchy.py", "Global, regional, per-world, hierarchical and multi-task scopes"],
-       ["21_models_extra.py", "OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets"],
-       ["22_discovery.py", "Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals"],
-       ["23_timeseries.py", "SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast"],
-       ["24_deep.py", "LSTM and time-series transformer on 30-day windows"],
-       ["25_arbitrage.py", "Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule"],
-       ["26_maximise.py", "Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation"],
-       ["27_irreducible.py", "Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know"],
-       ["28_supply_demand.py", "Direct test of the gold-production channel against demand and behavioural blocks"],
-       ["29_scenarios.py", "Block-bootstrap scenarios, probability bands and actionable levels"],
-       ["30_model_artifact.py", "Fits, persists and scores the shipped model; run with --predict"],
-       ["41_group_models.py", "Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores"],
-       ["42_verify_group_models.py", "Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family"],
-       ["44_launch_phase_models.py", "PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines"],
-       ["45_verify_launch_models.py", "Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness"],
-       ["43_build_group_model_notebook.py", "Builds and executes the reproducible general-versus-specific model notebook"],
-       ["31_participants.py", "Demand decomposed by participant type from the order-book size distribution"],
-       ["32_scenario_backtest.py", "Walk-forward coverage test of the scenario bands"],
-       ["33_strategy.py", "Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant"],
-       ["46_verify_artifacts.py", "Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree"],
-       ["47_bazaar_history.py", "Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage"],
-       ["narrative.py", "The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards"],
-       ["34a_collect_loot.py", "Revision-audited TibiaWiki loot probabilities and quantities"],
-       ["34b_collect_creatures.py", "Creature classification, boss, event and explicit no-loot evidence"],
-       ["34_gold_emission.py", "Creature-level gold value and daily world monetary-emission reconstruction"],
-       ["35_gold_emission_models.py", "Fixed-effects, lag, holdout and sensitivity tests for gold emission"],
-       ["36_gold_emission_report.py", "Validated technical report artifact for the monetary reconstruction"],
-       ["37_verify_gold_emission.py", "Data, model, report and dashboard integrity checks for gold emission"],
-       ["38_gold_emission_dashboard.py", "Self-contained interactive world-by-time gold-emission explorer"],
-       ["39_intelligence_hub.py", "Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits"],
-       ["40_verify_intelligence_hub.py", "Structural and data-integrity checks for the interactive workspace"],
-       ["14_venues.py", "Token contract, liquidity pools and Char Bazaar turnover "
-                        "(Section 5.8); network reads are cached and block-stamped"],
-       ["12_art.py / 13_icons.py", "Duotone artwork treatment; executive-summary pictograms"],
-       ["remap_sections.py", "Chapter consolidation and reference renumbering"],
-       ["09_report.py / 09_sections.py", "This document"],
-       ["15_verify.py", "Reads the built PDF back and checks it against the data: "
-                        "references, numbering, contents, coverage and conventions"],
-       ["run_all.py", "Runs every stage in dependency order and verifies that all "
-                      "result blocks are present"]],
-      [46 * mm, AVAIL - 46 * mm],
-      caption="Table 8.4 - Analysis pipeline, in dependency order. run_all.py enforces that "
+# The table claims to run in pipeline order, so it is generated from run_all.py's own stage
+# lists rather than maintained by hand. A hand-kept ordering drifted: 08_figures.py sat ahead
+# of every analysis stage whose output it draws.
+_PURPOSE = {'01_collect.py': 'Per-world GuildStats and order-book collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the order-book size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement'}
+_runall = (ROOT / "scripts" / "run_all.py").read_text()
+_stage_order, _seen = [], set()
+for _name in re.findall(r'"([0-9a-z_]+\.py)"', _runall):
+    if _name not in _seen:
+        _seen.add(_name)
+        _stage_order.append(_name)
+_extra = [k for k in _PURPOSE if k not in _seen]
+table([["Script", "Purpose"]] +
+      [[n, _PURPOSE.get(n, "")] for n in _stage_order if n in _PURPOSE] +
+      [[n, _PURPOSE[n]] for n in sorted(_extra)],
+      [46 * mm, AVAIL - 46 * mm], fs=7,
+      caption="Table 8.4 - Analysis pipeline, generated from run_all.py's stage lists so the "
+              "order shown is the order that runs. run_all.py enforces that "
               "order: the five modelling stages share one results file, so running them out of "
               "sequence silently drops later blocks rather than failing. Scripts are "
               "deterministic given the collected raw data.")
@@ -5760,7 +5729,7 @@ table([["File", "Contents"],
                                            "block"],
        ["data/raw/char_bazaar_2025.json", "Char Bazaar annual turnover aggregates"],
        ["data/processed/kill_stats_daily.csv",
-        f"{FD['panel']['rows']:,} world-days of monsters killed, player deaths, boss kills and "
+        f"{KS_ROWS:,} world-days of monsters killed, player deaths, boss kills and "
         f"hunting breadth"],
        ["data/processed/kill_stats_mix.csv",
         "Per-world daily shares of the 40 most-hunted creature types"],

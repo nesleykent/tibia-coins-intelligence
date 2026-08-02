@@ -112,10 +112,15 @@ for w, g in d.groupby("world"):
         mu = np.asarray(ms.params)[const_ix]
         pi_now = np.asarray(ms.smoothed_marginal_probabilities)[-1]
         pi_next = pi_now @ ms.regime_transition[:, :, 0].T
-        out["MarkovSwitch"] = np.full(len(idx), float(H * (pi_next @ mu)))
-        assert abs(out["MarkovSwitch"][0]) < 1.0, "implausible regime-switching forecast"
-    except Exception as e:
+        # Check before publishing. Assigning first and asserting afterwards left the rejected
+        # forecast in `out`, where the scoring loop below picked it up: the guard counted a
+        # failure and changed nothing.
+        _ms_fc = float(H * (pi_next @ mu))
+        assert abs(_ms_fc) < 1.0, "implausible regime-switching forecast"
+        out["MarkovSwitch"] = np.full(len(idx), _ms_fc)
+    except Exception:
         fails["MarkovSwitch"] = fails.get("MarkovSwitch", 0) + 1
+        out.pop("MarkovSwitch", None)
 
     yt = y_true.values
     e_rw = out["RandomWalk"] - yt
