@@ -187,6 +187,12 @@ A claim that gold emission does or does not predict Tibia Coin prices must be
 based on the reconstructed GP series, appropriate controls, lags, sensitivity
 tests, and out-of-sample evidence—not raw kill counts alone.
 
+Do not describe a direct GP-emission-to-price null as rejection of the full
+economic channel when the analysis skips GP circulation and TC turnover.
+Testing separate delayed price outcomes is not the same as estimating the
+distributed absorption path. Until that intermediate path is identified, say
+that the conversion interval and its price effect remain unknown.
+
 Do not equate gold production with immediate Tibia Coin demand. Treat the
 possible transmission chain explicitly:
 

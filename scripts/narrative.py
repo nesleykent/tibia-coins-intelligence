@@ -291,27 +291,31 @@ def claims() -> list[Claim]:
         Claim(
             key="gold",
             label="stat",
-            heading="Gold production does not set the price",
+            heading="Direct GP-to-price tests did not identify a reliable effect",
             section="6.6.15",
             text=(
-                f"Tested first on kill counts and then on a monetary emission series covering "
-                f"{F['emissionCoverage']:.1%} of recorded deaths, the channel is absent both "
-                f"times. No elasticity is significant at any horizon, and behaviour outperforms "
-                f"production by a factor of {F['behaviourOverProduction']:.0f}. This market is "
-                f"not a monetary phenomenon."),
-            player_heading="More hunting did not reliably move the TC price",
+                f"Direct models using kill counts and a monetary emission series covering "
+                f"{F['emissionCoverage']:.1%} of recorded deaths did not find a stable "
+                f"GP-to-price signal at the tested 1, 7, 14, 30, 60 and 90-day lags. "
+                f"However, these models skip the intermediate circulation step from generated "
+                f"GP to TC turnover. They therefore do not reject a delayed absorption channel "
+                f"and cannot estimate a GP-to-TC conversion interval. Behaviour currently has "
+                f"{F['behaviourOverProduction']:.0f} times the within-world explanatory power "
+                f"of the direct production block."),
+            player_heading="We still do not know how long generated GP takes to reach the TC Market",
             player_text=(
-                "Days with more creature deaths and more generated GP were not followed by a "
-                "reliable change in the TC price. This does not prove that GP can never matter. "
-                "It means the available history does not support using hunting activity alone "
-                "to decide when to buy or sell TC."),
+                "More hunting creates GP, but that GP is not used to buy TC immediately. It may "
+                "circulate between players for days or weeks first. The current test looked for "
+                "a direct price reaction at several delays, but it did not measure this full "
+                "path. So we cannot yet say how long the conversion takes—or that it has no "
+                "effect."),
             tiles=[
-                Tile("Gold production channel", "Rejected",
-                     "same null on the GP-emission series"),
+                Tile("Direct GP-to-price test", "No reliable signal",
+                     "tested separately at delays from 1 to 90 days"),
+                Tile("GP circulation into TC", "Not yet measured",
+                     "turnover step is required before interpreting price"),
                 Tile("Behaviour vs production", f"{F['behaviourOverProduction']:.0f}×",
                      "within-world explanatory power"),
-                Tile("Emission coverage", f"{F['emissionCoverage']:.1%}",
-                     "of recorded deaths, rest excluded not imputed"),
             ],
         ),
     ]

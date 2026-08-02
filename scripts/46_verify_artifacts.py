@@ -166,7 +166,7 @@ FACTS = [
      "value": "rejected",
      "kind": "phrase",
      "topic": r"gold (?:production|emission)[^.]{0,60}(?:not supported|rejected|eliminated)",
-     "why": "the GP-emission series reaches the same null as the kill-count proxy"},
+     "why": "direct GP-to-price tests find no reliable signal, but do not identify the intermediate GP-circulation-to-TC-turnover path"},
 ]
 
 fails: list[str] = []

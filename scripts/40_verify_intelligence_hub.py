@@ -159,7 +159,10 @@ def main() -> None:
     assert "What the data says" in html
     assert "See the numbers and technical explanation" in html
     assert "Do not keep extra TC expecting easy profit" in html
-    assert "More hunting did not reliably move the TC price" in html
+    assert "We still do not know how long generated GP takes to reach the TC Market" in html
+    assert "It may circulate between players for days or weeks first." in html
+    assert "cannot yet say how long the conversion takes" in html
+    assert "Gold production channel" not in html
     assert 'class="claim-details"' in html
     assert "reports/intelligence_hub.html" in entry
     assert 'meta http-equiv="refresh"' in entry
