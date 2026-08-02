@@ -175,10 +175,9 @@ STIM = [
     {"profile": "Farmer, gold to coin to money", "side": "Demand",
      "stimulus": "Farm hours against the coin price and the outside money price",
      "prediction": "Buys coins to export value; would show as coins leaving the game",
-     "evidence": f"{json.load(open(P / 'fundamentals_results.json'))['venues']['token']['total_supply']:,.0f} "
-                 f"TIB outstanding is coins held outside the in-game system (Section 5.8)"
-                 if "venues" in json.load(open(P / "fundamentals_results.json"))
-                 else "token supply unavailable"},
+     "evidence": (f"{R['venues']['token']['total_supply']:,.0f} TIB outstanding is coins held "
+                  f"outside the in-game system (Section 5.8)"
+                  if "venues" in R else "token supply unavailable")},
     {"profile": "Farmer selling gold directly", "side": "Absent",
      "stimulus": "Outside price of gold", "prediction":
      "Never touches the coin market; is pure gold supply",

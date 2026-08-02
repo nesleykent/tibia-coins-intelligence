@@ -3075,7 +3075,7 @@
     "side": "Demand",
     "stimulus": "Farm hours against the coin price and the outside money price",
     "prediction": "Buys coins to export value; would show as coins leaving the game",
-    "evidence": "token supply unavailable"
+    "evidence": "5,583,427 TIB outstanding is coins held outside the in-game system (Section 5.8)"
    },
    {
     "profile": "Farmer selling gold directly",
@@ -4942,7 +4942,12 @@
    "share_days_with_any_signal": 0.5757211538461539,
    "episode_mean_gross_pct": 3.359314429002558,
    "episode_share_profitable": 0.847457627118644,
-   "episode_t": 11.306991058712452
+   "episode_t_naive": 11.248452315223338,
+   "episode_t_overlap_corrected": 6.099759905539826,
+   "episode_t_disjoint": 1.9013757352950516,
+   "episode_disjoint_windows": 9,
+   "episode_median_overlapping": 22,
+   "episode_t": 6.099759905539826
   },
   "holdout": {
    "split_date": "2025-11-23",

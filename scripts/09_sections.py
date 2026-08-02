@@ -522,9 +522,12 @@ para(tag("mech") + "Gold enters the economy primarily through monster loot and q
 para(tag("hyp") + "A standing hypothesis in the community is that gold accumulates faster than "
      "it is destroyed, so the GP price of a fixed-value premium asset should drift upward over "
      "time. The chain-linked index in Section 4.2 is consistent with such a drift, but "
-     "consistency is not evidence: no gold stock or gold income series exists in any accessible "
-     "source, so this hypothesis cannot be tested here and is not relied upon anywhere in this "
-     "report.")
+     "consistency is not evidence. A gold <i>production</i> series does exist and is built "
+     "twice in Chapter 6 - from kill statistics in Section 6.6.14 and from drop tables and "
+     "player-to-NPC prices in Section 6.6.15 - and both reject the channel. What remains "
+     "unavailable is the accumulated stock and the quantity of coins issued, so the level "
+     "still cannot be tied to a monetary aggregate; but the flow hypothesis stated here is no "
+     "longer untested, it is tested and unsupported.")
 para(tag("econ") + f"One concrete anchor is available. Item metadata records non-player-character "
      f"prices for {R['valuation']['n_items_with_npc_buy']:,} items, which are the fixed GP sinks "
      f"and faucets against which the floating coin price can be compared. Section 6.1 develops "
@@ -1583,6 +1586,16 @@ para(tag("stat") + tag("econ") + "The pattern is monotone and the sign changes b
      "and 4-6% bins. Below the threshold there is no restoring force at all - small gaps drift "
      "wider. Above it, gaps close, and they close faster the larger they are. This is the "
      "signature of a transaction-cost band around a law-of-one-price relationship.")
+para(tag("judg") + f"<b>Two numbers describe the same friction and they are not the same "
+     f"number, which is worth stating plainly.</b> The threshold model puts the regime switch "
+     f"at {pc(R['advanced']['tar']['threshold_pct'])}, estimated by grid search on the "
+     f"continuous deviation. The binned closure above only turns positive in the 4-6% bucket. "
+     f"Both are correct: the threshold locates where the reversion coefficient changes sign in "
+     f"a model fitted to every observation, while the bins average over wide ranges and the "
+     f"2-4% bucket still contains more drift than reversion. The report uses "
+     f"{pc(R['advanced']['tar']['threshold_pct'])} when describing market structure and 4% when "
+     f"telling a reader when to act, because acting needs the gap to clear the round trip with "
+     f"a margin, not merely to have stopped widening.")
 para(tag("judg") + f"Bin edges chosen by hand can only locate the threshold to within a "
      f"bucket. Section 6.3.1 estimates it formally by threshold autoregression and puts it at "
      f"{pc(R['advanced']['tar']['threshold_pct'])}, with the band structure itself - no "
@@ -2437,7 +2450,10 @@ h3("6.1.1 The coin has no administered gold price")
 para(tag("mech") + "A Tibia Coin has two prices: a real-money price set administratively by "
      "CipSoft, and a gold price set by players on the Market. Only the second is observed "
      "here. No store price series was collected, so this report computes no gold-per-currency "
-     "rate and makes no claim about the real-money value of gold.")
+     "rate from CipSoft's own prices. Section 5.8 does quote a dollar figure, taken from the "
+     "on-chain TibiaToken market and carried through the GP price; it is one measurement "
+     "restated rather than an independent valuation, and it is labelled as such where it "
+     "appears.")
 para(tag("obs") + f"The coin carries no non-player-character price - its metadata record lists "
      f"empty buy and sell arrays - so no NPC will trade a coin for gold at a fixed rate. There "
      f"is therefore no administered floor or ceiling anchoring the gold price of a coin. It "
@@ -3944,7 +3960,8 @@ verdict_page(
         f"implement and carries no extra market risk.",
         f"{STA['n_worlds_profitable']} of {STA['n_worlds_used']} worlds and every calendar year "
         f"in the sample are positive on the signal, and it is not one standing opportunity: "
-        f"{OCC['n_episodes']} distinct episodes at {OCC['episodes_per_month']:.1f} a month.",
+        f"{OCC['n_episodes']} distinct episodes at {OCC['episodes_per_month']:.1f} a month, "
+        f"though only {OCC['episode_disjoint_windows']} of them are non-overlapping.",
         f"Capacity is the binding constraint, not conviction: about "
         f"{gp(CAPY['gp_per_month'])} GP a month can be deployed into it, for roughly "
         f"{gp(CAPY['expected_gp_per_month'])} GP of expected profit.",
@@ -4662,9 +4679,18 @@ para(tag("stat") + f"<b>A fourth question decides whether any of it is collectab
      f"{OCC['median_episode_days']:.0f} days and {OCC['episodes_per_month']:.1f} new episodes "
      f"a month. A qualifying world exists on {OCC['share_days_with_any_signal']:.0%} of days, "
      f"typically {OCC['median_worlds_qualifying_per_day']:.0f} at a time. Scored per episode "
-     f"rather than per day - the episodes being near-independent - the trade grosses "
-     f"{pc(OCC['episode_mean_gross_pct'], 2)} and is profitable on "
-     f"{OCC['episode_share_profitable']:.0%} of them, at t = {OCC['episode_t']:.1f}.")
+     f"rather than per day the trade grosses {pc(OCC['episode_mean_gross_pct'], 2)} and is "
+     f"profitable on {OCC['episode_share_profitable']:.0%} of them.")
+para(tag("lim") + f"<b>Episodes are not independent either, and saying how far from it matters "
+     f"more than the mean does.</b> A median of {OCC['episode_median_overlapping']} of the "
+     f"{OCC['n_episodes']} start within any ninety-one-day window, and the whole span holds "
+     f"only {OCC['episode_disjoint_windows']} disjoint ones. Treating each episode as its own "
+     f"observation gives t = {OCC['episode_t_naive']:.1f}; correcting for the overlap in start "
+     f"order gives {OCC['episode_t_overlap_corrected']:.1f}; keeping only genuinely disjoint "
+     f"windows gives {OCC['episode_t_disjoint']:.1f} on "
+     f"{OCC['episode_disjoint_windows']} observations, which does not clear a five percent "
+     f"threshold. The middle figure is the one to quote, and the last is why this section "
+     f"claims nothing at the quarterly horizon.")
 para(tag("lim") + "<b>What does not survive is the clean version of the trade.</b> The figures "
      "above are for a spread: long the cheap world, short the rich one. Tibia has no mechanism "
      "for a short position, so no player can run it as stated. What a player can run is the "

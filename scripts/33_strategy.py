@@ -383,8 +383,25 @@ OCC = {
     "episode_mean_gross_pct": float(ep.gross.mean() * 100),
     "episode_share_profitable": float((ep.gross - LARGE_RT > 0).mean()),
 }
-t_ep, _ = nw_t((ep.gross - LARGE_RT).values, 1)      # episodes are near-independent
-OCC["episode_t"] = t_ep
+# Episodes are NOT independent, which the data says plainly: a median of 22 of the 177 start
+# within any 91-day window, and the whole span holds only 9 non-overlapping quarters. Three
+# figures are reported because they bracket the honest answer - assuming independence, then
+# correcting for overlap in episode order, then the blunt version that keeps only genuinely
+# disjoint windows.
+ep = ep.sort_values("start")
+_epnet = (ep.gross - LARGE_RT).values
+_gap = ep.start.diff().dt.days.dropna().median()
+_lag = int(round(h / max(_gap, 1)))
+OCC["episode_t_naive"] = nw_t(_epnet, 1)[0]
+OCC["episode_t_overlap_corrected"] = nw_t(_epnet, _lag)[0]
+ep["_bin"] = ((ep.start - ep.start.min()).dt.days // h)
+_binned = ep.groupby("_bin").apply(lambda g: (g.gross - LARGE_RT).mean()).values
+OCC["episode_t_disjoint"] = nw_t(_binned, 1)[0]
+OCC["episode_disjoint_windows"] = int(len(_binned))
+OCC["episode_median_overlapping"] = int(
+    np.median([((ep.start >= d) & (ep.start < d + pd.Timedelta(days=h))).sum()
+               for d in ep.start]))
+OCC["episode_t"] = OCC["episode_t_overlap_corrected"]
 print("\n[OCCURRENCE] the top decile as episodes rather than as daily observations")
 print(f"  {OCC['n_signal_days']:,} signal-days collapse to {OCC['n_episodes']} episodes across "
       f"{OCC['n_worlds']} worlds")
@@ -393,7 +410,11 @@ print(f"  median episode lasts {OCC['median_episode_days']:.0f} days; "
 print(f"  a qualifying world exists on {OCC['share_days_with_any_signal']:.0%} of days, "
       f"median {OCC['median_worlds_qualifying_per_day']:.0f} worlds at a time")
 print(f"  per episode: gross {OCC['episode_mean_gross_pct']:+.2f}%, profitable on "
-      f"{OCC['episode_share_profitable']:.0%}, t = {OCC['episode_t']:.1f}")
+      f"{OCC['episode_share_profitable']:.0%}")
+print(f"  t = {OCC['episode_t_naive']:.1f} assuming independence, "
+      f"{OCC['episode_t_overlap_corrected']:.1f} corrected for overlap, "
+      f"{OCC['episode_t_disjoint']:.1f} on {OCC['episode_disjoint_windows']} disjoint windows "
+      f"(median {OCC['episode_median_overlapping']} episodes share any {h}-day window)")
 
 # How much money can this actually absorb? An edge is worth what it can be sized at, and a
 # world clearing a few thousand coins a day caps that hard. The bound taken here is one
