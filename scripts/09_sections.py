@@ -158,15 +158,10 @@ story.append(PageBreak())
 # ===================================================================== 1
 h1(1, "Executive Summary")
 
-bottomline("The gold price of a Tibia Coin is an exchange rate, not an asset price: coin "
-           "supply is perfectly elastic at a money price CipSoft fixes, neither leg pays a "
-           "yield, and a 2% fee holds a "
-           f"{pc(R['advanced']['tar']['threshold_pct'])} band open around every relation in the "
-           "market. That model, not a preference for efficient markets, is why the level does "
-           "not forecast and why the level does not forecast. The one edge that does exist is "
-           "relative, and Section 7.7 shows it clears its cost only at the strongest decile "
-           "held a month or more. Section 7.6 "
-           "states it in full and ranks it against every alternative tested.")
+bottomline(narrative.claim("mechanism").summary + " That model, not a preference for "
+           "efficient markets, is why the level does not forecast and why the one edge "
+           "that exists only clears its cost at the strongest signals held long enough. "
+           "Section 7.6 states it in full and ranks it against every alternative tested.")
 
 kpi_row([
     (f"{gp(D['price_latest_median'])}", "GP per Tibia Coin<br/>median across 93 worlds"),
@@ -195,10 +190,9 @@ para(tag("stat") + f"<b>What the evidence favours, and what it eliminates.</b> S
      f"momentum and market segmentation are <b>eliminated</b>: behaviour outperforms production "
      f"{_R2B / _R2S:.0f} to 1 and the production slope is the wrong sign on all "
      f"{SVD['gold_stock']['n_worlds']} worlds tested.")
-para(tag("judg") + f"<b>The consequence for a holder.</b> Coins are a currency, not an asset. "
-     f"Holding more than you intend to spend is an uncompensated position: zero expected return "
-     f"at every horizon tested, {pc(D['ret_sd_ann_pct'], 0)} annualised volatility, no premium "
-     f"of any kind.")
+# The same claim the body derives in 7.6.4, in its summary form, so the two cannot drift.
+para(tag("judg") + f"<b>The consequence for a holder.</b> "
+     f"{narrative.claim('currency').summary}")
 
 h2sec_plain("1.2 Why this mechanism and not another")
 para(tag("judg") + "<b>The case for it is not that the alternatives failed one by one. It is "
@@ -4388,13 +4382,11 @@ story.append(PageBreak())
 h2sec('7.6', 'The mechanism',
       'What sets the gold price of a Tibia Coin, stated as one model rather than as a list of '
       'rejections')
-bottomline("The gold price of a Tibia Coin is an exchange rate, not an asset price. Coin supply "
-           "is perfectly elastic at a money price CipSoft fixes, so nothing on the coin side can "
-           "move it; what moves is the gold side, and what moves the gold side is the "
-           "reservation price of whoever needs to transact today. Clearing is thin, neither leg "
-           "pays a yield, and a transaction-cost band sits wider than any predictable component. "
-           "That structure is the mechanism, and every negative result in this report is one of "
-           "its predictions.")
+bottomline("This report has accumulated a long list of things that do not explain the "
+           "price, and a list of rejections is not a finding. What follows states the "
+           "surviving model positively, ranks it against every alternative the study "
+           "tested, and ends with the claims it shares with the interactive site - each "
+           "written once and rendered in both places.")
 para(tag("judg") + "<b>This report has accumulated a long list of things that do not explain "
      "the price. A list of rejections is not a finding.</b> This section states the surviving "
      "model positively, ranks the competing hypotheses against each other rather than each "

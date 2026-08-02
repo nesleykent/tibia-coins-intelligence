@@ -186,6 +186,26 @@ check("the skill exhibit quotes the model it names", not _r2_bad,
       f"caption {_r2_claimed}, row {float(_rf7.iloc[0].r2_oos):.3f}" if _r2_bad
       else f"R2 {_r2_claimed[0] if _r2_claimed else 'n/a'} matches the 7d forest")
 
+# Shared claims are stated twice by design - the summary asserts, the body derives - but the
+# two must be the summary and full forms of one definition, not two hand-written sentences
+# that happen to agree today. A claim's full text appearing twice means one placement is a
+# copy that will drift.
+import sys as _sys
+_sys.path.insert(0, str(ROOT / "scripts"))
+try:
+    import narrative as _nar
+    # Compare the tail, not the head: a claim's summary and full forms deliberately open the
+    # same way, so matching on the opening flags the intended pair as a duplicate.
+    _dupe = [c.key for c in _nar.claims()
+             if len(c.text) > 80 and doc.count(c.text[-70:]) > 1]
+    check("no shared claim is stated twice verbatim", not _dupe,
+          f"{_dupe}" if _dupe else f"{len(_nar.claims())} claims checked")
+    # And every claim must actually reach the page, or the shared spine is decorative.
+    _missing = [c.key for c in _nar.claims() if c.text[-70:] not in doc]
+    check("every shared claim reaches the report", not _missing, f"{_missing}")
+except Exception as _e:                                    # narrative is optional at build time
+    check("shared-claim checks ran", False, f"narrative.py unusable: {_e}")
+
 labels = re.findall(r"Exhibit (\d+\.\d+)\n", txt)
 check("no exhibit number used twice", len(labels) == len(set(labels)))
 

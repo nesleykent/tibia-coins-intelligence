@@ -131,9 +131,15 @@ class Claim:
     label: str                       # the report's evidence-label key: mech/stat/econ/judg/lim
     heading: str
     text: str
+    summary: str = ""                # the shorter form, for an executive summary
     tiles: list[Tile] = field(default_factory=list)
     interactive: str | None = None   # a view the site can offer for this claim
     section: str = ""                # where the PDF states it, for cross-reference
+
+
+def claim(key: str) -> Claim:
+    """One claim by key, for a renderer that wants to place a single statement."""
+    return next(c for c in claims() if c.key == key)
 
 
 def claims() -> list[Claim]:
@@ -151,6 +157,10 @@ def claims() -> list[Claim]:
                 f"fee capped at {gp(F['feeCapGp'])} GP holds a {pc(F['bandThresholdPct'])} band "
                 f"open around every relation in the market. That model, not a preference for "
                 f"efficient markets, is why the level does not forecast."),
+            summary=(
+                f"The gold price of a Tibia Coin is an exchange rate, not an asset price: supply "
+                f"is elastic at a fixed money price, neither leg pays a yield, and a "
+                f"{pc(F['feeRatePct'], 0)} fee holds a {pc(F['bandThresholdPct'])} band open."),
             tiles=[
                 Tile("Friction band", pc(F["bandThresholdPct"]),
                      "estimated from prices alone, with no fee figure supplied"),
@@ -170,6 +180,9 @@ def claims() -> list[Claim]:
                 f"expected return at every horizon tested, {pc(F['annualVolPct'], 0)} annualised "
                 f"volatility, and no risk premium of any kind, because no risk is being borne "
                 f"on anyone's behalf."),
+            summary=(
+                f"Coins are a currency, not an asset. Held beyond what you intend to spend they "
+                f"pay nothing for {pc(F['annualVolPct'], 0)} of annualised volatility."),
             tiles=[
                 Tile("Annualised volatility", pc(F["annualVolPct"], 0),
                      "carried for no compensation"),
