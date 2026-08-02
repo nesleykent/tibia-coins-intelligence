@@ -8,7 +8,7 @@ success unless every block the report reads is present.
 
     python scripts/run_all.py              # everything, collection included
     python scripts/run_all.py --no-collect # from the cached raw data
-    python scripts/run_all.py --report     # figures and PDF only
+    python scripts/run_all.py --report     # figures, PDF and interactive workspaces
 """
 import json, pathlib, subprocess, sys, time
 
@@ -33,7 +33,7 @@ FUND = ["16_killstats.py", "17_features.py", "18_predict.py", "19_regimes.py",
 ANALYSE = ["06_analysis.py", "07_forecast.py", "10_advanced.py", "11_finance.py",
            "14_venues.py"] + FUND
 RENDER = ["12_art.py", "13_icons.py", "08_figures.py", "09_report.py",
-          "15_verify.py"]
+          "15_verify.py", "39_intelligence_hub.py", "40_verify_intelligence_hub.py"]
 
 # Every top-level block the report expects to find when it renders.
 REQUIRED = ["window", "desc", "index", "stationarity", "seasonality", "events", "arbitrage",

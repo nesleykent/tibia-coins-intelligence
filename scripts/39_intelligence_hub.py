@@ -1,0 +1,948 @@
+"""Build the unified interactive Tibia Coins Intelligence workspace.
+
+    python scripts/39_intelligence_hub.py
+
+The generated HTML is self-contained for offline use. When served from the
+repository root it refreshes its analytical datasets from data/processed.
+"""
+from __future__ import annotations
+
+import json
+import pathlib
+from datetime import datetime, timezone
+
+import pandas as pd
+
+
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+P = ROOT / "data" / "processed"
+FIGURES = ROOT / "figures" / "manifest.json"
+OUTPUT = ROOT / "reports" / "intelligence_hub.html"
+
+
+def value(item):
+    if pd.isna(item):
+        return None
+    if hasattr(item, "item"):
+        item = item.item()
+    return item
+
+
+def records(path: pathlib.Path, columns: list[str], *, where=None) -> list[dict]:
+    frame = pd.read_csv(path, low_memory=False)
+    if where is not None:
+        frame = where(frame)
+    return [
+        {column: value(row[column]) for column in columns}
+        for _, row in frame[columns].iterrows()
+    ]
+
+
+def figure_topic(key: str) -> str:
+    number = int(key[3:5])
+    if number <= 4:
+        return "Market overview"
+    if number <= 16:
+        return "Worlds & activity"
+    if number <= 26:
+        return "Market mechanics"
+    if number <= 31:
+        return "Models & forecasts"
+    return "Strategy"
+
+
+def build_payload() -> dict:
+    results = json.loads((P / "results.json").read_text())
+    manifest = json.loads(FIGURES.read_text())
+
+    market_index = records(
+        P / "market_index.csv",
+        ["date", "ew_price", "disp_pct", "breadth_up", "n_worlds"],
+        where=lambda frame: frame[
+            frame["index_valid"].astype(bool) & frame["ew_price"].notna()
+        ],
+    )
+    worlds = records(
+        P / "world_summary.csv",
+        [
+            "world", "first", "last", "px_first", "px_last", "px_med", "px_min",
+            "px_max", "vol", "sold", "bought", "region", "pvp_type", "converged",
+            "launch_in_window", "population", "active_chars", "premium_share",
+            "total_ret_pct",
+        ],
+    )
+    world_series = records(
+        P / "panel_daily.csv",
+        ["world", "date", "price_gp", "tc_sold", "tc_bought"],
+        where=lambda frame: frame[frame["price_gp"].notna()],
+    )
+    forecasts = records(
+        P / "forecasts_sa.csv",
+        [
+            "world", "last_price", "launch_phase", "gap_to_mean_pct",
+            "sigma_daily_pct", "mu_daily_pct",
+            "2w_p50", "2w_p10", "2w_p90",
+            "1m_p50", "1m_p10", "1m_p90",
+            "3m_p50", "3m_p10", "3m_p90",
+            "6m_p50", "6m_p10", "6m_p90",
+        ],
+    )
+    predictions = records(
+        P / "latest_predictions.csv",
+        [
+            "world", "as_of", "price_gp", "deviation_pct", "outside_band",
+            "predicted_change_pct", "low80_pct", "high80_pct",
+        ],
+    )
+    strategy = records(
+        P / "strategy_holdout.csv",
+        [
+            "horizon", "period", "cutoff_pct", "n", "n_effective", "net_pct",
+            "t_newey_west", "share_profitable",
+        ],
+    )
+    figures = [
+        {
+            "id": key,
+            "label": f"Study {index + 1:02d}",
+            "title": item["title"],
+            "subtitle": item["subtitle"],
+            "note": item["note"],
+            "source": item["source"],
+            "image": f"../figures/{key}.png",
+            "topic": figure_topic(key),
+        }
+        for index, (key, item) in enumerate(manifest.items())
+        if (ROOT / "figures" / f"{key}.png").exists()
+    ]
+
+    return {
+        "meta": {
+            "generatedAt": datetime.now(timezone.utc).isoformat(),
+            "start": results["window"]["start"],
+            "end": results["window"]["end"],
+            "worlds": results["window"]["n_worlds"],
+            "worldDays": results["window"]["n_world_days"],
+            "converged": results["window"]["n_converged"],
+            "indexReturn": results["index"]["total_pct"],
+            "latestMedian": results["desc"]["price_latest_median"],
+            "figureCount": len(figures),
+        },
+        "marketIndex": market_index,
+        "worlds": worlds,
+        "worldSeries": world_series,
+        "forecasts": forecasts,
+        "predictions": predictions,
+        "strategy": strategy,
+        "figures": figures,
+    }
+
+
+HTML = r"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Tibia Coins Intelligence</title>
+  <style>
+    :root {
+      --bg:#fff; --surface:#fff; --surface-soft:#f7f9fc; --ink:#0e1c3b;
+      --muted:#647087; --line:#d7deea; --line-soft:#edf1f6; --blue:#155eef;
+      --blue-soft:#eef4ff; --gold:#c58b16; --gold-soft:#fff8e7; --green:#14804a;
+      --red:#c9363e; --focus:#155eef; --radius:8px; --sidebar:224px;
+      font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      color:var(--ink); background:var(--bg);
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;min-width:320px;background:var(--bg)}
+    button,input,select{font:inherit;color:inherit}
+    button,select,input{min-height:44px}
+    button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{
+      outline:3px solid rgb(21 94 239 / 22%);outline-offset:2px
+    }
+    a{color:var(--blue)}
+    .app{display:grid;grid-template-columns:var(--sidebar) minmax(0,1fr);min-height:100vh}
+    .sidebar{border-right:1px solid var(--line);padding:24px 14px;display:flex;flex-direction:column;
+      position:sticky;top:0;height:100vh;background:#fff;z-index:8}
+    .brand{display:flex;align-items:center;gap:12px;padding:0 10px 26px}
+    .brand-mark{font-size:25px;font-weight:850;letter-spacing:-.07em}
+    .brand-name{font-size:13px;font-weight:750;line-height:1.1}
+    .nav{display:grid;gap:5px}
+    .nav-button{border:0;border-left:3px solid transparent;background:transparent;border-radius:6px;
+      min-height:48px;padding:0 12px;display:flex;align-items:center;gap:12px;text-align:left;
+      cursor:pointer;font-size:14px;font-weight:650;color:#273552}
+    .nav-button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8}
+    .nav-button:hover{background:var(--surface-soft)}
+    .nav-button.active{border-left-color:var(--blue);background:var(--blue-soft);color:#0f51d8}
+    .sidebar-note{margin-top:auto;padding:16px 12px 4px;color:var(--muted);font-size:11px;line-height:1.5}
+    .workspace{min-width:0}
+    .utility{height:64px;border-bottom:1px solid var(--line);display:flex;align-items:center;
+      justify-content:space-between;gap:18px;padding:0 28px;position:sticky;top:0;background:rgb(255 255 255 / 96%);
+      backdrop-filter:blur(8px);z-index:7}
+    .status{display:flex;align-items:center;gap:9px;color:#34405a;font-size:12px;min-width:0}
+    .status-dot{width:8px;height:8px;border-radius:50%;background:var(--green);flex:none}
+    .status-dot.fallback{background:var(--gold)}
+    .status-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .utility-actions{display:flex;gap:10px}
+    .button{border:1px solid #aeb9cb;background:#fff;border-radius:7px;padding:0 14px;
+      font-weight:700;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+    .button:hover{background:var(--surface-soft)}
+    .button.primary{border-color:var(--blue);background:var(--blue);color:#fff}
+    .button svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8}
+    .main{padding:28px 30px 52px;max-width:1540px;margin:0 auto}
+    .view[hidden]{display:none}
+    .view-header{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:18px}
+    h1{font-size:clamp(30px,3.3vw,48px);line-height:1.05;letter-spacing:-.045em;margin:0}
+    .view-intro{color:var(--muted);max-width:700px;line-height:1.55;margin:8px 0 0;font-size:14px}
+    h2{font-size:18px;letter-spacing:-.015em;margin:0}
+    h3{font-size:15px;margin:0}
+    .filters{display:flex;align-items:end;gap:12px;flex-wrap:wrap}
+    .field{display:grid;gap:6px;min-width:150px}
+    .field.wide{min-width:230px}
+    .field label{font-size:11px;font-weight:750;color:#3b4760}
+    select,input[type="date"],input[type="search"]{width:100%;border:1px solid #bdc7d6;border-radius:7px;
+      background:#fff;padding:0 11px;font-size:13px}
+    .date-pair{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    .metric-rail{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);
+      border-radius:var(--radius);margin:18px 0 16px;overflow:hidden}
+    .metric{padding:16px 22px;min-width:0}
+    .metric+.metric{border-left:1px solid var(--line)}
+    .metric-label{display:block;color:#4e5a71;font-size:12px;margin-bottom:7px}
+    .metric-value{display:block;color:var(--blue);font-size:clamp(24px,2.4vw,36px);
+      line-height:1;font-weight:760;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+    .metric-meta{display:block;color:var(--muted);font-size:11px;margin-top:7px}
+    .panel{border:1px solid var(--line);border-radius:var(--radius);background:#fff;min-width:0}
+    .panel-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;
+      padding:15px 16px 10px}
+    .panel-heading p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .chart-panel{padding-bottom:10px}
+    .legend{display:flex;flex-wrap:wrap;gap:9px 18px;color:#3d4961;font-size:11px}
+    .legend-item{display:inline-flex;align-items:center;gap:7px}
+    .legend-line{width:24px;border-top:3px solid var(--blue)}
+    .legend-line.dashed{border-color:#7b869a;border-top-style:dashed}
+    .chart-wrap{position:relative;padding:0 10px 4px}
+    .chart{width:100%;height:340px;display:block;overflow:visible}
+    .chart-tooltip{position:absolute;z-index:4;pointer-events:none;background:rgb(255 255 255 / 98%);
+      border:1px solid #aeb9c8;border-radius:7px;box-shadow:0 8px 24px rgb(14 28 59 / 10%);
+      padding:9px 11px;font-size:11px;line-height:1.5;opacity:0;transition:opacity .1s;min-width:180px}
+    .chart-tooltip.visible{opacity:1}
+    .chart-empty{color:var(--muted);text-align:center;padding:100px 20px}
+    .split{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(260px,.8fr);gap:16px;margin-top:16px}
+    .table-tools{display:flex;gap:8px;align-items:center}
+    .table-tools input{min-width:200px}
+    .table-wrap{overflow:auto;border-top:1px solid var(--line-soft)}
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:right;white-space:nowrap}
+    th{color:#34405a;background:#fafbfd;font-weight:750;position:sticky;top:0;z-index:1}
+    th:first-child,td:first-child{text-align:left}
+    tbody tr{cursor:pointer}
+    tbody tr:hover{background:#f8faff}
+    tbody tr.selected{background:var(--gold-soft);box-shadow:inset 3px 0 var(--gold)}
+    .positive{color:var(--green);font-weight:700}
+    .negative{color:var(--red);font-weight:700}
+    .neutral{color:var(--muted)}
+    .signal{padding:18px 17px;display:grid;align-content:start;gap:18px}
+    .signal-block{border-bottom:1px solid var(--line);padding-bottom:16px}
+    .signal-value{display:block;font-size:30px;line-height:1;font-weight:780;margin-top:8px}
+    .signal-note{color:var(--muted);font-size:11px;line-height:1.55;margin:0}
+    .world-layout{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.7fr);gap:16px}
+    .world-facts{padding:16px;display:grid;gap:13px}
+    .fact{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line-soft);
+      padding-bottom:10px;font-size:12px}
+    .fact span{color:var(--muted)}
+    .fact strong{text-align:right}
+    .segmented{display:inline-flex;border:1px solid #b9c3d2;border-radius:7px;overflow:hidden}
+    .segment{min-height:40px;border:0;border-right:1px solid #b9c3d2;background:#fff;padding:0 14px;
+      cursor:pointer;font-size:12px;font-weight:700}
+    .segment:last-child{border-right:0}
+    .segment.active{background:var(--blue);color:#fff}
+    .forecast-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(300px,.7fr);gap:16px}
+    .forecast-summary{padding:18px;display:grid;gap:14px}
+    .forecast-band{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+    .forecast-band:last-child{border:0}
+    .forecast-band strong{font-size:22px;display:block;margin-top:5px}
+    .strategy-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:16px}
+    .bar-area{padding:16px}
+    .bar-row{display:grid;grid-template-columns:72px 1fr 72px;gap:12px;align-items:center;margin:20px 0}
+    .bar-track{height:26px;background:var(--surface-soft);border-radius:4px;overflow:hidden}
+    .bar-fill{height:100%;background:var(--blue);transition:width .2s}
+    .bar-fill.gold{background:var(--gold)}
+    .evidence{padding:18px;display:grid;gap:14px}
+    .evidence-callout{border-left:3px solid var(--gold);background:var(--gold-soft);padding:12px;
+      color:#5f4a17;font-size:12px;line-height:1.55}
+    .emission-frame{width:100%;height:1050px;border:1px solid var(--line);border-radius:var(--radius);
+      background:#fff}
+    .library-tools{display:grid;grid-template-columns:minmax(240px,1fr) 220px auto;gap:10px;margin:16px 0}
+    .library-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .exhibit{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;
+      text-align:left;cursor:pointer;padding:0;min-height:0;transition:transform .12s,border-color .12s}
+    .exhibit:hover{transform:translateY(-2px);border-color:#94a7c5}
+    .exhibit img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;object-position:top;
+      background:var(--surface-soft);border-bottom:1px solid var(--line-soft)}
+    .exhibit-copy{display:block;padding:13px 14px 15px}
+    .exhibit-id{display:block;color:var(--blue);font-size:10px;font-weight:800;text-transform:uppercase}
+    .exhibit-title{display:block;margin-top:6px;font-size:13px;font-weight:750;line-height:1.35}
+    dialog{width:min(1100px,calc(100% - 28px));max-height:calc(100vh - 28px);border:0;border-radius:10px;
+      padding:0;box-shadow:0 22px 70px rgb(14 28 59 / 24%)}
+    dialog::backdrop{background:rgb(14 28 59 / 54%)}
+    .modal-head{display:flex;justify-content:space-between;gap:18px;align-items:start;padding:18px;
+      border-bottom:1px solid var(--line)}
+    .icon-button{width:44px;min-width:44px;border:1px solid var(--line);border-radius:7px;background:#fff;
+      cursor:pointer;font-size:20px}
+    .modal-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(280px,.7fr);gap:18px;
+      padding:18px;overflow:auto}
+    .modal-body img{width:100%;height:auto;border:1px solid var(--line-soft)}
+    .modal-notes{font-size:12px;line-height:1.6;color:#37435c}
+    .modal-notes p{margin:0 0 14px}
+    .source{color:var(--muted);font-size:10px}
+    .empty{padding:70px 20px;text-align:center;color:var(--muted)}
+    .footer{display:flex;justify-content:space-between;gap:20px;color:var(--muted);font-size:10px;
+      border-top:1px solid var(--line);margin-top:22px;padding-top:14px}
+    .mobile-only{display:none}
+    @media(max-width:1050px){
+      :root{--sidebar:190px}.main{padding:24px 20px 44px}.library-grid{grid-template-columns:repeat(2,1fr)}
+      .split,.world-layout,.forecast-grid,.strategy-grid{grid-template-columns:1fr}
+      .signal{grid-template-columns:1fr 1fr}.emission-frame{height:1150px}
+    }
+    @media(max-width:760px){
+      .app{display:block}.sidebar{position:sticky;height:auto;border-right:0;border-bottom:1px solid var(--line);
+        padding:0;top:0}.brand{padding:14px 16px 10px}.brand-mark{font-size:21px}.brand-name{font-size:15px}
+      .nav{display:flex;overflow-x:auto;padding:0 10px 7px;gap:2px}.nav-button{flex:none;border-left:0;
+        border-bottom:3px solid transparent;border-radius:0;padding:0 10px;min-height:44px}
+      .nav-button.active{border-bottom-color:var(--blue);border-left-color:transparent;background:transparent}
+      .nav-button svg{display:none}.sidebar-note{display:none}.utility{position:static;height:50px;padding:0 14px}
+      .status-text{max-width:220px}.utility-actions .button:first-child{display:none}
+      .main{padding:20px 14px 38px}.view-header{display:block}.filters{margin-top:18px;display:grid;
+        grid-template-columns:1fr 1fr}.field,.field.wide{min-width:0}.field.wide{grid-column:1/-1}
+      .metric-rail{grid-template-columns:1fr 1fr;border:0;gap:9px;overflow:visible}
+      .metric{border:1px solid var(--line);border-radius:var(--radius);padding:13px}
+      .metric+.metric{border-left:1px solid var(--line)}.metric-value{font-size:25px}
+      .chart{height:300px}.panel-heading{display:block}.legend{margin-top:10px}
+      .signal{grid-template-columns:1fr 1fr}.table-tools{margin-top:10px}.table-tools input{min-width:0}
+      .data-table thead{display:none}.data-table,.data-table tbody{display:block}
+      .data-table tr{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:12px;border-bottom:1px solid var(--line)}
+      .data-table td{display:grid;gap:3px;padding:0;border:0;text-align:left!important;white-space:normal}
+      .data-table td::before{content:attr(data-label);color:var(--muted);font-size:9px;text-transform:uppercase;
+        font-weight:750}.data-table td:first-child{grid-column:1/-1;font-size:15px}
+      .library-tools{grid-template-columns:1fr 1fr}.library-tools input{grid-column:1/-1}
+      .library-grid{grid-template-columns:1fr}.modal-body{grid-template-columns:1fr}
+      .emission-frame{height:1250px}.footer{display:block}.footer span{display:block;margin-top:5px}
+    }
+    @media(max-width:430px){
+      .filters{grid-template-columns:1fr}.field.wide{grid-column:auto}.date-pair{grid-template-columns:1fr}
+      .metric-rail{grid-template-columns:1fr 1fr}.signal{grid-template-columns:1fr}
+      .library-tools{grid-template-columns:1fr}.library-tools input{grid-column:auto}
+      .chart{height:270px}.emission-frame{height:1350px}
+    }
+    @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+    @media print{.sidebar,.utility,.filters,.button,.library-tools{display:none!important}.app{display:block}.main{max-width:none}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">TCI</span><span class="brand-name">Tibia Coins<br>Intelligence</span></div>
+    <nav class="nav" aria-label="Workspace navigation">
+      <button class="nav-button active" data-view="overview">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-13h6V4h-6v3Z"/></svg>Overview
+      </button>
+      <button class="nav-button" data-view="worlds">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Worlds
+      </button>
+      <button class="nav-button" data-view="forecasts">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 18 5-6 4 3 7-10M17 5h3v3"/></svg>Forecasts
+      </button>
+      <button class="nav-button" data-view="strategy">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="m14.8 9.2 5-5M16 4h4v4"/></svg>Strategy
+      </button>
+      <button class="nav-button" data-view="emission">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>Gold Emission
+      </button>
+      <button class="nav-button" data-view="library">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1 5-.4 8 1.5v13c-3-1.9-5-2.5-8-1.5v-13ZM20 5.5c-3-1-5-.4-8 1.5v13c3-1.9 5-2.5 8-1.5v-13Z"/></svg>Research Library
+      </button>
+    </nav>
+    <div class="sidebar-note">Independent quantitative research.<br>Currency: GP per Tibia Coin.</div>
+  </aside>
+
+  <div class="workspace">
+    <header class="utility">
+      <div class="status"><i id="statusDot" class="status-dot"></i><span id="dataStatus" class="status-text"></span></div>
+      <div class="utility-actions">
+        <a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Open full report</a>
+        <button id="copyView" class="button" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M16 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h3"/></svg>
+          <span>Copy view</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section id="view-overview" class="view">
+        <div class="view-header">
+          <div><h1>Tibia Coins Intelligence</h1><p class="view-intro">Explore price, relative value, forecasts and the economic mechanics connecting 93 Tibia worlds.</p></div>
+          <div class="filters" aria-label="Overview filters">
+            <div class="field"><label for="overviewWorld">World</label><select id="overviewWorld"></select></div>
+            <div class="field wide"><label>Date range</label><div class="date-pair"><input id="overviewStart" type="date" aria-label="Start date"><input id="overviewEnd" type="date" aria-label="End date"></div></div>
+          </div>
+        </div>
+        <div class="metric-rail" aria-label="Market summary">
+          <div class="metric"><span class="metric-label" id="metricPriceLabel">Market index</span><strong id="metricPrice" class="metric-value">—</strong><span id="metricPriceMeta" class="metric-meta">GP per TC</span></div>
+          <div class="metric"><span class="metric-label">Worlds</span><strong id="metricWorlds" class="metric-value">—</strong><span class="metric-meta">tracked</span></div>
+          <div class="metric"><span class="metric-label">Median price</span><strong id="metricMedian" class="metric-value">—</strong><span class="metric-meta">GP per TC</span></div>
+          <div class="metric"><span class="metric-label">Dispersion</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">cross-world log SD</span></div>
+        </div>
+        <article class="panel chart-panel">
+          <div class="panel-heading"><div><h2 id="overviewChartTitle">Market index and dispersion</h2><p id="overviewChartNote">Tap, focus or move across the chart to inspect a date.</p></div><div id="overviewLegend" class="legend"></div></div>
+          <div class="chart-wrap"><svg id="overviewChart" class="chart" role="img" aria-labelledby="overviewChartTitle"></svg><div id="overviewTooltip" class="chart-tooltip"></div></div>
+        </article>
+        <div class="split">
+          <article class="panel">
+            <div class="panel-heading"><div><h2>Worlds overview</h2><p id="overviewTableCount"></p></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted change</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
+          </article>
+          <aside class="panel signal">
+            <div class="signal-block"><h2>Signal summary</h2><span class="signal-value positive">+1.73% net</span><small>7-day true holdout · t = 5.3</small></div>
+            <div class="signal-block"><h3>Level forecast</h3><span class="signal-value">No edge</span></div>
+            <p class="signal-note">Relative position is forecastable; the common price level is not. Signals outside the estimated friction band deserve attention, not automatic execution.</p>
+          </aside>
+        </div>
+      </section>
+
+      <section id="view-worlds" class="view" hidden>
+        <div class="view-header"><div><h1>Worlds</h1><p class="view-intro">Compare price histories, liquidity, population and world structure using the same scale.</p></div>
+          <div class="filters"><div class="field"><label for="worldA">Primary world</label><select id="worldA"></select></div><div class="field"><label for="worldB">Compare with</label><select id="worldB"></select></div></div>
+        </div>
+        <div class="world-layout">
+          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p>Daily GP per Tibia Coin; each series is rebased to 100 for a fair comparison.</p></div><div id="worldLegend" class="legend"></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
+          <aside id="worldFacts" class="panel world-facts"></aside>
+        </div>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>All worlds</h2><p>Click a row to make it the primary world.</p></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Latest</th><th>Region</th><th>PvP</th><th>Population</th><th>Total return</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
+      </section>
+
+      <section id="view-forecasts" class="view" hidden>
+        <div class="view-header"><div><h1>Forecasts</h1><p class="view-intro">Scenario ranges describe uncertainty around the level; the actionable model predicts relative convergence only.</p></div>
+          <div class="filters"><div class="field"><label for="forecastWorld">World</label><select id="forecastWorld"></select></div><div class="field"><label>Horizon</label><div id="forecastHorizon" class="segmented"><button class="segment" data-horizon="2w">2 weeks</button><button class="segment active" data-horizon="1m">1 month</button><button class="segment" data-horizon="3m">3 months</button><button class="segment" data-horizon="6m">6 months</button></div></div></div>
+        </div>
+        <div class="forecast-grid">
+          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="forecastChartTitle">Forecast fan</h2><p>Median and 80% simulated range. A wide band is uncertainty, not opportunity.</p></div></div><div class="chart-wrap"><svg id="forecastChart" class="chart" role="img" aria-labelledby="forecastChartTitle"></svg><div id="forecastTooltip" class="chart-tooltip"></div></div></article>
+          <aside id="forecastSummary" class="panel forecast-summary"></aside>
+        </div>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation</th><th>Prediction</th><th>80% interval</th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
+      </section>
+
+      <section id="view-strategy" class="view" hidden>
+        <div class="view-header"><div><h1>Strategy</h1><p class="view-intro">Test the strongest cross-world convergence signals after transaction cost, with training and untouched holdout evidence separated.</p></div>
+          <div id="strategyHorizon" class="segmented"><button class="segment active" data-days="7">7 days</button><button class="segment" data-days="30">30 days</button><button class="segment" data-days="91">91 days</button></div>
+        </div>
+        <div class="strategy-grid">
+          <article class="panel"><div class="panel-heading"><div><h2>Net return after cost</h2><p>Top-decile raw convergence gap.</p></div></div><div id="strategyBars" class="bar-area"></div></article>
+          <aside id="strategyEvidence" class="panel evidence"></aside>
+        </div>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>How to read the signal</h2><p>What the evidence permits—and what it does not.</p></div></div><div class="signal" style="grid-template-columns:repeat(3,1fr)">
+          <div class="signal-block"><h3>Use</h3><p class="signal-note">Rank worlds by their raw gap to the cross-world mean and act only on the strongest decile outside the friction band.</p></div>
+          <div class="signal-block"><h3>Do not use</h3><p class="signal-note">Do not issue a directional call on the common Tibia Coin price level; fifteen model classes fail to beat a random walk.</p></div>
+          <div class="signal-block"><h3>Binding constraint</h3><p class="signal-note">Market depth limits deployable size. The opportunity is relative, conditional and capacity-constrained.</p></div>
+        </div></article>
+      </section>
+
+      <section id="view-emission" class="view" hidden>
+        <div class="view-header"><div><h1>Gold Emission</h1><p class="view-intro">Explore reconstructed direct coins and NPC-sale potential by world, period and realization scenario.</p></div><a class="button primary" href="gold_emission_dashboard.html" target="_blank" rel="noopener">Open full screen</a></div>
+        <iframe id="emissionFrame" class="emission-frame" title="Interactive gold emission dashboard" loading="lazy"></iframe>
+      </section>
+
+      <section id="view-library" class="view" hidden>
+        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Read 174-page report</a></div>
+        <div class="library-tools"><input id="librarySearch" type="search" placeholder="Search titles, topics or notes…" aria-label="Search research library"><select id="libraryTopic" aria-label="Filter research topic"><option value="all">All topics</option></select><button id="clearLibrary" class="button" type="button">Clear filters</button></div>
+        <div id="libraryCount" class="source"></div>
+        <div id="libraryGrid" class="library-grid" style="margin-top:12px"></div>
+      </section>
+
+      <footer class="footer"><span>Independent study · GP per Tibia Coin · not affiliated with CipSoft</span><span id="footerCoverage"></span></footer>
+    </main>
+  </div>
+</div>
+
+<dialog id="exhibitDialog">
+  <div class="modal-head"><div><small id="modalId" class="exhibit-id"></small><h2 id="modalTitle"></h2><p id="modalSubtitle" class="view-intro"></p></div><button id="modalClose" class="icon-button" aria-label="Close exhibit">×</button></div>
+  <div class="modal-body"><img id="modalImage" alt=""><div class="modal-notes"><h3>Interpretation</h3><p id="modalNote"></p><h3>Source</h3><p id="modalSource" class="source"></p><a id="modalOpenImage" class="button" target="_blank" rel="noopener">Open original</a></div></div>
+</dialog>
+
+<script>
+const EMBEDDED = __DATA__;
+const DATA_FILES = {
+  marketIndex:"../data/processed/market_index.csv",
+  worlds:"../data/processed/world_summary.csv",
+  worldSeries:"../data/processed/panel_daily.csv",
+  forecasts:"../data/processed/forecasts_sa.csv",
+  predictions:"../data/processed/latest_predictions.csv",
+  strategy:"../data/processed/strategy_holdout.csv"
+};
+const COLORS = {blue:"#155eef",gray:"#7b869a",gold:"#c58b16",green:"#14804a",red:"#c9363e"};
+const NS = "http://www.w3.org/2000/svg";
+const $ = selector => document.querySelector(selector);
+const $$ = selector => [...document.querySelectorAll(selector)];
+const fmt = new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
+const fmt1 = new Intl.NumberFormat("en-US",{maximumFractionDigits:1});
+const pct1 = new Intl.NumberFormat("en-US",{style:"percent",maximumFractionDigits:1});
+const dateFmt = new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});
+const shortDate = new Intl.DateTimeFormat("en-US",{month:"short",year:"2-digit",timeZone:"UTC"});
+let data = structuredClone(EMBEDDED);
+let worldMap = new Map();
+let seriesMap = new Map();
+let predictionMap = new Map();
+let forecastMap = new Map();
+let activeView = "overview";
+let selectedForecastHorizon = "1m";
+let selectedStrategyHorizon = 7;
+let selectedExhibit = "";
+let liveMode = false;
+
+function num(value){const parsed=Number(value);return Number.isFinite(parsed)?parsed:0}
+function bool(value){return value===true||value===1||String(value).toLowerCase()==="true"}
+function date(value){return new Date(`${value}T00:00:00Z`)}
+function compact(value){const n=Math.abs(value);if(n>=1e9)return`${(value/1e9).toFixed(2)}B`;if(n>=1e6)return`${(value/1e6).toFixed(2)}M`;if(n>=1e3)return`${(value/1e3).toFixed(1)}K`;return fmt.format(value)}
+function signed(value,digits=2){return`${value>0?"+":""}${num(value).toFixed(digits)}%`}
+function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
+function safeDate(value,min,max){return value&&value>=min&&value<=max?value:""}
+function addSvg(parent,tag,attributes,text=""){const el=document.createElementNS(NS,tag);Object.entries(attributes).forEach(([key,val])=>el.setAttribute(key,val));if(text)el.textContent=text;parent.appendChild(el);return el}
+function uniqueIndexes(count,length){if(length<=1)return[0];return[...new Set(Array.from({length:count},(_,i)=>Math.round(i*(length-1)/(count-1))))]}
+function niceMax(value){const e=Math.floor(Math.log10(Math.max(value,1)));const u=10**e;const n=value/u;return(n<=1?1:n<=2?2:n<=5?5:10)*u}
+
+function rebuildIndexes(){
+  worldMap=new Map(data.worlds.map(row=>[row.world,row]));
+  seriesMap=new Map();
+  for(const row of data.worldSeries){
+    if(!seriesMap.has(row.world))seriesMap.set(row.world,[]);
+    seriesMap.get(row.world).push(row);
+  }
+  for(const rows of seriesMap.values())rows.sort((a,b)=>a.date.localeCompare(b.date));
+  predictionMap=new Map(data.predictions.map(row=>[row.world,row]));
+  forecastMap=new Map(data.forecasts.map(row=>[row.world,row]));
+}
+
+function populateSelect(select,values,selected,allLabel=""){
+  select.innerHTML=(allLabel?`<option value="all">${escapeHtml(allLabel)}</option>`:"")+
+    values.map(value=>`<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
+  if([...select.options].some(option=>option.value===selected))select.value=selected;
+}
+
+function initialize(){
+  rebuildIndexes();
+  const params=new URLSearchParams(location.search);
+  const worlds=[...worldMap.keys()].sort((a,b)=>a.localeCompare(b));
+  populateSelect($("#overviewWorld"),worlds,params.get("world")||"all","All worlds");
+  populateSelect($("#worldA"),worlds,params.get("a")||"Antica");
+  populateSelect($("#worldB"),worlds,params.get("b")||"Belobra");
+  populateSelect($("#forecastWorld"),[...forecastMap.keys()].sort(),params.get("forecast")||"Belobra");
+  const dates=data.marketIndex.map(row=>row.date);
+  const min=dates[0],max=dates[dates.length-1];
+  $("#overviewStart").min=$("#overviewEnd").min=min;
+  $("#overviewStart").max=$("#overviewEnd").max=max;
+  $("#overviewStart").value=safeDate(params.get("start"),min,max)||min;
+  $("#overviewEnd").value=safeDate(params.get("end"),min,max)||max;
+  selectedForecastHorizon=["2w","1m","3m","6m"].includes(params.get("horizon"))?params.get("horizon"):"1m";
+  selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
+  bindEvents();
+  populateLibraryChapters();
+  showView(["overview","worlds","forecasts","strategy","emission","library"].includes(params.get("view"))?params.get("view"):"overview",false);
+  updateStatus();
+  renderAll();
+  if(params.get("exhibit")&&data.figures.some(item=>item.id===params.get("exhibit"))){
+    showView("library",false);
+    openExhibit(params.get("exhibit"));
+  }
+}
+
+function bindEvents(){
+  $$(".nav-button").forEach(button=>button.addEventListener("click",()=>showView(button.dataset.view)));
+  ["#overviewWorld","#overviewStart","#overviewEnd","#overviewSort"].forEach(selector=>$(selector).addEventListener("change",()=>{renderOverview();updateURL()}));
+  $("#overviewSearch").addEventListener("input",renderOverviewTable);
+  $("#worldA").addEventListener("change",()=>{renderWorlds();updateURL()});
+  $("#worldB").addEventListener("change",()=>{renderWorlds();updateURL()});
+  $("#worldSearch").addEventListener("input",renderWorldTable);
+  $("#forecastWorld").addEventListener("change",()=>{renderForecasts();updateURL()});
+  $$("#forecastHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedForecastHorizon=button.dataset.horizon;renderForecasts();updateURL()}));
+  $$("#strategyHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedStrategyHorizon=Number(button.dataset.days);renderStrategy();updateURL()}));
+  $("#librarySearch").addEventListener("input",renderLibrary);
+  $("#libraryTopic").addEventListener("change",renderLibrary);
+  $("#clearLibrary").addEventListener("click",()=>{$("#librarySearch").value="";$("#libraryTopic").value="all";renderLibrary()});
+  $("#copyView").addEventListener("click",copyView);
+  $("#modalClose").addEventListener("click",closeExhibit);
+  $("#exhibitDialog").addEventListener("click",event=>{if(event.target===$("#exhibitDialog"))closeExhibit()});
+  window.addEventListener("resize",debounce(()=>{if(activeView==="overview")renderOverviewChart();if(activeView==="worlds")renderWorldChart();if(activeView==="forecasts")renderForecastChart()},120));
+}
+
+function showView(view,push=true){
+  activeView=view;
+  $$(".view").forEach(section=>section.hidden=section.id!==`view-${view}`);
+  $$(".nav-button").forEach(button=>button.classList.toggle("active",button.dataset.view===view));
+  if(view==="emission"&&!$("#emissionFrame").src)$("#emissionFrame").src="gold_emission_dashboard.html";
+  if(view==="overview")renderOverview();
+  if(view==="worlds")renderWorlds();
+  if(view==="forecasts")renderForecasts();
+  if(view==="strategy")renderStrategy();
+  if(view==="library")renderLibrary();
+  if(push)updateURL();
+  window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
+}
+
+function renderAll(){
+  renderOverview();renderWorlds();renderForecasts();renderStrategy();renderLibrary();
+  $("#footerCoverage").textContent=`${fmt.format(data.meta.worldDays)} world-days · ${fmt.format(data.meta.worlds)} worlds · ${data.meta.start} to ${data.meta.end}`;
+}
+
+function updateStatus(){
+  const generated=new Date(data.meta.generatedAt);
+  const stamp=Number.isNaN(generated.valueOf())?data.meta.generatedAt:generated.toLocaleString("en-US");
+  $("#statusDot").classList.toggle("fallback",!liveMode&&["http:","https:"].includes(location.protocol));
+  $("#dataStatus").textContent=liveMode?`Live project data · refreshed ${stamp}`:
+    ["http:","https:"].includes(location.protocol)?`Embedded fallback · project CSV unavailable · ${stamp}`:`Offline snapshot · ${stamp}`;
+}
+
+function overviewRows(){
+  const world=$("#overviewWorld").value;
+  const start=$("#overviewStart").value,end=$("#overviewEnd").value;
+  if(start>end)return[];
+  return world==="all"?data.marketIndex.filter(row=>row.date>=start&&row.date<=end):
+    (seriesMap.get(world)||[]).filter(row=>row.date>=start&&row.date<=end);
+}
+
+function renderOverview(){
+  const world=$("#overviewWorld").value;
+  const rows=overviewRows();
+  const latestIndex=data.marketIndex[data.marketIndex.length-1]||{};
+  const prices=data.worlds.map(row=>num(row.px_last)).filter(Boolean).sort((a,b)=>a-b);
+  const median=prices.length?prices[Math.floor(prices.length/2)]:0;
+  if(world==="all"){
+    $("#metricPriceLabel").textContent="Market index";
+    $("#metricPrice").textContent=latestIndex.ew_price?`${fmt.format(latestIndex.ew_price)} GP`:"—";
+    $("#metricPriceMeta").textContent=`${signed(data.meta.indexReturn,1)} since Apr 2024`;
+    $("#metricWorlds").textContent=fmt.format(data.meta.worlds);
+    $("#metricMedian").textContent=`${fmt.format(median)} GP`;
+    $("#metricDispersion").textContent=`${num(latestIndex.disp_pct).toFixed(1)}%`;
+    $("#overviewChartTitle").textContent="Market index and dispersion";
+  }else{
+    const item=worldMap.get(world)||{};
+    $("#metricPriceLabel").textContent=`${world} price`;
+    $("#metricPrice").textContent=item.px_last?`${fmt.format(item.px_last)} GP`:"—";
+    $("#metricPriceMeta").textContent=`${signed(item.total_ret_pct,1)} total return`;
+    $("#metricWorlds").textContent=item.converged?"Converged":"Launch";
+    $("#metricMedian").textContent=item.px_med?`${fmt.format(item.px_med)} GP`:"—";
+    $("#metricDispersion").textContent=item.vol?`${num(item.vol).toFixed(1)}%`:"—";
+    $("#overviewChartTitle").textContent=`${world} price history`;
+  }
+  renderOverviewChart(rows,world);
+  renderOverviewTable();
+}
+
+function renderOverviewChart(rows=overviewRows(),world=$("#overviewWorld").value){
+  const svg=$("#overviewChart"),tooltip=$("#overviewTooltip");
+  svg.innerHTML="";
+  if(!rows.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No observations for this selection");return}
+  const width=Math.max(320,svg.clientWidth||900),height=340,m={top:22,right:world==="all"?64:16,bottom:42,left:64};
+  const iw=width-m.left-m.right,ih=height-m.top-m.bottom;
+  const priceKey=world==="all"?"ew_price":"price_gp";
+  const prices=rows.map(row=>num(row[priceKey]));
+  const pMin=Math.min(...prices),pMax=Math.max(...prices),pad=Math.max((pMax-pMin)*.12,500);
+  const low=Math.max(0,pMin-pad),high=pMax+pad;
+  const x=i=>m.left+(rows.length===1?iw/2:i/(rows.length-1)*iw);
+  const y=value=>m.top+ih-(value-low)/(high-low||1)*ih;
+  const dispersionMax=Math.max(10,...rows.map(row=>num(row.disp_pct)));
+  const y2=value=>m.top+ih-num(value)/dispersionMax*ih;
+  svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  for(let i=0;i<=4;i++){
+    const value=low+(high-low)*i/4,yy=y(value);
+    addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1","stroke-dasharray":i?"3 4":""});
+    addSvg(svg,"text",{x:m.left-9,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},compact(value));
+  }
+  for(const index of uniqueIndexes(Math.min(width<600?4:7,rows.length),rows.length)){
+    addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},shortDate.format(date(rows[index].date)));
+  }
+  const pricePath=rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y(num(row[priceKey])).toFixed(2)}`).join(" ");
+  addSvg(svg,"path",{d:pricePath,fill:"none",stroke:COLORS.blue,"stroke-width":2.4,"stroke-linecap":"round","stroke-linejoin":"round","vector-effect":"non-scaling-stroke"});
+  if(world==="all"){
+    const dispersionPath=rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y2(row.disp_pct).toFixed(2)}`).join(" ");
+    addSvg(svg,"path",{d:dispersionPath,fill:"none",stroke:COLORS.gray,"stroke-width":1.8,"stroke-dasharray":"6 5","vector-effect":"non-scaling-stroke"});
+    for(let i=0;i<=4;i++){
+      const value=dispersionMax*i/4,yy=y2(value);
+      addSvg(svg,"text",{x:width-m.right+9,y:yy+4,fill:"#647087","font-size":10},`${value.toFixed(value<10?1:0)}%`);
+    }
+  }
+  $("#overviewLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${world==="all"?"Chain-linked index":escapeHtml(world)+" price"}</span>`+
+    (world==="all"?`<span class="legend-item"><i class="legend-line dashed"></i>Cross-world dispersion</span>`:"");
+  const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
+  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":"Interactive time-series chart"});
+  const inspect=index=>{
+    index=Math.max(0,Math.min(rows.length-1,index));const row=rows[index],xx=x(index);
+    cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);
+    tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${world==="all"?"Market index":escapeHtml(world)}: ${fmt.format(row[priceKey])} GP`+
+      (world==="all"?`<br>Dispersion: ${num(row.disp_pct).toFixed(1)}%`:"");
+    tooltip.style.left=`${Math.min(Math.max(8,xx+8),Math.max(8,width-210))}px`;tooltip.style.top="28px";tooltip.classList.add("visible");
+    capture.setAttribute("aria-label",tooltip.textContent);
+  };
+  capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
+  capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
+  capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
+  capture.addEventListener("keydown",event=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();let i=Number(capture.dataset.index||0);if(event.key==="ArrowLeft")i--;if(event.key==="ArrowRight")i++;if(event.key==="Home")i=0;if(event.key==="End")i=rows.length-1;capture.dataset.index=Math.max(0,Math.min(rows.length-1,i));inspect(Number(capture.dataset.index))});
+}
+
+function joinedWorlds(){
+  return data.worlds.map(world=>({...world,prediction:predictionMap.get(world.world)||null}));
+}
+
+function signalOf(row){
+  if(!row.prediction)return{label:"No model",className:"neutral"};
+  if(!bool(row.prediction.outside_band))return{label:"Inside band",className:"neutral"};
+  return num(row.prediction.predicted_change_pct)>=0?{label:"Converging ↑",className:"positive"}:{label:"Diverging ↓",className:"negative"};
+}
+
+function renderOverviewTable(){
+  const term=$("#overviewSearch").value.trim().toLowerCase(),sort=$("#overviewSort").value;
+  let rows=joinedWorlds().filter(row=>row.world.toLowerCase().includes(term));
+  rows.sort((a,b)=>{
+    if(sort==="world")return a.world.localeCompare(b.world);
+    if(sort==="price")return num(b.px_last)-num(a.px_last);
+    if(sort==="deviation")return Math.abs(num(b.prediction?.deviation_pct))-Math.abs(num(a.prediction?.deviation_pct));
+    return num(b.prediction?.predicted_change_pct)-num(a.prediction?.predicted_change_pct);
+  });
+  $("#overviewTableCount").textContent=`${fmt.format(rows.length)} worlds`;
+  $("#overviewTable").innerHTML=rows.map(row=>{const signal=signalOf(row);return`<tr data-world="${escapeHtml(row.world)}">
+    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
+    <td data-label="Price">${row.px_last?fmt.format(row.px_last):"—"}</td>
+    <td data-label="Deviation" class="${num(row.prediction?.deviation_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.deviation_pct):"—"}</td>
+    <td data-label="Predicted 7d" class="${num(row.prediction?.predicted_change_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.predicted_change_pct):"—"}</td>
+    <td data-label="Signal" class="${signal.className}">${signal.label}</td></tr>`}).join("");
+  $$("#overviewTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;showView("worlds")}));
+}
+
+function renderWorlds(){
+  renderWorldChart();renderWorldFacts();renderWorldTable();
+}
+
+function commonSeries(worldA,worldB){
+  const a=seriesMap.get(worldA)||[],b=seriesMap.get(worldB)||[];
+  const aMap=new Map(a.map(row=>[row.date,row]));
+  const bMap=new Map(b.map(row=>[row.date,row]));
+  const dates=[...aMap.keys()].filter(item=>bMap.has(item)).sort();
+  if(!dates.length)return[];
+  const a0=num(aMap.get(dates[0]).price_gp),b0=num(bMap.get(dates[0]).price_gp);
+  return dates.map(item=>({date:item,a:num(aMap.get(item).price_gp)/a0*100,b:num(bMap.get(item).price_gp)/b0*100,aPrice:num(aMap.get(item).price_gp),bPrice:num(bMap.get(item).price_gp)}));
+}
+
+function renderWorldChart(){
+  const worldA=$("#worldA").value,worldB=$("#worldB").value,rows=commonSeries(worldA,worldB);
+  $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
+  drawTwoSeries($("#worldChart"),$("#worldTooltip"),rows,{a:worldA,b:worldB});
+}
+
+function drawTwoSeries(svg,tooltip,rows,labels){
+  svg.innerHTML="";
+  if(!rows.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No overlapping observations");return}
+  const width=Math.max(320,svg.clientWidth||900),height=340,m={top:22,right:18,bottom:42,left:58},iw=width-m.left-m.right,ih=height-m.top-m.bottom;
+  const values=rows.flatMap(row=>[row.a,row.b]),low=Math.min(...values)*.96,high=Math.max(...values)*1.04;
+  const x=i=>m.left+i/(rows.length-1||1)*iw,y=value=>m.top+ih-(value-low)/(high-low||1)*ih;
+  svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},v.toFixed(0))}
+  for(const index of uniqueIndexes(Math.min(width<600?4:7,rows.length),rows.length))addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},shortDate.format(date(rows[index].date)));
+  for(const [key,color] of [["a",COLORS.blue],["b",COLORS.gold]])addSvg(svg,"path",{d:rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)}`).join(" "),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
+  const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
+  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":"Interactive rebased world comparison"});
+  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${escapeHtml(labels.a)}: ${fmt.format(row.aPrice)} GP · ${row.a.toFixed(1)}<br>${escapeHtml(labels.b)}: ${fmt.format(row.bPrice)} GP · ${row.b.toFixed(1)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-220)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
+  capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
+  capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
+  capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
+}
+
+function renderWorldFacts(){
+  const name=$("#worldA").value,row=worldMap.get(name)||{},prediction=predictionMap.get(name);
+  $("#worldFacts").innerHTML=`<h2>${escapeHtml(name)}</h2>
+    <div class="fact"><span>Latest price</span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
+    <div class="fact"><span>Region</span><strong>${escapeHtml(row.region||"—")}</strong></div>
+    <div class="fact"><span>PvP type</span><strong>${escapeHtml(row.pvp_type||"—")}</strong></div>
+    <div class="fact"><span>Population proxy</span><strong>${row.population?fmt.format(row.population):"—"}</strong></div>
+    <div class="fact"><span>Observed range</span><strong>${row.px_min?fmt.format(row.px_min)+" – "+fmt.format(row.px_max):"—"}</strong></div>
+    <div class="fact"><span>Total return</span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
+    <div class="fact"><span>7-day prediction</span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"No model"}</strong></div>`;
+}
+
+function renderWorldTable(){
+  const term=$("#worldSearch").value.trim().toLowerCase();
+  const rows=[...data.worlds].filter(row=>row.world.toLowerCase().includes(term)).sort((a,b)=>num(b.px_last)-num(a.px_last));
+  $("#worldTable").innerHTML=rows.map(row=>`<tr data-world="${escapeHtml(row.world)}" class="${row.world===$("#worldA").value?"selected":""}">
+    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td><td data-label="Latest">${row.px_last?fmt.format(row.px_last):"—"}</td>
+    <td data-label="Region">${escapeHtml(row.region||"—")}</td><td data-label="PvP">${escapeHtml(row.pvp_type||"—")}</td>
+    <td data-label="Population">${row.population?fmt.format(row.population):"—"}</td><td data-label="Total return" class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</td></tr>`).join("");
+  $$("#worldTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;renderWorlds();updateURL()}));
+}
+
+function renderForecasts(){
+  $$("#forecastHorizon .segment").forEach(button=>button.classList.toggle("active",button.dataset.horizon===selectedForecastHorizon));
+  renderForecastChart();renderForecastSummary();renderPredictionTable();
+}
+
+function renderForecastChart(){
+  const world=$("#forecastWorld").value,row=forecastMap.get(world),svg=$("#forecastChart");
+  svg.innerHTML="";if(!row){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No forecast for this world");return}
+  const key=selectedForecastHorizon,now=num(row.last_price),low=num(row[`${key}_p10`]),mid=num(row[`${key}_p50`]),high=num(row[`${key}_p90`]);
+  const width=Math.max(320,svg.clientWidth||800),height=340,m={top:30,right:50,bottom:48,left:70},iw=width-m.left-m.right,ih=height-m.top-m.bottom;
+  const min=Math.min(now,low)*.94,max=Math.max(now,high)*1.06,y=value=>m.top+ih-(value-min)/(max-min||1)*ih;
+  svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  for(let i=0;i<=4;i++){const v=min+(max-min)*i/4,yy=y(v);addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});addSvg(svg,"text",{x:m.left-9,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},compact(v))}
+  const x0=m.left+iw*.18,x1=m.left+iw*.78;
+  addSvg(svg,"path",{d:`M ${x0} ${y(now)} L ${x1} ${y(mid)}`,stroke:COLORS.blue,"stroke-width":2.5,fill:"none"});
+  addSvg(svg,"line",{x1:x1,x2:x1,y1:y(low),y2:y(high),stroke:COLORS.gold,"stroke-width":12,opacity:.28});
+  addSvg(svg,"line",{x1:x1-12,x2:x1+12,y1:y(low),y2:y(low),stroke:COLORS.gold,"stroke-width":2});
+  addSvg(svg,"line",{x1:x1-12,x2:x1+12,y1:y(high),y2:y(high),stroke:COLORS.gold,"stroke-width":2});
+  addSvg(svg,"circle",{cx:x0,cy:y(now),r:5,fill:COLORS.blue});addSvg(svg,"circle",{cx:x1,cy:y(mid),r:6,fill:COLORS.gold});
+  addSvg(svg,"text",{x:x0,y:height-18,"text-anchor":"middle",fill:"#647087","font-size":11},"Today");
+  addSvg(svg,"text",{x:x1,y:height-18,"text-anchor":"middle",fill:"#647087","font-size":11},({"2w":"2 weeks","1m":"1 month","3m":"3 months","6m":"6 months"})[key]);
+  addSvg(svg,"text",{x:x0,y:y(now)-12,"text-anchor":"middle",fill:COLORS.blue,"font-size":12,"font-weight":700},fmt.format(now));
+  addSvg(svg,"text",{x:x1,y:y(mid)-12,"text-anchor":"middle",fill:COLORS.gold,"font-size":12,"font-weight":700},fmt.format(mid));
+  addSvg(svg,"text",{x:x1+18,y:y(high)+4,fill:"#647087","font-size":10},`P90 ${fmt.format(high)}`);
+  addSvg(svg,"text",{x:x1+18,y:y(low)+4,fill:"#647087","font-size":10},`P10 ${fmt.format(low)}`);
+}
+
+function renderForecastSummary(){
+  const world=$("#forecastWorld").value,row=forecastMap.get(world)||{},key=selectedForecastHorizon;
+  const last=num(row.last_price),mid=num(row[`${key}_p50`]),low=num(row[`${key}_p10`]),high=num(row[`${key}_p90`]);
+  $("#forecastSummary").innerHTML=`<h2>${escapeHtml(world)}</h2>
+    <div class="forecast-band"><span class="metric-label">Last price</span><strong>${last?fmt.format(last)+" GP":"—"}</strong></div>
+    <div class="forecast-band"><span class="metric-label">Median scenario</span><strong class="${mid>=last?"positive":"negative"}">${mid?fmt.format(mid)+" GP":"—"}</strong><small>${last?signed((mid/last-1)*100,1):"—"} versus today</small></div>
+    <div class="forecast-band"><span class="metric-label">80% range</span><strong>${low?fmt.format(low)+" – "+fmt.format(high):"—"}</strong></div>
+    <div class="forecast-band"><span class="metric-label">Daily volatility</span><strong>${num(row.sigma_daily_pct).toFixed(1)}%</strong></div>
+    <p class="signal-note">${bool(row.launch_phase)?"Launch-phase world: uncertainty is structurally wider.":"Established world forecast."}</p>`;
+}
+
+function renderPredictionTable(){
+  const rows=[...data.predictions].sort((a,b)=>num(b.predicted_change_pct)-num(a.predicted_change_pct));
+  $("#predictionTable").innerHTML=rows.map(row=>`<tr data-world="${escapeHtml(row.world)}">
+    <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td><td data-label="Price">${fmt.format(row.price_gp)}</td>
+    <td data-label="Deviation" class="${num(row.deviation_pct)>=0?"positive":"negative"}">${signed(row.deviation_pct)}</td>
+    <td data-label="Prediction" class="${num(row.predicted_change_pct)>=0?"positive":"negative"}">${signed(row.predicted_change_pct)}</td>
+    <td data-label="80% interval">${signed(row.low80_pct)} to ${signed(row.high80_pct)}</td></tr>`).join("");
+  $$("#predictionTable tr").forEach(row=>row.addEventListener("click",()=>{if(forecastMap.has(row.dataset.world)){$("#forecastWorld").value=row.dataset.world;renderForecasts();updateURL()}}));
+}
+
+function renderStrategy(){
+  $$("#strategyHorizon .segment").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===selectedStrategyHorizon));
+  const rows=data.strategy.filter(row=>num(row.horizon)===selectedStrategyHorizon);
+  const max=Math.max(1,...rows.map(row=>num(row.net_pct)));
+  $("#strategyBars").innerHTML=rows.map(row=>`<div class="bar-row"><strong>${row.period==="train"?"Training":"Holdout"}</strong><div class="bar-track"><div class="bar-fill ${row.period==="holdout"?"gold":""}" style="width:${Math.max(0,num(row.net_pct)/max*100)}%"></div></div><strong class="positive">${signed(row.net_pct)}</strong></div>`).join("");
+  const holdout=rows.find(row=>row.period==="holdout")||{},train=rows.find(row=>row.period==="train")||{};
+  const caution=num(holdout.n_effective)<10?`Only ${fmt.format(holdout.n_effective)} independent window${num(holdout.n_effective)===1?"":"s"}: this horizon is descriptive, not decision-grade.`:
+    `${fmt.format(holdout.n_effective)} independent holdout windows support this comparison.`;
+  $("#strategyEvidence").innerHTML=`<h2>${selectedStrategyHorizon}-day evidence</h2>
+    <div class="fact"><span>Holdout net</span><strong class="positive">${signed(holdout.net_pct)}</strong></div>
+    <div class="fact"><span>Profitable signals</span><strong>${pct1.format(num(holdout.share_profitable))}</strong></div>
+    <div class="fact"><span>Effective holdout N</span><strong>${fmt.format(holdout.n_effective)}</strong></div>
+    <div class="fact"><span>Training cutoff</span><strong>${num(train.cutoff_pct).toFixed(1)}% gap</strong></div>
+    <div class="evidence-callout">${caution}</div>`;
+}
+
+function populateLibraryChapters(){
+  const select=$("#libraryTopic");
+  const topics=[...new Set(data.figures.map(item=>item.topic))];
+  select.innerHTML='<option value="all">All topics</option>'+topics.map(topic=>`<option value="${escapeHtml(topic)}">${escapeHtml(topic)}</option>`).join("");
+}
+
+function renderLibrary(){
+  const term=$("#librarySearch").value.trim().toLowerCase(),topic=$("#libraryTopic").value;
+  const rows=data.figures.filter(item=>(topic==="all"||item.topic===topic)&&`${item.title} ${item.subtitle} ${item.note} ${item.topic}`.toLowerCase().includes(term));
+  $("#libraryCount").textContent=`${fmt.format(rows.length)} of ${fmt.format(data.figures.length)} exhibits`;
+  $("#libraryGrid").innerHTML=rows.length?rows.map(item=>`<button class="exhibit" data-id="${escapeHtml(item.id)}"><img src="${escapeHtml(item.image)}" alt="" loading="lazy"><span class="exhibit-copy"><span class="exhibit-id">${escapeHtml(item.label)} · ${escapeHtml(item.topic)}</span><span class="exhibit-title">${escapeHtml(item.title)}</span></span></button>`).join(""):'<div class="empty">No exhibits match this search.</div>';
+  $$(".exhibit").forEach(button=>button.addEventListener("click",()=>openExhibit(button.dataset.id)));
+}
+
+function openExhibit(id){
+  const item=data.figures.find(row=>row.id===id);if(!item)return;
+  selectedExhibit=id;$("#modalId").textContent=`${item.label} · ${item.topic}`;
+  $("#modalTitle").textContent=item.title;$("#modalSubtitle").textContent=item.subtitle;
+  $("#modalImage").src=item.image;$("#modalImage").alt=item.title;$("#modalNote").textContent=item.note;
+  $("#modalSource").textContent=item.source;$("#modalOpenImage").href=item.image;
+  $("#exhibitDialog").showModal();updateURL();
+}
+
+function closeExhibit(){
+  $("#exhibitDialog").close();
+  selectedExhibit="";
+  updateURL();
+}
+
+function updateURL(){
+  const params=new URLSearchParams();
+  if(activeView!=="overview")params.set("view",activeView);
+  if($("#overviewWorld").value!=="all")params.set("world",$("#overviewWorld").value);
+  if($("#overviewStart").value!==$("#overviewStart").min)params.set("start",$("#overviewStart").value);
+  if($("#overviewEnd").value!==$("#overviewEnd").max)params.set("end",$("#overviewEnd").value);
+  if($("#worldA").value!=="Antica")params.set("a",$("#worldA").value);
+  if($("#worldB").value!=="Belobra")params.set("b",$("#worldB").value);
+  if($("#forecastWorld").value!=="Belobra")params.set("forecast",$("#forecastWorld").value);
+  if(selectedForecastHorizon!=="1m")params.set("horizon",selectedForecastHorizon);
+  if(selectedStrategyHorizon!==7)params.set("days",selectedStrategyHorizon);
+  if(selectedExhibit)params.set("exhibit",selectedExhibit);
+  const query=params.toString();try{history.replaceState(null,"",`${location.pathname}${query?`?${query}`:""}${location.hash}`)}catch(_){}
+}
+
+async function copyView(){
+  updateURL();const url=location.href;
+  try{await navigator.clipboard.writeText(url)}catch(_){const area=document.createElement("textarea");area.value=url;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();document.execCommand("copy");area.remove()}
+  const label=$("#copyView span"),original=label.textContent;label.textContent="Copied";setTimeout(()=>label.textContent=original,1400);
+}
+
+function parseCSV(text){
+  const rows=[];let row=[],field="",quoted=false;
+  for(let i=0;i<text.length;i++){const char=text[i];if(quoted){if(char==='"'&&text[i+1]==='"'){field+='"';i++}else if(char==='"')quoted=false;else field+=char}else if(char==='"')quoted=true;else if(char===","){row.push(field);field=""}else if(char==="\n"){row.push(field.replace(/\r$/,""));rows.push(row);row=[];field=""}else field+=char}
+  if(field.length||row.length){row.push(field.replace(/\r$/,""));rows.push(row)}
+  const headers=rows.shift()||[];
+  return rows.filter(values=>values.some(Boolean)).map(values=>Object.fromEntries(headers.map((header,index)=>[header,coerce(values[index]??"")])));
+}
+
+function coerce(value){
+  if(value==="")return null;if(value==="True"||value==="true")return true;if(value==="False"||value==="false")return false;
+  if(/^-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(value)){const parsed=Number(value);if(Number.isFinite(parsed))return parsed}
+  return value;
+}
+
+async function refreshProjectData(){
+  if(!["http:","https:"].includes(location.protocol))return;
+  try{
+    const entries=await Promise.all(Object.entries(DATA_FILES).map(async([key,url])=>{const response=await fetch(url,{cache:"no-store"});if(!response.ok)throw new Error(`${url}: HTTP ${response.status}`);return[key,parseCSV(await response.text()),response.headers.get("last-modified")]}));
+    const loaded=Object.fromEntries(entries.map(([key,rows])=>[key,rows]));
+    loaded.marketIndex=loaded.marketIndex.filter(row=>bool(row.index_valid)&&row.ew_price!==null);
+    loaded.worldSeries=loaded.worldSeries.filter(row=>row.price_gp!==null);
+    Object.assign(data,loaded);
+    const updated=entries.map(entry=>entry[2]).find(Boolean);
+    data.meta.generatedAt=updated||new Date().toISOString();
+    data.meta.worlds=data.worlds.length;data.meta.worldDays=data.worldSeries.length;
+    liveMode=true;rebuildIndexes();updateStatus();renderAll();
+  }catch(_){liveMode=false;updateStatus()}
+}
+
+function debounce(fn,wait){let timer;return(...args)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...args),wait)}}
+
+initialize();
+void refreshProjectData();
+</script>
+</body>
+</html>
+"""
+
+
+def main() -> None:
+    payload = build_payload()
+    embedded = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+    output = HTML.replace("__DATA__", embedded.replace("</", "<\\/"))
+    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_text(output, encoding="utf-8")
+    print(
+        f"[INTELLIGENCE HUB] wrote {OUTPUT.relative_to(ROOT)} with "
+        f"{payload['meta']['worlds']} worlds, {len(payload['worldSeries']):,} price rows, "
+        f"and {payload['meta']['figureCount']} exhibits"
+    )
+
+
+if __name__ == "__main__":
+    main()

@@ -3,8 +3,11 @@
 A quantitative study of the gold-denominated Tibia Coin market across 93 game worlds, built
 from public data and rendered to a single PDF.
 
-**Output:** `reports/tibia_coin_market_report.pdf` — 174 pages, 8 chapters, 34 exhibits,
-109 tables, 5 appendices.
+**Interactive workspace:** `reports/intelligence_hub.html` — six connected areas for market
+overview, worlds, forecasts, strategy, gold emission and all 34 research exhibits.
+
+**Technical report:** `reports/tibia_coin_market_report.pdf` — 175 pages, 8 chapters,
+34 exhibits, 109 tables, 5 appendices.
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
 
@@ -71,8 +74,20 @@ python scripts/30_model_artifact.py --predict   # writes latest_predictions.csv
 ```bash
 python scripts/run_all.py               # collect, analyse, render, verify
 python scripts/run_all.py --no-collect  # from cached raw data (~2 minutes)
-python scripts/run_all.py --report      # figures and PDF only
+python scripts/run_all.py --report      # figures, PDF and interactive workspaces
 ```
+
+Serve the repository root and open the workspace:
+
+```bash
+python3 -m http.server 4173
+# then open http://127.0.0.1:4173/
+```
+
+The workspace automatically refreshes its price, world, forecast, strategy and prediction
+datasets while served over HTTP. It keeps a complete embedded snapshot for direct-file and
+offline use, stores the active view and filters in the URL, embeds the gold-emission explorer,
+and turns every report exhibit into a searchable detail view.
 
 The monetary-emission reconstruction is also available as four audit layers:
 
