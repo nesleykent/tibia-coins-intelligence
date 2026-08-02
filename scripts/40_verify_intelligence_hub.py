@@ -157,9 +157,13 @@ def main() -> None:
     assert "direct GP drops" in html
     assert "GP means gold pieces; Tibia Coins are labeled TC throughout." in html
     assert "What the data says" in html
+    assert "Deviation" in html
     assert "Price vs other worlds" in html
-    assert "Next 7 days" in html
-    assert "What do these columns mean?" in html
+    assert "Predicted 7d" in html
+    assert "Expected change in deviation" in html
+    assert "Signal" in html
+    assert "How to read the result" in html
+    assert "Method and limitations" in html
     assert "The rule in three steps" in html
     assert "It does not show a trade available right now." in html
     assert "Minimum unusual price difference" in html
@@ -167,7 +171,8 @@ def main() -> None:
         "<th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th>"
         not in html
     )
-    assert "Dispersion:" not in html
+    assert "Dispersion" in html
+    assert "How different world prices are" in html
     assert "See the numbers and technical explanation" not in html
     assert "Method, checks and limitations" in html
     assert 'class="claim-tiles" aria-label="Key numbers"' in html

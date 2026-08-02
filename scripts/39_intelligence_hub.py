@@ -368,6 +368,8 @@ HTML = r"""<!doctype html>
     table{width:100%;border-collapse:collapse;font-size:12px}
     th,td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:right;white-space:nowrap}
     th{color:#34405a;background:#fafbfd;font-weight:750;position:sticky;top:0;z-index:1}
+    th .term-help{display:block;color:var(--muted);font-size:10px;font-weight:500;
+      line-height:1.3;margin-top:3px;white-space:normal}
     th:first-child,td:first-child{text-align:left}
     tbody tr{cursor:pointer}
     tbody tr:hover{background:#f8faff}
@@ -585,7 +587,7 @@ HTML = r"""<!doctype html>
           <div class="metric"><span class="metric-label" id="metricPriceLabel">Market index</span><strong id="metricPrice" class="metric-value">—</strong><span id="metricPriceMeta" class="metric-meta">GP per TC</span></div>
           <div class="metric"><span class="metric-label">Worlds</span><strong id="metricWorlds" class="metric-value">—</strong><span class="metric-meta">tracked</span></div>
           <div class="metric"><span class="metric-label">Median price</span><strong id="metricMedian" class="metric-value">—</strong><span class="metric-meta">GP per TC</span></div>
-          <div class="metric"><span class="metric-label">How different world prices are</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">0% would mean all worlds cost the same</span></div>
+          <div class="metric"><span class="metric-label">Dispersion</span><strong id="metricDispersion" class="metric-value">—</strong><span class="metric-meta">How different world prices are · 0% means all cost the same</span></div>
         </div>
         <article class="panel chart-panel">
           <div class="panel-heading"><div><h2 id="overviewChartTitle">Typical TC price and differences between worlds</h2><p id="overviewChartNote">The solid line is the combined market price. The dashed line shows whether world prices are close together or far apart. Tap, focus or move across the chart to inspect a date.</p></div><div id="overviewLegend" class="legend"></div></div>
@@ -601,11 +603,11 @@ HTML = r"""<!doctype html>
         </article>
         <div class="split">
           <article class="panel">
-            <div class="panel-heading"><div><h2>Compare worlds</h2><p><span id="overviewTableCount"></span> · Positive means the TC costs more than in other worlds. “Next 7 days” is a model estimate, not a guaranteed price.</p><details class="claim-details"><summary>What do these columns mean?</summary><p><strong>Price vs other worlds</strong> is the technical deviation from the cross-world reference. <strong>Next 7 days</strong> estimates whether that difference may shrink or grow. <strong>Meaning</strong> translates the result into plain language. These numbers do not include whether enough TC can actually be traded.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Next 7 days</option><option value="price">Price</option><option value="deviation">Price vs other worlds</option><option value="world">World name</option></select></div></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Price vs other worlds</th><th>Next 7 days</th><th>Meaning</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
+            <div class="panel-heading"><div><h2>Compare worlds</h2><p><span id="overviewTableCount"></span> · The professional terms stay visible, with a short explanation under each one.</p><details class="claim-details"><summary>Method and limitations</summary><p><strong>Deviation</strong> uses the cross-world reference. <strong>Predicted 7d</strong> estimates the change in that deviation, not the future TC price. <strong>Signal</strong> translates the two numbers into a classification. These figures do not show whether enough TC is available to execute a trade.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>Signal<span class="term-help">How to read the result</span></th></tr></thead><tbody id="overviewTable"></tbody></table></div>
           </article>
           <aside class="panel signal">
-            <div class="signal-block"><h2>Signal summary</h2><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
+            <div class="signal-block"><h2>Signal</h2><p class="signal-note">How to read the model result, after costs and evidence checks.</p><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
             <div class="signal-block"><h3>Level forecast</h3><span class="signal-value">No edge</span></div>
             <p class="signal-note">The model can sometimes identify a world moving back toward the others, but it cannot reliably predict whether TC prices everywhere will rise or fall. A large gap deserves investigation, not an automatic trade.</p>
           </aside>
@@ -631,7 +633,7 @@ HTML = r"""<!doctype html>
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="forecastChartTitle">Forecast fan</h2><p>Median and 80% simulated range. A wide band is uncertainty, not opportunity.</p></div></div><div class="chart-wrap"><svg id="forecastChart" class="chart" role="img" aria-labelledby="forecastChartTitle"></svg><div id="forecastTooltip" class="chart-tooltip"></div></div></article>
           <aside id="forecastSummary" class="panel forecast-summary"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation</th><th>Prediction</th><th>80% interval</th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>80% interval<span class="term-help">Likely range, not a guarantee</span></th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
       </section>
 
       <section id="view-models" class="view" hidden>
@@ -1065,14 +1067,14 @@ function renderOverviewChart(rows=overviewRows(),world=$("#overviewWorld").value
     }
   }
   $("#overviewLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${world==="all"?"Chain-linked index":escapeHtml(world)+" price"}</span>`+
-    (world==="all"?`<span class="legend-item"><i class="legend-line dashed"></i>Difference between world prices</span>`:"");
+    (world==="all"?`<span class="legend-item"><i class="legend-line dashed"></i>Dispersion · difference between world prices</span>`:"");
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
   const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":"Interactive time-series chart"});
   const inspect=index=>{
     index=Math.max(0,Math.min(rows.length-1,index));const row=rows[index],xx=x(index);
     cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);
     tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${world==="all"?"Market index":escapeHtml(world)}: ${fmt.format(row[priceKey])} GP`+
-      (world==="all"?`<br>Difference between world prices: ${num(row.disp_pct).toFixed(1)}%`:"");
+      (world==="all"?`<br>Dispersion (difference between world prices): ${num(row.disp_pct).toFixed(1)}%`:"");
     tooltip.style.left=`${Math.min(Math.max(8,xx+8),Math.max(8,width-210))}px`;tooltip.style.top="28px";tooltip.classList.add("visible");
     capture.setAttribute("aria-label",tooltip.textContent);
   };
@@ -1105,9 +1107,9 @@ function renderOverviewTable(){
   $("#overviewTable").innerHTML=rows.map(row=>{const signal=signalOf(row);return`<tr data-world="${escapeHtml(row.world)}">
     <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
     <td data-label="Price">${row.px_last?fmt.format(row.px_last):"—"}</td>
-    <td data-label="Price vs other worlds" class="${num(row.prediction?.deviation_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.deviation_pct):"—"}</td>
-    <td data-label="Next 7 days" class="${num(row.prediction?.predicted_change_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.predicted_change_pct):"—"}</td>
-    <td data-label="Meaning" class="${signal.className}">${signal.label}</td></tr>`}).join("");
+    <td data-label="Deviation · price vs other worlds" class="${num(row.prediction?.deviation_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.deviation_pct):"—"}</td>
+    <td data-label="Predicted 7d · expected change in deviation" class="${num(row.prediction?.predicted_change_pct)>=0?"positive":"negative"}">${row.prediction?signed(row.prediction.predicted_change_pct):"—"}</td>
+    <td data-label="Signal · how to read the result" class="${signal.className}">${signal.label}</td></tr>`}).join("");
   $$("#overviewTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;showView("worlds")}));
 }
 

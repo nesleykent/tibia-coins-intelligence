@@ -52,14 +52,16 @@ not lose information merely because the default language is simpler.
 
 ## Canonical terminology
 
-| Technical or financial term | Player-first label | Plain explanation |
+| Technical or financial term | Combined visible label | Plain explanation |
 |---|---|---|
 | GP | Gold pieces | Tibia’s regular in-game currency |
 | TC | Tibia Coins | The premium currency sold by CipSoft |
 | GP/TC | Price of one TC in GP | How many gold pieces are needed to buy 1 TC |
 | Market index | Typical price across worlds | A combined line showing the general TC price across the tracked worlds |
-| Cross-world dispersion | Difference between world prices | Whether worlds are selling TC at similar or very different prices |
-| Relative deviation | Price versus other worlds | How expensive or cheap this world is compared with the market |
+| Cross-world dispersion | Dispersion — difference between world prices | Whether worlds are selling TC at similar or very different prices |
+| Relative deviation | Deviation — price versus other worlds | How expensive or cheap this world is compared with the market |
+| Predicted 7d | Predicted 7d — expected change over the next 7 days | The model's estimate of how the world's deviation may change; it is not a guaranteed TC price |
+| Signal | Signal — how to read the result | A plain classification of whether the gap is small, may shrink, or may grow |
 | Convergence | Price difference shrinking | A cheap or expensive world moving back toward the others |
 | Friction/no-trade band | Difference too small to cover costs | A price gap that is not worth trading after Market fees and execution risk |
 | Random walk | Today’s price is the best central estimate | The models could not reliably improve on simply carrying today’s price forward |

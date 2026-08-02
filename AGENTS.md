@@ -93,21 +93,23 @@ Write the visible player layer as a guildmate would explain it in chat:
 - say what the player pays, receives, gains, loses, can buy, or can sell;
 - prefer short sentences with one idea each;
 - use familiar Market actions before market-structure vocabulary;
-- do not put terms such as bid, ask, midpoint, spread, depth, attribution,
-  dispersion, holdout, or significance in the primary label;
-- place the precise technical term and formula under “How this is calculated”
-  or another optional detail;
+- keep the canonical technical or financial term in the primary label so
+  analysts and finance professionals can scan the interface accurately;
+- pair that term with an immediately visible plain-language explanation for
+  players; never make the explanation or the term replace the other;
+- place only formulas, estimator details and diagnostics under “How this is
+  calculated” or another optional detail;
 - do not solve complexity by replacing a technical term with a different
   unexplained term.
 
 Examples:
 
-- “How different world prices are” before “cross-world dispersion”;
+- “Dispersion — how different world prices are”;
 - “error on later dates the model never saw” before “holdout RMSE”;
 - “using today’s price as the future estimate” before “random walk”;
 - “strongest 10% of price gaps” before “top decile”;
 - “likely range, not a guaranteed target” before “80% forecast interval”;
-- “price compared with the other worlds” before “relative deviation.”
+- “Deviation — price compared with the other worlds.”
 
 Use [design/player_explanation_system.md](design/player_explanation_system.md)
 as the canonical translation and page-review checklist.
