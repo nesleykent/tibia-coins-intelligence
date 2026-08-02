@@ -6,7 +6,7 @@
   "note": "One point per world on the last date it is observed. Converged worlds span 36,668 to 43,884 GP/TC, a cross-world standard deviation of 4.9% in logs. Including worlds still in launch-phase price discovery widens that to 26.4% and stretches the range from 12,030 to 54,001 - the dispersion in this market is a statement about young worlds, not about disagreement among established ones."
  },
  "fig01_index": {
-  "title": "The market has risen 8.6% since April 2024, not 44%",
+  "title": "Chain-linking is worth 2.8 points; the window is worth thirty",
   "subtitle": "Aggregate Tibia Coin price, GP per TC, converged worlds",
   "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
   "note": "The archive's cross-section grows from a median of 1 world per date in 2023 to 85 in 2026, so a basket mean mixes price change with composition change. The headline index is chain-linked: each day's return is the mean log return across worlds observed on both that day and the previous day, which is invariant to entry and exit. Shown from the first date carrying at least 10 converged worlds. Converged = 200+ observations, regular world type, not a launch inside the window."
@@ -159,7 +159,7 @@
   "title": "A coin can be sold three ways; this report prices one of them",
   "subtitle": "Settlement venues for a Tibia Coin, and the friction each imposes",
   "source": "Sources: documented Market mechanics; Tibia Token Service Agreement (tibia.com); TibiaToken contract 0x111B95C2b65CbA53aB4E0AaDA12f55985045E446, BNB Smart Chain.",
-  "note": "Schematic, not an estimate. The three venues are not perfect substitutes - they differ in settlement asset, speed and who carries counterparty risk - so a seller picks the lowest effective cost rather than the best technology. The in-game Market is the only venue this study observes, and every price, band and forecast in this report is therefore a within-venue result. The token venue is measurable in one respect: 5,583,427 TIB existed at block 113,667,838, each corresponding to a Tibia Coin held outside the in-game system."
+  "note": "Schematic, not an estimate. The three venues are not perfect substitutes - they differ in settlement asset, speed and who carries counterparty risk - so a seller picks the lowest effective cost rather than the best technology. The in-game Market is the only venue this study observes, and every price, band and forecast in this report is therefore a within-venue result. The token venue is measurable in one respect: 5,583,427 TIB existed at block 113,669,707, each corresponding to a Tibia Coin held outside the in-game system."
  },
  "fig27_fundamentals_skill": {
   "title": "Fundamentals do not make the level predictable, and barely move the relative price",

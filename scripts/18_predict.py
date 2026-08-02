@@ -67,10 +67,11 @@ mkt = (d.groupby("date")
          .dropna())
 print(f"market aggregate series: {len(mkt)} days")
 
+LAG_GRID = (1, 2, 3, 5, 7, 14)
 lead = []
 for f in [c for c in mkt.columns if c != "ret"]:
     best = {"feature": f, "best_lag": None, "best_p": 1.0}
-    for lagn in (1, 2, 3, 5, 7, 14):
+    for lagn in LAG_GRID:
         try:
             t = grangercausalitytests(mkt[["ret", f]].dropna(), maxlag=[lagn])
             p = t[lagn][0]["ssr_ftest"][1]
@@ -79,15 +80,30 @@ for f in [c for c in mkt.columns if c != "ret"]:
         if p < best["best_p"]:
             best.update(best_lag=lagn, best_p=float(p))
     lead.append(best)
-lead = pd.DataFrame(lead).sort_values("best_p")
-# Many tests, one question: control the false-discovery rate rather than reading raw p-values.
+lead = pd.DataFrame(lead)
+# Two searches happened, so two corrections are owed. Taking the smallest p across six lags
+# is itself a search: the minimum of six p-values is not a p-value, and correcting only across
+# series treats sixty-six tests as eleven. Sidak first, over the lag grid, then Benjamini-
+# Hochberg across series on the adjusted figures.
+N_LAGS = len(LAG_GRID)
+lead["p_lag_adjusted"] = 1 - (1 - lead.best_p) ** N_LAGS
+lead = lead.sort_values("p_lag_adjusted").reset_index(drop=True)
 m = len(lead)
 lead["bh_threshold"] = (np.arange(1, m + 1) / m) * 0.05
-lead["survives_bh"] = lead.best_p.values <= lead.bh_threshold.values
+lead["survives_bh"] = lead.p_lag_adjusted.values <= lead.bh_threshold.values
+lead["survives_bh_uncorrected_lags"] = (
+    lead.best_p.values <= lead.bh_threshold.values)
 lead.to_csv(P / "leading_indicators.csv", index=False)
-RES["granger"] = {"n_tested": int(m), "n_survive_bh_5pct": int(lead.survives_bh.sum()),
+RES["granger"] = {"n_tested": int(m), "n_lags_searched": int(N_LAGS),
+                  "n_hypotheses": int(m * N_LAGS),
+                  "n_survive_bh_5pct": int(lead.survives_bh.sum()),
+                  "n_survive_if_lag_search_ignored": int(
+                      lead.survives_bh_uncorrected_lags.sum()),
                   "table": lead.to_dict("records")}
-print(f"[GRANGER] {int(lead.survives_bh.sum())} of {m} fundamentals survive Benjamini-Hochberg")
+print(f"[GRANGER] {m} series x {N_LAGS} lags = {m * N_LAGS} hypotheses; "
+      f"{int(lead.survives_bh.sum())} survive Sidak-then-Benjamini-Hochberg "
+      f"({int(lead.survives_bh_uncorrected_lags.sum())} would survive if the lag search were "
+      f"ignored)")
 
 sub = d.dropna(subset=["y_ret1"])[FEATS + ["y_ret1"]].dropna()
 mi = mutual_info_regression(sub[FEATS].values, sub.y_ret1.values, random_state=RNG)

@@ -8,84 +8,109 @@
  },
  "granger": {
   "n_tested": 11,
-  "n_survive_bh_5pct": 2,
+  "n_lags_searched": 6,
+  "n_hypotheses": 66,
+  "n_survive_bh_5pct": 0,
+  "n_survive_if_lag_search_ignored": 2,
   "table": [
    {
     "feature": "log_monsters_killed",
     "best_lag": 1,
     "best_p": 0.000975103752923347,
+    "p_lag_adjusted": 0.0058363786371555815,
     "bh_threshold": 0.004545454545454546,
-    "survives_bh": true
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": true
    },
    {
     "feature": "log_players_online_avg",
     "best_lag": 1,
     "best_p": 0.005618394947267607,
+    "p_lag_adjusted": 0.03324040638963499,
     "bh_threshold": 0.009090909090909092,
-    "survives_bh": true
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": true
    },
    {
     "feature": "deaths_pp",
     "best_lag": 14,
     "best_p": 0.014454907353282821,
+    "p_lag_adjusted": 0.08365503325544654,
     "bh_threshold": 0.013636363636363636,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "xw_disp",
     "best_lag": 14,
     "best_p": 0.02203995730272031,
+    "p_lag_adjusted": 0.1251639621680234,
     "bh_threshold": 0.018181818181818184,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "turnover_7",
     "best_lag": 5,
     "best_p": 0.02899673932537732,
+    "p_lag_adjusted": 0.16184540602353492,
     "bh_threshold": 0.022727272727272728,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "log_kills_pp",
     "best_lag": 2,
     "best_p": 0.18795210210638505,
+    "p_lag_adjusted": 0.7132589450456551,
     "bh_threshold": 0.02727272727272727,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "g30_monsters_killed",
     "best_lag": 1,
     "best_p": 0.193548845387529,
+    "p_lag_adjusted": 0.7249140507407188,
     "bh_threshold": 0.03181818181818182,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "log_boss_kills",
     "best_lag": 3,
     "best_p": 0.19785052530532796,
+    "p_lag_adjusted": 0.7336014721292192,
     "bh_threshold": 0.03636363636363637,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "boss_share",
     "best_lag": 5,
     "best_p": 0.3192948635451941,
+    "p_lag_adjusted": 0.9005157875535599,
     "bh_threshold": 0.040909090909090916,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "g7_monsters_killed",
     "best_lag": 5,
     "best_p": 0.3665095671121742,
+    "p_lag_adjusted": 0.9353690763180389,
     "bh_threshold": 0.045454545454545456,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    },
    {
     "feature": "log_players_killed",
     "best_lag": 14,
     "best_p": 0.370393178576063,
+    "p_lag_adjusted": 0.9377102556808058,
     "bh_threshold": 0.05,
-    "survives_bh": false
+    "survives_bh": false,
+    "survives_bh_uncorrected_lags": false
    }
   ]
  },
@@ -154,11 +179,11 @@
  "fold_stability": [
   {
    "horizon": 1,
-   "mean_r2": 0.017660550094276768,
+   "mean_r2": 0.01766055009427675,
    "median_r2": 0.012773661260494507,
    "first_fold_r2": 0.017107891342257542,
    "last_fold_r2": -0.004372668354275078,
-   "mean_excl_first": 0.017771081844680615,
+   "mean_excl_first": 0.01777108184468059,
    "trend_rho": -0.6,
    "trend_p": 0.208,
    "folds": 6,
@@ -166,9 +191,9 @@
   },
   {
    "horizon": 7,
-   "mean_r2": 0.04955490336230761,
-   "median_r2": 0.06378332823337796,
-   "first_fold_r2": 0.05963802145205033,
+   "mean_r2": 0.04955490336230759,
+   "median_r2": 0.0637833282333779,
+   "first_fold_r2": 0.059638021452050216,
    "last_fold_r2": -0.004084158090061907,
    "mean_excl_first": 0.04753827974435907,
    "trend_rho": -0.6571428571428573,
@@ -197,10 +222,10 @@
    "horizon": 30,
    "model": "RandomForest",
    "rmse": 0.022436108695112433,
-   "mae": 0.016001710650116314,
+   "mae": 0.01600171065011631,
    "r2_oos": 0.07893854219998282,
    "dir_acc": 0.6009013320933964,
-   "dm_t": 2.506910516623723,
+   "dm_t": 2.5069105166237224,
    "folds": 5,
    "dm_z": 5.60562232867976,
    "dm_p": 2.0750799967217404e-08,
@@ -280,11 +305,11 @@
    "model": "RandomForest",
    "rmse": 0.011946401891683037,
    "mae": 0.007433715487218734,
-   "r2_oos": 0.017660550094276768,
+   "r2_oos": 0.01766055009427675,
    "dir_acc": 0.5496748751419531,
    "dm_t": 1.0744954706094314,
    "folds": 6,
-   "dm_z": 2.6319656339247866,
+   "dm_z": 2.631965633924786,
    "dm_p": 0.008489244942682106,
    "folds_better": 5.0,
    "bh_threshold": 0.036904761904761905,
@@ -407,12 +432,12 @@
    "horizon": 7,
    "model": "RandomForest",
    "rmse": 0.018831782912538928,
-   "mae": 0.01336171687960652,
-   "r2_oos": 0.04955490336230761,
+   "mae": 0.013361716879606517,
+   "r2_oos": 0.04955490336230759,
    "dir_acc": 0.5831845308928002,
-   "dm_t": 2.2063389941693106,
+   "dm_t": 2.20633899416931,
    "folds": 6,
-   "dm_z": 5.4044047353202815,
+   "dm_z": 5.40440473532028,
    "dm_p": 6.502397065233367e-08,
    "folds_better": 5.0,
    "bh_threshold": 0.030952380952380953,
@@ -535,10 +560,10 @@
    "horizon": 30,
    "model": "RandomForest",
    "rmse": 0.022436108695112433,
-   "mae": 0.016001710650116314,
+   "mae": 0.01600171065011631,
    "r2_oos": 0.07893854219998282,
    "dir_acc": 0.6009013320933964,
-   "dm_t": 2.506910516623723,
+   "dm_t": 2.5069105166237224,
    "folds": 5,
    "dm_z": 5.60562232867976,
    "dm_p": 2.0750799967217404e-08,
@@ -664,11 +689,11 @@
    "model": "RandomForest",
    "rmse": 0.012535969351345691,
    "mae": 0.007907984457508326,
-   "r2_oos": -0.02523179137119419,
+   "r2_oos": -0.025231791371194173,
    "dir_acc": 0.5095262522478196,
-   "dm_t": -1.6048210428147982,
+   "dm_t": -1.604821042814798,
    "folds": 6,
-   "dm_z": -3.9309926833774522,
+   "dm_z": -3.9309926833774513,
    "dm_p": 8.459584674502807e-05,
    "folds_better": 2.0,
    "bh_threshold": 0.03333333333333333,

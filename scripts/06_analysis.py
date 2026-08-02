@@ -123,13 +123,25 @@ idx["disp_pct"] = (piv.std(axis=1) * 100).where(idx["n_worlds"].values >= MIN_XW
 idx["breadth_up"] = (piv.diff() > 0).sum(axis=1).values / idx["n_worlds"]
 idx.to_csv(P / "market_index.csv", index=False)
 
+_bk = idx.dropna(subset=["basket_price"])
 iv = idx[idx.index_valid & idx.ew_price.notna()]
+_bk_w = _bk[_bk.date >= iv.date.iloc[0]]
 span_days = (iv.date.iloc[-1] - iv.date.iloc[0]).days
 R["index"] = {
     "min_worlds_required": MIN_XW,
     "index_start": str(iv.date.iloc[0].date()), "index_end": str(iv.date.iloc[-1].date()),
     "first_ew": float(iv.ew_price.iloc[0]), "last_ew": float(iv.ew_price.iloc[-1]),
     "total_pct": float((iv.ew_price.iloc[-1] / iv.ew_price.iloc[0] - 1) * 100),
+    # The naive basket is quoted two ways because the two answer different questions and the
+    # difference between them is the whole point. Over the archive it runs from a date carrying
+    # a single world, so most of its rise is coverage rather than price. Over the index's own
+    # window it is a like-for-like comparison, and the gap to the chain-linked figure is the
+    # actual composition distortion.
+    "naive_total_archive_pct": float(
+        (_bk.basket_price.iloc[-1] / _bk.basket_price.iloc[0] - 1) * 100),
+    "naive_total_index_window_pct": float(
+        (_bk_w.basket_price.iloc[-1] / _bk_w.basket_price.iloc[0] - 1) * 100),
+    "archive_start": str(_bk.date.iloc[0].date()),
     "cagr_pct": float(((iv.ew_price.iloc[-1] / iv.ew_price.iloc[0]) **
                        (365.25 / span_days) - 1) * 100),
     "peak": float(iv.ew_price.max()), "peak_date": str(iv.loc[iv.ew_price.idxmax(), "date"].date()),

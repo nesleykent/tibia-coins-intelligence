@@ -27,6 +27,9 @@
   "first_ew": 36823.58996201428,
   "last_ew": 39986.85777322113,
   "total_pct": 8.590329770861405,
+  "naive_total_archive_pct": 44.028752825235905,
+  "naive_total_index_window_pct": 11.417791073927086,
+  "archive_start": "2023-01-11",
   "cagr_pct": 3.6308362451472176,
   "peak": 41489.49647901699,
   "peak_date": "2025-12-03",
@@ -2031,7 +2034,7 @@
    "symbol": "TIB",
    "decimals": 18,
    "total_supply": 5583427.0,
-   "block": 113667838
+   "block": 113669707
   },
   "book_ask_depth_tc": 3389425.0,
   "book_bid_depth_tc": 17361950.0,
@@ -2040,7 +2043,7 @@
   "tib_over_ask_depth": 1.6473080242223976,
   "tib_over_total_depth": 0.2690629898018806,
   "dex": {
-   "block": 113667907,
+   "block": 113669776,
    "n_pools": 12,
    "tib_in_pools": 2204959.1816005423,
    "stable_depth_usd": 34159.80999079453,

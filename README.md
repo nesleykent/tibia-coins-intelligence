@@ -15,7 +15,7 @@ content and are checked for coverage and numerical agreement across artifacts.
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.
 
-**Technical report:** `reports/tibia_coin_market_report.pdf` — 181 pages, 8 chapters,
+**Technical report:** `reports/tibia_coin_market_report.pdf` — 182 pages, 8 chapters,
 34 exhibits, 111 tables, 5 appendices.
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
@@ -26,6 +26,13 @@ fee holds a 1.79% band open — a friction point recovered from prices alone, wi
 supplied to the estimator. Seven established facts have exactly one joint explanation, and that
 mechanism predicts every null in the study. Verdict **buy relative, not directional**,
 confidence **78/100**.
+
+**No fundamental leads the market.** Granger tests search six lags for each of 11 series —
+66 hypotheses, not 11. Keeping the smallest p-value across the lag grid is itself a search, so
+the lag grid is corrected by Šidák before Benjamini-Hochberg is applied across series. Nothing
+survives. Monsters killed and players online sit just under the FDR thresholds unadjusted and
+just above them adjusted; a result that flips on whether one search is counted is treated as
+the null it is.
 
 **What is and is not forecastable.** The price *level* is not, and that survives fifteen model
 classes, 140 engineered features and a gold-production series: nothing beats a random walk at

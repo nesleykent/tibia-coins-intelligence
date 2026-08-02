@@ -151,7 +151,7 @@ ax2.annotate("Coverage expands", xy=(pd.Timestamp("2025-01-15"), 30),
              xytext=(6, 10), textcoords="offset points", ha="left", va="bottom",
              fontsize=6.9, color=MUTED, fontweight=W_LIGHT)
 finish(fig, "fig01_index.png",
-       "The market has risen 8.6% since April 2024, not 44%",
+       f"Chain-linking is worth {R['index']['naive_total_index_window_pct'] - R['index']['total_pct']:.1f} points; the window is worth thirty",
        "Aggregate Tibia Coin price, GP per TC, converged worlds",
        SRC_PX,
        "The archive's cross-section grows from a median of 1 world per date in 2023 to 85 in "
