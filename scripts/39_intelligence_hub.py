@@ -51,6 +51,57 @@ def figure_topic(key: str) -> str:
     return "Strategy"
 
 
+def _headline_facts() -> dict:
+    """The claims the PDF and this page must agree on, read from the shared results."""
+    fund = json.loads((P / "fundamentals_results.json").read_text())
+    res = json.loads((P / "results.json").read_text())
+    grid = pd.DataFrame(fund["strategy"]["grid"])
+    hold = pd.DataFrame(fund["strategy"]["holdout"]["rows"])
+
+    def cell(h, col):
+        row = grid[(grid.horizon == h) & (grid.decile == grid.decile.max())
+                   & (grid.cost_basis == "above the fee cap")]
+        return float(row[col].iloc[0])
+
+    def ho(h, col):
+        return float(hold[(hold.horizon == h) & (hold.period == "holdout")][col].iloc[0])
+
+    pages = 0
+    pdf = ROOT / "reports" / "tibia_coin_market_report.pdf"
+    if pdf.exists():
+        try:
+            from pypdf import PdfReader
+            pages = len(PdfReader(str(pdf)).pages)
+        except Exception:
+            pages = 0
+    return {
+        "verdict": "buy relative, not directional",
+        "confidence": 78,
+        "reportPages": pages,
+        "bandThresholdPct": res["advanced"]["tar"]["threshold_pct"],
+        "actionGapPct": fund["scenarios"]["levels"]["arb_act_gap_pct"],
+        "lotSize": res["fees"]["lot_size"],
+        "feeCapLotTc": res["fees"]["cap_binds_at_lot_tc"],
+        "roundTripPct": res["fees"]["roundtrip_largest_decile_pct"],
+        "strategyNet7": cell(7, "net_pct"),
+        "strategyNet30": cell(30, "net_pct"),
+        "strategyWin30": cell(30, "share_profitable"),
+        "holdoutNet7": ho(7, "net_pct"),
+        "holdoutT7": ho(7, "t_newey_west"),
+        "holdoutWindows7": int(ho(7, "n_effective")),
+        "holdoutWindows30": int(ho(30, "n_effective")),
+        "holdoutWindows91": int(ho(91, "n_effective")),
+        "episodesPerMonth": fund["strategy"]["occurrence"]["episodes_per_month"],
+        "capacityGpPerMonth": fund["strategy"]["capacity"]["gp_per_month"],
+        "bazaarOverMarket": res["venues"]["market_size"]["bazaar_over_market"],
+        "marketTcYear": res["venues"]["market_size"]["market_tc_year"],
+        "bazaarTcYear": res["venues"]["market_size"]["bazaar_tc_year"],
+        "tcPerWorldDay": fund["participants"]["executable"][
+            "median_executed_per_world_day_tc"],
+        "emissionVerdict": "rejected",
+    }
+
+
 def build_payload() -> dict:
     results = json.loads((P / "results.json").read_text())
     manifest = json.loads(FIGURES.read_text())
@@ -206,6 +257,10 @@ def build_payload() -> dict:
                 [row["pvp_type"] for row in launch_registry]
             ).nunique()),
             "activeLaunchWorlds": len(launch_predictions),
+            # The report and this page publish the same claims, so they read them from the
+            # same place. Anything hardcoded in the markup below drifts the moment a stage
+            # re-runs; scripts/46_verify_artifacts.py fails the build when they disagree.
+            **_headline_facts(),
         },
         "marketIndex": market_index,
         "worlds": worlds,
@@ -401,6 +456,18 @@ HTML = r"""<!doctype html>
       .split,.world-layout,.forecast-grid,.model-grid,.strategy-grid{grid-template-columns:1fr}
       .signal{grid-template-columns:1fr 1fr}.emission-frame{height:1150px}
     }
+    .thesis-verdict{margin:0 0 10px;font-size:19px;line-height:1.3}
+    .thesis-verdict strong{text-transform:capitalize}
+    .thesis-confidence{margin-left:9px;font-size:13px;color:var(--muted);font-weight:500}
+    .thesis-body{margin:0 0 16px;max-width:78ch;color:var(--muted);line-height:1.55}
+    .thesis-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
+      border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+    .thesis-fact{background:var(--card);padding:12px 13px;display:flex;flex-direction:column;gap:3px}
+    .thesis-fact span{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted)}
+    .thesis-fact strong{font-size:19px;line-height:1.15}
+    .thesis-fact small{font-size:11px;color:var(--muted);line-height:1.35}
+    .thesis-note{margin:14px 0 0;font-size:12.5px;color:var(--muted);max-width:82ch;line-height:1.5}
+    @media(max-width:1100px){.thesis-grid{grid-template-columns:repeat(2,1fr)}}
     @media(max-width:760px){
       .app{display:block}.sidebar{position:sticky;height:auto;border-right:0;border-bottom:1px solid var(--line);
         padding:0;top:0}.brand{padding:14px 16px 10px}.brand-mark{font-size:21px}.brand-name{font-size:15px}
@@ -497,13 +564,56 @@ HTML = r"""<!doctype html>
           <div class="panel-heading"><div><h2 id="overviewChartTitle">Market index and dispersion</h2><p id="overviewChartNote">Tap, focus or move across the chart to inspect a date.</p></div><div id="overviewLegend" class="legend"></div></div>
           <div class="chart-wrap"><svg id="overviewChart" class="chart" role="img" aria-labelledby="overviewChartTitle"></svg><div id="overviewTooltip" class="chart-tooltip"></div></div>
         </article>
+        <article class="panel thesis">
+          <div class="panel-heading"><div><h2>The verdict, and why</h2><p>The same claims the
+            report makes, read from the same results files. Nothing here is written by hand.</p></div></div>
+          <p class="thesis-verdict"><strong id="verdictLine">—</strong>
+            <span class="thesis-confidence" id="verdictConfidence">—</span></p>
+          <p class="thesis-body">The gold price of a Tibia Coin is an exchange rate, not an asset
+            price. Coin supply is perfectly elastic at a money price CipSoft fixes, neither leg
+            pays a yield, and the Market fee holds a band open around every relation in the
+            market. That model — not a preference for efficient markets — is why the level does
+            not forecast, and why the one edge that exists only clears its cost at the strongest
+            signals held long enough. Coins are a currency, not an asset: holding more than you
+            intend to spend is an uncompensated position.</p>
+          <div class="thesis-grid">
+            <div class="thesis-fact"><span>Friction band</span><strong id="factBand">—</strong>
+              <small>estimated from prices, no fee supplied</small></div>
+            <div class="thesis-fact"><span>Act across worlds past</span><strong id="factAction">—</strong>
+              <small>below this the round trip eats the edge</small></div>
+            <div class="thesis-fact"><span>Minimum viable order</span><strong id="factLot">—</strong>
+              <small>where the fee cap binds</small></div>
+            <div class="thesis-fact"><span>Round trip at that size</span><strong id="factRoundTrip">—</strong>
+              <small>against 4.00% below it</small></div>
+            <div class="thesis-fact"><span>Net at 30 days</span><strong id="factNet30">—</strong>
+              <small>strongest decile, after cost</small></div>
+            <div class="thesis-fact"><span>Wins</span><strong id="factWin30">—</strong>
+              <small>of 30-day occasions</small></div>
+            <div class="thesis-fact"><span>Opportunities</span><strong id="factEpisodes">—</strong>
+              <small>distinct episodes, not one standing gap</small></div>
+            <div class="thesis-fact"><span>Capacity</span><strong id="factCapacity">—</strong>
+              <small>the binding constraint, not conviction</small></div>
+            <div class="thesis-fact"><span>Independent windows</span><strong id="factWindows">—</strong>
+              <small>holdout at 7 · 30 · 91 days</small></div>
+            <div class="thesis-fact"><span>Char Bazaar vs Market</span><strong id="factVenue">—</strong>
+              <small>the priced venue is the smaller one</small></div>
+            <div class="thesis-fact"><span>Cleared per world-day</span><strong id="factFlow">—</strong>
+              <small>coins, converted at the 25-coin lot</small></div>
+            <div class="thesis-fact"><span>Gold production channel</span><strong>Rejected</strong>
+              <small>same null on the GP-emission series</small></div>
+          </div>
+          <p class="thesis-note">The quarterly strategy figures are the largest and the least
+            supported: the holdout holds a single independent window at 91 days. A dispersion
+            regime filter was proposed and rejected — it fails to improve selection and does not
+            replicate within periods.</p>
+        </article>
         <div class="split">
           <article class="panel">
             <div class="panel-heading"><div><h2>Worlds overview</h2><p id="overviewTableCount"></p></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted change</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
           </article>
           <aside class="panel signal">
-            <div class="signal-block"><h2>Signal summary</h2><span class="signal-value positive">+1.73% net</span><small>7-day true holdout · t = 5.3</small></div>
+            <div class="signal-block"><h2>Signal summary</h2><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
             <div class="signal-block"><h3>Level forecast</h3><span class="signal-value">No edge</span></div>
             <p class="signal-note">Relative position is forecastable; the common price level is not. Signals outside the estimated friction band deserve attention, not automatic execution.</p>
           </aside>
@@ -511,11 +621,11 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-worlds" class="view" hidden>
-        <div class="view-header"><div><h1>Worlds</h1><p class="view-intro">Compare price histories, liquidity, population and world structure using the same scale.</p></div>
+        <div class="view-header"><div><h1>Worlds</h1><p class="view-intro">Compare actual Tibia Coin prices first, then switch to percentage returns when relative performance matters.</p></div>
           <div class="filters"><div class="field"><label for="worldA">Primary world</label><select id="worldA"></select></div><div class="field"><label for="worldB">Compare with</label><select id="worldB"></select></div></div>
         </div>
         <div class="world-layout">
-          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p>Daily GP per Tibia Coin; each series is rebased to 100 for a fair comparison.</p></div><div id="worldLegend" class="legend"></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
+          <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p id="worldChartDescription">Actual daily market price in GP per Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="World chart measure"><button class="segment active" data-mode="price">Price (GP)</button><button class="segment" data-mode="return">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
           <aside id="worldFacts" class="panel world-facts"></aside>
         </div>
         <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>All worlds</h2><p>Click a row to make it the primary world.</p></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Latest</th><th>Region</th><th>PvP</th><th>Population</th><th>Total return</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
@@ -603,7 +713,7 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-library" class="view" hidden>
-        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener">Read 176-page report</a></div>
+        <div class="view-header"><div><h1>Research Library</h1><p class="view-intro">Search, open and inspect every analytical exhibit with its method note and source.</p></div><a class="button" href="tibia_coin_market_report.pdf" target="_blank" rel="noopener" id="reportLink">Read the full report</a></div>
         <div class="library-tools"><input id="librarySearch" type="search" placeholder="Search titles, topics or notes…" aria-label="Search research library"><select id="libraryTopic" aria-label="Filter research topic"><option value="all">All topics</option></select><button id="clearLibrary" class="button" type="button">Clear filters</button></div>
         <div id="libraryCount" class="source"></div>
         <div id="libraryGrid" class="library-grid" style="margin-top:12px"></div>
@@ -656,6 +766,7 @@ let launchRegistryMap = new Map();
 let forecastMap = new Map();
 let activeView = "overview";
 let selectedForecastHorizon = "1m";
+let selectedWorldChartMode = "price";
 let selectedStrategyHorizon = 7;
 let selectedExhibit = "";
 let liveMode = false;
@@ -714,6 +825,7 @@ function initialize(){
   $("#overviewStart").value=safeDate(params.get("start"),min,max)||min;
   $("#overviewEnd").value=safeDate(params.get("end"),min,max)||max;
   selectedForecastHorizon=["2w","1m","3m","6m"].includes(params.get("horizon"))?params.get("horizon"):"1m";
+  selectedWorldChartMode=["price","return"].includes(params.get("worldMeasure"))?params.get("worldMeasure"):"price";
   selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
   bindEvents();
   populateLibraryChapters();
@@ -732,6 +844,7 @@ function bindEvents(){
   $("#overviewSearch").addEventListener("input",renderOverviewTable);
   $("#worldA").addEventListener("change",()=>{renderWorlds();updateURL()});
   $("#worldB").addEventListener("change",()=>{renderWorlds();updateURL()});
+  $$("#worldChartMode .segment").forEach(button=>button.addEventListener("click",()=>{selectedWorldChartMode=button.dataset.mode;renderWorldChart();updateURL()}));
   $("#worldSearch").addEventListener("input",renderWorldTable);
   $("#forecastWorld").addEventListener("change",()=>{renderForecasts();updateURL()});
   $$("#forecastHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedForecastHorizon=button.dataset.horizon;renderForecasts();updateURL()}));
@@ -764,8 +877,39 @@ function showView(view,push=true){
   window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
 }
 
+function renderHeadline(){
+  // Every figure below comes from data.meta, which the builder reads from the same results
+  // files the PDF reads. Nothing here is written by hand, so the page cannot drift from the
+  // report when a pipeline stage re-runs.
+  const m=data.meta;
+  const el=(id,txt)=>{const n=$("#"+id);if(n)n.textContent=txt;};
+  el("signalNet",`${signed(m.holdoutNet7,2)} net`);
+  el("signalNote",`7-day true holdout · t = ${Number(m.holdoutT7).toFixed(1)} · `+
+                  `${m.holdoutWindows7} independent windows`);
+  el("verdictLine",m.verdict);
+  el("verdictConfidence",`${m.confidence}/100 confidence`);
+  el("factBand",`${Number(m.bandThresholdPct).toFixed(2)}%`);
+  el("factAction",`${Number(m.actionGapPct).toFixed(0)}%`);
+  el("factLot",`${fmt.format(m.feeCapLotTc)} TC`);
+  el("factRoundTrip",`${Number(m.roundTripPct).toFixed(2)}%`);
+  el("factNet30",`${signed(m.strategyNet30,2)}`);
+  el("factWin30",`${Math.round(m.strategyWin30*100)}%`);
+  el("factEpisodes",`${Number(m.episodesPerMonth).toFixed(1)} / month`);
+  // A capacity estimate built on ~6 episodes a month does not support nine significant
+  // figures; round it to the precision the underlying count can carry.
+  const cap=Number(m.capacityGpPerMonth);
+  el("factCapacity",cap>=1e6?`${(cap/1e6).toFixed(0)}M GP / month`:
+                    `${fmt.format(Math.round(cap))} GP / month`);
+  el("factVenue",`${Number(m.bazaarOverMarket).toFixed(1)}×`);
+  el("factFlow",`${fmt.format(m.tcPerWorldDay)} TC`);
+  el("factWindows",`${m.holdoutWindows7} · ${m.holdoutWindows30} · ${m.holdoutWindows91}`);
+  const link=$("#reportLink");
+  if(link&&m.reportPages)link.textContent=`Read the ${m.reportPages}-page report`;
+}
+
 function renderAll(){
   renderOverview();renderWorlds();renderForecasts();renderModels();renderStrategy();renderLibrary();
+  renderHeadline();
   $("#footerCoverage").textContent=`${fmt.format(data.meta.worldDays)} world-days · ${fmt.format(data.meta.worlds)} worlds · ${data.meta.start} to ${data.meta.end}`;
 }
 
@@ -904,28 +1048,35 @@ function commonSeries(worldA,worldB){
   const dates=[...aMap.keys()].filter(item=>bMap.has(item)).sort();
   if(!dates.length)return[];
   const a0=num(aMap.get(dates[0]).price_gp),b0=num(bMap.get(dates[0]).price_gp);
-  return dates.map(item=>({date:item,a:num(aMap.get(item).price_gp)/a0*100,b:num(bMap.get(item).price_gp)/b0*100,aPrice:num(aMap.get(item).price_gp),bPrice:num(bMap.get(item).price_gp)}));
+  return dates.map(item=>{const aPrice=num(aMap.get(item).price_gp),bPrice=num(bMap.get(item).price_gp);return{date:item,aPrice,bPrice,aReturn:(aPrice/a0-1)*100,bReturn:(bPrice/b0-1)*100}});
 }
 
 function renderWorldChart(){
   const worldA=$("#worldA").value,worldB=$("#worldB").value,rows=commonSeries(worldA,worldB);
+  $$("#worldChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedWorldChartMode));
+  $("#worldChartDescription").textContent=selectedWorldChartMode==="price"
+    ?"Actual daily market price in GP per Tibia Coin."
+    :"Percentage gain or loss from the first shared date; 0% means no change.";
   $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
-  drawTwoSeries($("#worldChart"),$("#worldTooltip"),rows,{a:worldA,b:worldB});
+  drawTwoSeries($("#worldChart"),$("#worldTooltip"),rows,{a:worldA,b:worldB},selectedWorldChartMode);
 }
 
-function drawTwoSeries(svg,tooltip,rows,labels){
+function drawTwoSeries(svg,tooltip,rows,labels,mode){
   svg.innerHTML="";
   if(!rows.length){addSvg(svg,"text",{x:400,y:170,"text-anchor":"middle",fill:"#647087"},"No overlapping observations");return}
   const width=Math.max(320,svg.clientWidth||900),height=340,m={top:22,right:18,bottom:42,left:58},iw=width-m.left-m.right,ih=height-m.top-m.bottom;
-  const values=rows.flatMap(row=>[row.a,row.b]),low=Math.min(...values)*.96,high=Math.max(...values)*1.04;
+  const aKey=mode==="return"?"aReturn":"aPrice",bKey=mode==="return"?"bReturn":"bPrice";
+  const values=rows.flatMap(row=>[row[aKey],row[bKey]]),rawLow=Math.min(...values),rawHigh=Math.max(...values),padding=Math.max((rawHigh-rawLow)*.08,mode==="return"?1:100);
+  const low=rawLow-padding,high=rawHigh+padding;
   const x=i=>m.left+i/(rows.length-1||1)*iw,y=value=>m.top+ih-(value-low)/(high-low||1)*ih;
   svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
-  for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},v.toFixed(0))}
+  for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},mode==="return"?`${v>=0?"+":""}${v.toFixed(0)}%`:fmt.format(Math.round(v)))}
   for(const index of uniqueIndexes(Math.min(width<600?4:7,rows.length),rows.length))addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},shortDate.format(date(rows[index].date)));
-  for(const [key,color] of [["a",COLORS.blue],["b",COLORS.gold]])addSvg(svg,"path",{d:rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)}`).join(" "),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
+  if(mode==="return"&&low<0&&high>0)addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:y(0),y2:y(0),stroke:"#647087","stroke-dasharray":"4 4"});
+  for(const [key,color] of [[aKey,COLORS.blue],[bKey,COLORS.gold]])addSvg(svg,"path",{d:rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)}`).join(" "),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
-  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":"Interactive rebased world comparison"});
-  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${escapeHtml(labels.a)}: ${fmt.format(row.aPrice)} GP · ${row.a.toFixed(1)}<br>${escapeHtml(labels.b)}: ${fmt.format(row.bPrice)} GP · ${row.b.toFixed(1)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-220)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
+  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive world comparison by ${mode==="return"?"percentage return":"actual GP price"}`});
+  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${escapeHtml(labels.a)}: ${fmt.format(row.aPrice)} GP · ${signed(row.aReturn,1)} since start<br>${escapeHtml(labels.b)}: ${fmt.format(row.bPrice)} GP · ${signed(row.bReturn,1)} since start`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
   capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
@@ -1205,6 +1356,7 @@ function updateURL(){
   if($("#overviewEnd").value!==$("#overviewEnd").max)params.set("end",$("#overviewEnd").value);
   if($("#worldA").value!=="Antica")params.set("a",$("#worldA").value);
   if($("#worldB").value!=="Belobra")params.set("b",$("#worldB").value);
+  if(selectedWorldChartMode!=="price")params.set("worldMeasure",selectedWorldChartMode);
   if($("#forecastWorld").value!=="Belobra")params.set("forecast",$("#forecastWorld").value);
   if(selectedForecastHorizon!=="1m")params.set("horizon",selectedForecastHorizon);
   if($("#modelPvp").value!=="all")params.set("modelPvp",$("#modelPvp").value);

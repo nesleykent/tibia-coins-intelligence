@@ -126,6 +126,11 @@ def main() -> None:
     )
     assert '$("#emissionFrame").src="gold_emission_dashboard.html"' in html
     assert 'href="tibia_coin_market_report.pdf"' in html
+    assert 'data-mode="price">Price (GP)</button>' in html
+    assert 'data-mode="return">Return (%)</button>' in html
+    assert "Actual daily market price in GP per Tibia Coin." in html
+    assert "each series is rebased to 100" not in html
+    assert "Interactive rebased world comparison" not in html
     assert "reports/intelligence_hub.html" in entry
     assert 'meta http-equiv="refresh"' in entry
 

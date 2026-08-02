@@ -35,8 +35,11 @@ FUND = ["16_killstats.py", "17_features.py", "18_predict.py", "19_regimes.py",
 # Order matters from here: 06 recreates results.json, the rest extend it.
 ANALYSE = ["06_analysis.py", "07_forecast.py", "10_advanced.py", "11_finance.py",
            "14_venues.py"] + FUND
+# 46 runs last on purpose: it compares the finished PDF against the finished site, so both
+# must already be rebuilt for its answer to mean anything.
 RENDER = ["12_art.py", "13_icons.py", "08_figures.py", "09_report.py",
-          "15_verify.py", "39_intelligence_hub.py", "40_verify_intelligence_hub.py"]
+          "15_verify.py", "39_intelligence_hub.py", "40_verify_intelligence_hub.py",
+          "46_verify_artifacts.py"]
 
 # Every top-level block the report expects to find when it renders.
 REQUIRED = ["window", "desc", "index", "stationarity", "seasonality", "events", "arbitrage",
