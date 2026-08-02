@@ -168,7 +168,15 @@ def main() -> None:
         not in html
     )
     assert "Dispersion:" not in html
-    assert "See the numbers and technical explanation" in html
+    assert "See the numbers and technical explanation" not in html
+    assert "Method, checks and limitations" in html
+    assert 'class="claim-tiles" aria-label="Key numbers"' in html
+    claim_template = html[html.index('<section class="claim" data-claim='):html.index(
+        'host.querySelectorAll("[data-open]")'
+    )]
+    assert claim_template.index('class="claim-tiles"') < claim_template.index(
+        '<details class="claim-details">'
+    )
     assert "Do not keep extra TC expecting easy profit" in html
     assert "We still do not know how long generated GP takes to reach the TC Market" in html
     assert "It may circulate between players for days or weeks first." in html

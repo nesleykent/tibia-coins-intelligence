@@ -593,7 +593,7 @@ HTML = r"""<!doctype html>
         </article>
         <article class="panel thesis">
           <div class="panel-heading"><div><h2>What the data says</h2><p>Start with the simple
-            explanation. Open the numbers only when you want to check the evidence.</p></div></div>
+            explanation. The numbers and units stay visible so you can check the evidence immediately.</p></div></div>
           <p class="thesis-verdict"><strong id="verdictLine">—</strong>
             <span class="thesis-confidence" id="verdictConfidence">—</span></p>
           <div id="claimList" class="claim-list"></div>
@@ -916,12 +916,12 @@ function renderHeadline(){
         <h3>${escapeHtml(c.playerHeading||c.heading)}</h3>
       </div>
       <p class="claim-player">${escapeHtml(c.playerText||c.text)}</p>
-      <details class="claim-details"><summary>See the numbers and technical explanation</summary>
+      <div class="claim-tiles" aria-label="Key numbers">${c.tiles.map(t=>`
+        <div class="thesis-fact"><span>${escapeHtml(t.label)}</span>
+          <strong>${escapeHtml(t.value)}</strong><small>${escapeHtml(t.note)}</small></div>`).join("")}</div>
+      <details class="claim-details"><summary>Method, checks and limitations</summary>
         <span class="claim-ref">Full report §${escapeHtml(c.section)}</span>
         <p class="claim-text">${escapeHtml(c.text)}</p>
-        <div class="claim-tiles">${c.tiles.map(t=>`
-          <div class="thesis-fact"><span>${escapeHtml(t.label)}</span>
-            <strong>${escapeHtml(t.value)}</strong><small>${escapeHtml(t.note)}</small></div>`).join("")}</div>
       </details>
       ${c.interactive?`<button class="claim-open button" data-open="${escapeHtml(c.interactive)}">Explore the data</button>`:""}
     </section>`).join("");

@@ -12,16 +12,22 @@ A Tibia player who has never studied statistics, economics, or finance should
 understand the principal conclusion and its practical consequence without
 opening a methodology section.
 
-This is not “dumbing down” the analysis. It is progressive disclosure:
+This is not “dumbing down” the analysis. It is layered explanation:
 
-1. what it means in Tibia;
-2. why it matters for a decision;
-3. how the evidence was produced.
+1. the number and what it measures;
+2. what it means in Tibia;
+3. why it matters for a decision;
+4. how the evidence was produced.
+
+Progressive disclosure applies to technical method, not to evidence. Never
+hide a headline number, effect size, range, sample size, date, cost, capacity,
+uncertainty or principal limitation behind a click.
 
 ## Required structure for every important result
 
 ### 1. Player answer — visible by default
 
+- What are the actual numbers, units, period and comparison?
 - What happened?
 - Is it good, bad, or inconclusive for the player?
 - What action, if any, does the evidence support?
@@ -37,11 +43,12 @@ Explain the mechanism with game language. For example:
 > use that opportunity. The difference usually shrinks only when it is large
 > enough to pay the Market fees.
 
-### 3. Technical evidence — expandable
+### 3. Technical method — expandable
 
-Keep the full method, sample, uncertainty, diagnostics, robustness,
-reproducibility, and limitations. Experts must not lose information merely
-because the default layer is simpler.
+Keep formulas, estimator details, diagnostics, robustness and reproducibility
+available here. Sample size, uncertainty and the principal limitation remain
+visible with the result; deeper breakdowns may also appear here. Experts must
+not lose information merely because the default language is simpler.
 
 ## Canonical terminology
 
@@ -162,6 +169,8 @@ Every exhibit needs:
 Before marking a view complete, verify:
 
 - The first visible paragraph contains no unexplained technical term.
+- The principal numbers, units, dates, uncertainty and sample size are visible
+  without opening anything.
 - A player can describe the chart without reading its tooltip.
 - Every percentage states what changed and against what.
 - Every prediction distinguishes range from certainty.
@@ -180,6 +189,7 @@ For each view:
 1. Read only the default visible layer and summarize it as a player.
 2. Record every term requiring outside statistical or financial knowledge.
 3. Replace or explain those terms contextually.
-4. Open the technical layer and confirm no evidence was lost.
+4. Confirm the visible layer contains every decision-relevant number, then open
+   the technical layer and confirm the method remains auditable.
 5. Test desktop and mobile reading order.
 6. Verify keyboard access to every expandable explanation.

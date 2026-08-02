@@ -81,6 +81,13 @@ understand a statistical or financial term in order to understand the finding.
 When a technical term is useful, show a plain-language label first and place
 the technical name in supporting text or an expandable layer.
 
+Never hide a principal number because the player may not understand it. Show
+the result, unit, comparison and plain-language meaning together by default.
+Expandable layers may contain formulas, estimator names, diagnostics,
+robustness checks and reproducibility details, but not the headline value,
+effect size, range, sample size, date, cost, capacity, uncertainty or principal
+limitation needed to judge the result.
+
 Write the visible player layer as a guildmate would explain it in chat:
 
 - say what the player pays, receives, gains, loses, can buy, or can sell;
