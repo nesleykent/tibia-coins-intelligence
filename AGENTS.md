@@ -132,6 +132,23 @@ thresholds.
 - Prevent look-ahead leakage in forecasting and backtesting.
 - Use time-aware holdouts and compare against simple baselines.
 - Report effect sizes and uncertainty, not only p-values or model scores.
+- When discussing the “strength” of a variable, state exactly what strength
+  means: association with the price level, contribution to a fitted
+  prediction, incremental out-of-sample performance, or share of variation.
+  These are different quantities and must not be merged into one ranking.
+- Separate variables associated with **price composition/level** from
+  variables useful for **future price movement**. Always state the target,
+  horizon, model family, sample and validation window.
+- Report direction and relationship shape alongside magnitude whenever the
+  method supports them. Absolute SHAP or permutation importance alone does not
+  say whether a variable raises or lowers price.
+- Check driver stability across time, worlds and model families. Compare at
+  least two compatible attribution methods, disclose correlated/redundant
+  predictors, and prioritize incremental out-of-sample value over in-sample
+  gain.
+- Predictive importance, SHAP attribution, partial dependence and variance
+  decomposition are not causal effects. Use causal language only when the
+  identification design supports it.
 - Separate exploratory findings from validated findings.
 - Verify that report prose, tables, charts, and generated artifacts agree.
 - Treat missingness, short histories, world launches, mergers, and structural
