@@ -11,6 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data" / "processed" / "gold_emission_daily.csv"
+PRICE_SOURCE = ROOT / "data" / "processed" / "panel_daily.csv"
 OUTPUT = ROOT / "reports" / "gold_emission_dashboard.html"
 
 FIELDS = (
@@ -63,11 +64,25 @@ def build_payload() -> dict[str, object]:
             raise ValueError(f"Missing dashboard fields: {', '.join(missing)}")
         rows = [_compact_row(row) for row in reader]
 
+    with PRICE_SOURCE.open(newline="", encoding="utf-8") as handle:
+        reader = csv.DictReader(handle)
+        required = {"world", "date", "price_gp"}
+        missing = sorted(required - set(reader.fieldnames or ()))
+        if missing:
+            raise ValueError(f"Missing TC price fields: {', '.join(missing)}")
+        price_rows = [
+            [row["world"], row["date"], round(float(row["price_gp"]), 3)]
+            for row in reader
+            if row.get("world") and row.get("date") and row.get("price_gp")
+        ]
+
     worlds = sorted({str(row[0]) for row in rows})
     dates = sorted({str(row[1]) for row in rows})
     return {
         "schema": list(FIELDS),
         "rows": rows,
+        "priceSchema": ["world", "date", "price_gp"],
+        "priceRows": price_rows,
         "meta": {
             "generatedAt": datetime.now(timezone.utc).isoformat(),
             "source": str(SOURCE.relative_to(ROOT)),
@@ -319,6 +334,7 @@ HTML = r"""<!doctype html>
           <label class="check"><input type="checkbox" data-series="direct" checked> Direct GP drops</label>
           <label class="check"><input type="checkbox" data-series="potential" checked> Potential GP maximum</label>
           <label class="check"><input type="checkbox" data-series="realized" checked> Realized GP estimate</label>
+          <label class="check"><input id="tcPriceToggle" type="checkbox"> TC price (GP/TC)</label>
         </div>
       </div>
       <div class="actions">
@@ -360,13 +376,13 @@ HTML = r"""<!doctype html>
         <div class="panel-inner">
           <div class="panel-heading">
             <h2>Emission over time</h2>
-            <span class="panel-note">GP generated per day</span>
+            <span class="panel-note">Emission uses the left axis · TC price uses the right axis</span>
           </div>
           <div id="chartLegend" class="legend" aria-hidden="true"></div>
           <div class="chart-wrap">
             <svg id="lineChart" role="img" aria-labelledby="chartTitle chartDescription">
               <title id="chartTitle">Gold emission over time</title>
-              <desc id="chartDescription">Daily direct, potential, and realized gold emission for the selected world and dates.</desc>
+              <desc id="chartDescription">Daily gold emission and, when selected, Tibia Coin price in GP per TC for the selected world and dates.</desc>
             </svg>
             <div id="chartTooltip" class="chart-tooltip"></div>
             <label class="visually-hidden" for="chartInspector">Inspect chart by date</label>
@@ -452,7 +468,7 @@ HTML = r"""<!doctype html>
   "use strict";
   const EMBEDDED = __DATA__;
   const SCHEMA = EMBEDDED.schema;
-  const COLORS = { direct: "#2467c9", potential: "#bc643f", realized: "#d39418" };
+  const COLORS = { direct: "#2467c9", potential: "#bc643f", realized: "#d39418", tcPrice: "#7c3aed" };
   const SERIES = {
     direct: { label: "Direct GP drops", color: COLORS.direct, dash: "" },
     potential: { label: "Potential GP maximum", color: COLORS.potential, dash: "8 6" },
@@ -472,6 +488,9 @@ HTML = r"""<!doctype html>
   const NS = "http://www.w3.org/2000/svg";
 
   let rawRows = decodeRows(EMBEDDED.schema, EMBEDDED.rows);
+  const rawPriceRows = decodeRows(EMBEDDED.priceSchema, EMBEDDED.priceRows);
+  let priceByWorldDate = new Map();
+  let priceByDateMedian = new Map();
   let sourceMeta = EMBEDDED.meta;
   let filtered = [];
   let showAllRows = false;
@@ -513,6 +532,7 @@ HTML = r"""<!doctype html>
   }
 
   function initialize() {
+    rebuildPriceIndexes();
     populateWorlds();
     const params = new URLSearchParams(location.search);
     const dates = rawRows.map(row => row.date).sort();
@@ -536,6 +556,7 @@ HTML = r"""<!doctype html>
       $$("[data-series]").forEach(input => { input.checked = selected.has(input.dataset.series); });
       if (!$$("[data-series]:checked").length) $("[data-series='realized']").checked = true;
     }
+    $("#tcPriceToggle").checked = params.get("tcPrice") === "1";
     bindEvents();
     updateStatus();
     render();
@@ -566,6 +587,7 @@ HTML = r"""<!doctype html>
       if (!$$("[data-series]:checked").length) input.checked = true;
       render();
     }));
+    $("#tcPriceToggle").addEventListener("change", render);
     $("#resetButton").addEventListener("click", resetFilters);
     $("#loadButton").addEventListener("click", () => $("#fileInput").click());
     $("#fileInput").addEventListener("change", loadCSV);
@@ -581,12 +603,31 @@ HTML = r"""<!doctype html>
     $("#dateEnd").value = $("#dateEnd").max;
     $("#scenarioSelect").value = "0.5";
     $$("[data-series]").forEach(input => { input.checked = true; });
+    $("#tcPriceToggle").checked = false;
     showAllRows = false;
     render();
   }
 
   function selectedSeries() {
     return $$("[data-series]:checked").map(input => input.dataset.series);
+  }
+
+  function rebuildPriceIndexes() {
+    priceByWorldDate = new Map();
+    const valuesByDate = new Map();
+    for (const row of rawPriceRows) {
+      const value = numeric(row.price_gp);
+      if (!value) continue;
+      priceByWorldDate.set(`${row.world}|${row.date}`, value);
+      if (!valuesByDate.has(row.date)) valuesByDate.set(row.date, []);
+      valuesByDate.get(row.date).push(value);
+    }
+    priceByDateMedian = new Map([...valuesByDate].map(([date, values]) => {
+      values.sort((a, b) => a - b);
+      const middle = Math.floor(values.length / 2);
+      const median = values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
+      return [date, median];
+    }));
   }
 
   function aggregateRows() {
@@ -624,7 +665,10 @@ HTML = r"""<!doctype html>
       ...row,
       potential: row.direct + row.npc,
       realized: row.direct + scenario * row.npc,
-      coverage: row.nonboss > 0 ? row.modeled / row.nonboss : 0
+      coverage: row.nonboss > 0 ? row.modeled / row.nonboss : 0,
+      tcPrice: world === "all"
+        ? numeric(priceByDateMedian.get(row.date))
+        : numeric(priceByWorldDate.get(`${world}|${row.date}`))
     }));
   }
 
@@ -678,15 +722,19 @@ HTML = r"""<!doctype html>
   }
 
   function renderLegend() {
-    $("#chartLegend").innerHTML = selectedSeries().map(key =>
+    const emissionLegend = selectedSeries().map(key =>
       `<span class="legend-item"><i class="legend-line ${key}" style="border-color:${SERIES[key].color}"></i>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span>`
     ).join("");
+    const priceLegend = $("#tcPriceToggle").checked
+      ? `<span class="legend-item"><i class="legend-line" style="border-color:${COLORS.tcPrice}"></i>TC price (GP/TC) · right axis</span>`
+      : "";
+    $("#chartLegend").innerHTML = emissionLegend + priceLegend;
   }
 
   function renderChart(rows) {
     const svg = $("#lineChart");
     svg.innerHTML = `<title id="chartTitle">Gold emission over time</title>
-      <desc id="chartDescription">Daily direct, potential, and realized gold emission for the selected world and dates.</desc>`;
+      <desc id="chartDescription">Daily gold emission and, when selected, Tibia Coin price in GP per TC for the selected world and dates.</desc>`;
     $("#chartTooltip").classList.remove("visible");
     if (!rows.length) {
       svg.setAttribute("viewBox", "0 0 800 360");
@@ -694,15 +742,23 @@ HTML = r"""<!doctype html>
       return;
     }
     const keys = selectedSeries();
+    const showTcPrice = $("#tcPriceToggle").checked;
+    const tcPrices = rows.map(row => row.tcPrice).filter(value => value > 0);
     const width = Math.max(320, svg.clientWidth || 800);
     const height = 360;
-    const margin = { top: 22, right: 14, bottom: 46, left: width < 720 ? 54 : 76 };
+    const margin = { top: 22, right: showTcPrice ? (width < 720 ? 58 : 76) : 14, bottom: 46, left: width < 720 ? 54 : 76 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
     const yMaxRaw = Math.max(...rows.flatMap(row => keys.map(key => row[key])), 1);
     const yMax = niceMax(yMaxRaw);
     const x = index => margin.left + (rows.length === 1 ? innerWidth / 2 : index / (rows.length - 1) * innerWidth);
     const y = value => margin.top + innerHeight - value / yMax * innerHeight;
+    const priceMinRaw = tcPrices.length ? Math.min(...tcPrices) : 0;
+    const priceMaxRaw = tcPrices.length ? Math.max(...tcPrices) : 1;
+    const pricePad = Math.max((priceMaxRaw - priceMinRaw) * 0.1, priceMaxRaw * 0.01, 1);
+    const priceMin = Math.max(0, priceMinRaw - pricePad);
+    const priceMax = priceMaxRaw + pricePad;
+    const yPrice = value => margin.top + innerHeight - (value - priceMin) / (priceMax - priceMin || 1) * innerHeight;
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
 
     for (let i = 0; i <= 4; i++) {
@@ -710,6 +766,13 @@ HTML = r"""<!doctype html>
       const yy = y(value);
       addSVG(svg, "line", { x1: margin.left, x2: width - margin.right, y1: yy, y2: yy, stroke: "#e2e7ee", "stroke-dasharray": i ? "4 4" : "" });
       addSVG(svg, "text", { x: margin.left - 10, y: yy + 4, "text-anchor": "end", fill: "#667085", "font-size": 11 }, compact.format(value));
+      if (showTcPrice && tcPrices.length) {
+        const priceValue = priceMin + (priceMax - priceMin) * i / 4;
+        addSVG(svg, "text", {
+          x: width - margin.right + 9, y: yPrice(priceValue) + 4,
+          fill: COLORS.tcPrice, "font-size": 11
+        }, compact.format(priceValue));
+      }
     }
 
     const tickCount = Math.min(width < 720 ? 3 : 6, rows.length);
@@ -726,6 +789,20 @@ HTML = r"""<!doctype html>
         "vector-effect": "non-scaling-stroke"
       });
     }
+    if (showTcPrice && tcPrices.length) {
+      let started = false;
+      const pricePath = rows.map((row, index) => {
+        if (!row.tcPrice) { started = false; return ""; }
+        const command = started ? "L" : "M";
+        started = true;
+        return `${command} ${x(index).toFixed(2)} ${yPrice(row.tcPrice).toFixed(2)}`;
+      }).filter(Boolean).join(" ");
+      addSVG(svg, "path", {
+        d: pricePath, fill: "none", stroke: COLORS.tcPrice, "stroke-width": 2.8,
+        "stroke-linecap": "round", "stroke-linejoin": "round",
+        "vector-effect": "non-scaling-stroke"
+      });
+    }
 
     const crosshair = addSVG(svg, "line", {
       id: "crosshair", x1: margin.left, x2: margin.left, y1: margin.top, y2: margin.top + innerHeight,
@@ -738,16 +815,22 @@ HTML = r"""<!doctype html>
         fill: SERIES[key].color, stroke: "#fff", "stroke-width": 2, opacity: 0
       });
     }
+    if (showTcPrice && tcPrices.length) {
+      dots.tcPrice = addSVG(svg, "circle", {
+        id: "dot-tc-price", cx: margin.left, cy: margin.top, r: 4.5,
+        fill: COLORS.tcPrice, stroke: "#fff", "stroke-width": 2, opacity: 0
+      });
+    }
     const capture = addSVG(svg, "rect", {
       x: margin.left, y: margin.top, width: innerWidth, height: innerHeight,
       fill: "transparent", tabindex: "0", role: "application",
-      "aria-label": "Interactive time chart. Move pointer or use the chart date slider to inspect values."
+      "aria-label": "Interactive time chart. Emission uses the left axis and TC price uses the right axis. Move pointer or use the chart date slider to inspect values."
     });
     capture.addEventListener("pointermove", event => {
       const bounds = svg.getBoundingClientRect();
       const pointerX = (event.clientX - bounds.left) / bounds.width * width;
       const index = Math.max(0, Math.min(rows.length - 1, Math.round((pointerX - margin.left) / innerWidth * (rows.length - 1))));
-      showTooltipAt(index, false, { x, y, margin, width, height, crosshair, dots, rows, keys });
+      showTooltipAt(index, false, { x, y, yPrice, margin, width, height, crosshair, dots, rows, keys, showTcPrice });
     });
     capture.addEventListener("pointerdown", event => capture.setPointerCapture?.(event.pointerId));
     capture.addEventListener("pointerleave", hideTooltip);
@@ -764,7 +847,7 @@ HTML = r"""<!doctype html>
       $("#chartInspector").value = index;
       showTooltipAt(index, true);
     });
-    svg._chart = { x, y, margin, width, height, crosshair, dots, rows, keys };
+    svg._chart = { x, y, yPrice, margin, width, height, crosshair, dots, rows, keys, showTcPrice };
     $("#chartInspector").max = rows.length - 1;
     $("#chartInspector").value = 0;
   }
@@ -772,7 +855,7 @@ HTML = r"""<!doctype html>
   function showTooltipAt(index, fromKeyboard = false, chartState = null) {
     const state = chartState || $("#lineChart")._chart;
     if (!state || !state.rows[index]) return;
-    const { x, y, margin, width, crosshair, dots, rows, keys } = state;
+    const { x, y, yPrice, margin, width, crosshair, dots, rows, keys, showTcPrice } = state;
     const row = rows[index];
     const xx = x(index);
     crosshair.setAttribute("x1", xx);
@@ -783,10 +866,16 @@ HTML = r"""<!doctype html>
       dots[key].setAttribute("cy", y(row[key]));
       dots[key].setAttribute("opacity", 1);
     }
+    if (showTcPrice && dots.tcPrice) {
+      dots.tcPrice.setAttribute("cx", xx);
+      dots.tcPrice.setAttribute("cy", row.tcPrice ? yPrice(row.tcPrice) : margin.top);
+      dots.tcPrice.setAttribute("opacity", row.tcPrice ? 1 : 0);
+    }
     $("#chartInspector").value = index;
     const tooltip = $("#chartTooltip");
     tooltip.innerHTML = `<div class="tooltip-date">${isoDate(row.date)}</div>` +
       keys.map(key => `<div class="tooltip-row"><i class="tooltip-dot" style="background:${SERIES[key].color}"></i><span>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span><span class="tooltip-value">${number.format(row[key])} GP</span></div>`).join("") +
+      (showTcPrice ? `<div class="tooltip-row"><i class="tooltip-dot" style="background:${COLORS.tcPrice}"></i><span>TC price</span><span class="tooltip-value">${row.tcPrice ? `${number.format(row.tcPrice)} GP/TC` : "No price data"}</span></div>` : "") +
       `<div class="tooltip-row" style="margin-top:7px"><i></i><span>Coverage</span><span class="tooltip-value">${percent.format(row.coverage)}</span></div>`;
     const chartWidth = $(".chart-wrap").clientWidth;
     const scaledX = xx / width * chartWidth;
@@ -794,7 +883,7 @@ HTML = r"""<!doctype html>
     tooltip.style.top = `${Math.max(8, margin.top + 8)}px`;
     tooltip.classList.add("visible");
     if (fromKeyboard) {
-      $("#chartInspector").setAttribute("aria-valuetext", `${isoDate(row.date)}: realized ${number.format(row.realized)} GP`);
+      $("#chartInspector").setAttribute("aria-valuetext", `${isoDate(row.date)}: realized ${number.format(row.realized)} GP${showTcPrice && row.tcPrice ? `; TC price ${number.format(row.tcPrice)} GP per TC` : ""}`);
     }
   }
 
@@ -1058,6 +1147,7 @@ HTML = r"""<!doctype html>
     if ($("#dateStart").value !== $("#dateStart").min) params.set("start", $("#dateStart").value);
     if ($("#dateEnd").value !== $("#dateEnd").max) params.set("end", $("#dateEnd").value);
     if ($("#scenarioSelect").value !== "0.5") params.set("scenario", $("#scenarioSelect").value);
+    if ($("#tcPriceToggle").checked) params.set("tcPrice", "1");
     const series = selectedSeries();
     if (series.length !== 3) params.set("series", series.join(","));
     const query = params.toString();

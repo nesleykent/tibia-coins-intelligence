@@ -146,6 +146,10 @@ def main() -> None:
     assert 'id="dateStart"' in dashboard and 'id="dateEnd"' in dashboard
     assert 'id="scenarioSelect"' in dashboard
     assert 'id="lineChart"' in dashboard
+    assert 'id="tcPriceToggle"' in dashboard
+    assert "TC price (GP/TC)" in dashboard
+    assert "priceSchema" in dashboard and "priceRows" in dashboard
+    assert 'params.set("tcPrice", "1")' in dashboard
     assert 'id="fileInput"' in dashboard
     assert "<script src=" not in dashboard, "dashboard must remain self-contained"
     assert "async function refreshProjectCSV()" in dashboard
