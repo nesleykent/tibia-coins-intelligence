@@ -214,6 +214,10 @@ rather than displayed as an unexplained blank.
 - Keep spacing, typography, controls, and chart behavior consistent across the
   Overview and all report sections.
 - Define technical and Tibia-specific terms at first use.
+- Format every reader-facing date as `YYYY-MM-DD`. If a timestamp is needed,
+  use `YYYY-MM-DD HH:MM UTC`; never use locale-dependent numeric dates such as
+  `8/2/2026` or month-name abbreviations in charts, tables, status text, or
+  tooltips.
 - Use units as part of the meaning, not as decoration:
   - **GP** always means Tibia gold pieces;
   - **TC** always means Tibia Coins;

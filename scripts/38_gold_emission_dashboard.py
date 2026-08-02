@@ -461,8 +461,6 @@ HTML = r"""<!doctype html>
   const number = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
   const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
   const percent = new Intl.NumberFormat("en-US", { style: "percent", maximumFractionDigits: 1 });
-  const dateLabel = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-  const dateShort = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   const NS = "http://www.w3.org/2000/svg";
 
   let rawRows = decodeRows(EMBEDDED.schema, EMBEDDED.rows);
@@ -485,6 +483,19 @@ HTML = r"""<!doctype html>
 
   function toDate(value) {
     return new Date(`${value}T00:00:00Z`);
+  }
+
+  function isoDate(value) {
+    if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) return value.slice(0, 10);
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.valueOf()) ? String(value ?? "") : parsed.toISOString().slice(0, 10);
+  }
+
+  function isoTimestamp(value) {
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.valueOf())) return String(value ?? "");
+    const stamp = parsed.toISOString();
+    return `${stamp.slice(0, 10)} ${stamp.slice(11, 16)} UTC`;
   }
 
   function qualityOf(row) {
@@ -651,7 +662,7 @@ HTML = r"""<!doctype html>
     $("#averageMetric").title = `${number.format(total / rows.length)} GP per day`;
     $("#peakMetric").textContent = metricCompact(peak.realized);
     $("#peakMetric").title = `${number.format(peak.realized)} GP`;
-    $("#peakMeta").textContent = dateLabel.format(toDate(peak.date));
+    $("#peakMeta").textContent = isoDate(peak.date);
     $("#coverageMetric").textContent = percent.format(nonboss ? modeled / nonboss : 0);
     $("#coverageMeta").textContent = `${rows.length} observed days`;
   }
@@ -691,10 +702,10 @@ HTML = r"""<!doctype html>
       addSVG(svg, "text", { x: margin.left - 10, y: yy + 4, "text-anchor": "end", fill: "#667085", "font-size": 11 }, compact.format(value));
     }
 
-    const tickCount = Math.min(width < 720 ? 4 : 7, rows.length);
+    const tickCount = Math.min(width < 720 ? 3 : 6, rows.length);
     const tickIndexes = uniqueIndexes(tickCount, rows.length);
     for (const index of tickIndexes) {
-      addSVG(svg, "text", { x: x(index), y: height - 14, "text-anchor": "middle", fill: "#667085", "font-size": 11 }, dateShort.format(toDate(rows[index].date)));
+      addSVG(svg, "text", { x: x(index), y: height - 14, "text-anchor": "middle", fill: "#667085", "font-size": 11 }, isoDate(rows[index].date));
     }
 
     for (const key of keys) {
@@ -764,7 +775,7 @@ HTML = r"""<!doctype html>
     }
     $("#chartInspector").value = index;
     const tooltip = $("#chartTooltip");
-    tooltip.innerHTML = `<div class="tooltip-date">${dateLabel.format(toDate(row.date))}</div>` +
+    tooltip.innerHTML = `<div class="tooltip-date">${isoDate(row.date)}</div>` +
       keys.map(key => `<div class="tooltip-row"><i class="tooltip-dot" style="background:${SERIES[key].color}"></i><span>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span><span class="tooltip-value">${number.format(row[key])} GP</span></div>`).join("") +
       `<div class="tooltip-row" style="margin-top:7px"><i></i><span>Coverage</span><span class="tooltip-value">${percent.format(row.coverage)}</span></div>`;
     const chartWidth = $(".chart-wrap").clientWidth;
@@ -773,7 +784,7 @@ HTML = r"""<!doctype html>
     tooltip.style.top = `${Math.max(8, margin.top + 8)}px`;
     tooltip.classList.add("visible");
     if (fromKeyboard) {
-      $("#chartInspector").setAttribute("aria-valuetext", `${dateLabel.format(toDate(row.date))}: realized ${number.format(row.realized)} GP`);
+      $("#chartInspector").setAttribute("aria-valuetext", `${isoDate(row.date)}: realized ${number.format(row.realized)} GP`);
     }
   }
 
@@ -820,7 +831,7 @@ HTML = r"""<!doctype html>
     const strip = $("#qualityStrip");
     strip.innerHTML = rows.map((row, index) => {
       const quality = qualityOf(row);
-      const label = `${dateLabel.format(toDate(row.date))}: ${quality}, ${percent.format(row.coverage)} coverage`;
+      const label = `${isoDate(row.date)}: ${quality}, ${percent.format(row.coverage)} coverage`;
       return `<button class="quality-day ${quality}" data-index="${index}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}"></button>`;
     }).join("");
     strip.querySelectorAll(".quality-day").forEach(button => {
@@ -841,7 +852,7 @@ HTML = r"""<!doctype html>
       const qualityLabel = quality === "low" ? "Low quality" : quality[0].toUpperCase() + quality.slice(1);
       const topEmitter = $("#worldSelect").value === "all" ? `${row.topName} · ${row.topWorld}` : row.topName;
       return `<tr>
-        <td>${dateLabel.format(toDate(row.date))}</td>
+        <td>${isoDate(row.date)}</td>
         <td>${percent.format(row.coverage)}</td>
         <td><span class="quality-label ${quality}">${qualityLabel}</span></td>
         <td>${number.format(row.kills)}</td>
@@ -988,7 +999,7 @@ HTML = r"""<!doctype html>
 
   function updateStatus() {
     const generated = new Date(sourceMeta.generatedAt);
-    const stamp = Number.isNaN(generated.valueOf()) ? sourceMeta.generatedAt : generated.toLocaleString("en-US");
+    const stamp = isoTimestamp(generated);
     const sourceLabel = sourceMeta.mode === "project"
       ? `project CSV refreshed ${stamp}`
       : sourceMeta.mode === "manual"

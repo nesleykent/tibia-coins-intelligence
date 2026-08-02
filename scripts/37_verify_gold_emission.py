@@ -153,6 +153,10 @@ def main() -> None:
     assert 'if (!["http:", "https:"].includes(location.protocol)) return;' in dashboard
     assert 'sourceMeta = { ...sourceMeta, mode: "fallback" };' in dashboard
     assert "void refreshProjectCSV();" in dashboard
+    assert "function isoDate(value)" in dashboard
+    assert "function isoTimestamp(value)" in dashboard
+    assert 'Intl.DateTimeFormat("en-US"' not in dashboard
+    assert 'toLocaleString("en-US")' not in dashboard
     invalid_guard = dashboard.index(
         'if ($("#dateStart").value > $("#dateEnd").value)'
     )

@@ -139,6 +139,10 @@ def main() -> None:
     assert "const linePath=key=>" in html
     assert "each series is rebased to 100" not in html
     assert "Interactive rebased world comparison" not in html
+    assert "function isoDate(value)" in html
+    assert "function isoTimestamp(value)" in html
+    assert 'Intl.DateTimeFormat("en-US"' not in html
+    assert 'toLocaleString("en-US")' not in html
     assert "direct GP drops" in html
     assert "GP means gold pieces; Tibia Coins are labeled TC throughout." in html
     assert "What the data says" in html

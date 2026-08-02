@@ -734,8 +734,6 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 const fmt = new Intl.NumberFormat("en-US",{maximumFractionDigits:0});
 const fmt1 = new Intl.NumberFormat("en-US",{maximumFractionDigits:1});
 const pct1 = new Intl.NumberFormat("en-US",{style:"percent",maximumFractionDigits:1});
-const dateFmt = new Intl.DateTimeFormat("en-US",{month:"short",day:"numeric",year:"numeric",timeZone:"UTC"});
-const shortDate = new Intl.DateTimeFormat("en-US",{month:"short",year:"2-digit",timeZone:"UTC"});
 let data = structuredClone(EMBEDDED);
 let worldMap = new Map();
 let seriesMap = new Map();
@@ -756,6 +754,8 @@ let liveMode = false;
 function num(value){const parsed=Number(value);return Number.isFinite(parsed)?parsed:0}
 function bool(value){return value===true||value===1||String(value).toLowerCase()==="true"}
 function date(value){return new Date(`${value}T00:00:00Z`)}
+function isoDate(value){if(typeof value==="string"&&/^\d{4}-\d{2}-\d{2}/.test(value))return value.slice(0,10);const parsed=new Date(value);return Number.isNaN(parsed.valueOf())?String(value??""):parsed.toISOString().slice(0,10)}
+function isoTimestamp(value){const parsed=value instanceof Date?value:new Date(value);if(Number.isNaN(parsed.valueOf()))return String(value??"");const stamp=parsed.toISOString();return`${stamp.slice(0,10)} ${stamp.slice(11,16)} UTC`}
 function compact(value){const n=Math.abs(value);if(n>=1e9)return`${(value/1e9).toFixed(2)}B`;if(n>=1e6)return`${(value/1e6).toFixed(2)}M`;if(n>=1e3)return`${(value/1e3).toFixed(1)}K`;return fmt.format(value)}
 function signed(value,digits=2){return`${value>0?"+":""}${num(value).toFixed(digits)}%`}
 function escapeHtml(value){return String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[char]))}
@@ -959,7 +959,7 @@ function renderAll(){
 
 function updateStatus(){
   const generated=new Date(data.meta.generatedAt);
-  const stamp=Number.isNaN(generated.valueOf())?data.meta.generatedAt:generated.toLocaleString("en-US");
+  const stamp=isoTimestamp(generated);
   $("#statusDot").classList.toggle("fallback",!liveMode&&["http:","https:"].includes(location.protocol));
   $("#dataStatus").textContent=liveMode?`Live project data · refreshed ${stamp}`:
     ["http:","https:"].includes(location.protocol)?`Embedded fallback · project CSV unavailable · ${stamp}`:`Offline snapshot · ${stamp}`;
@@ -1028,8 +1028,8 @@ function renderOverviewChart(rows=overviewRows(),world=$("#overviewWorld").value
     addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1","stroke-dasharray":i?"3 4":""});
     addSvg(svg,"text",{x:m.left-9,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},compact(value));
   }
-  for(const index of uniqueIndexes(Math.min(width<600?4:7,rows.length),rows.length)){
-    addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},shortDate.format(date(rows[index].date)));
+  for(const index of uniqueIndexes(Math.min(width<600?3:6,rows.length),rows.length)){
+    addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},isoDate(rows[index].date));
   }
   const pricePath=rows.map((row,i)=>`${i?"L":"M"} ${x(i).toFixed(2)} ${y(num(row[priceKey])).toFixed(2)}`).join(" ");
   addSvg(svg,"path",{d:pricePath,fill:"none",stroke:COLORS.blue,"stroke-width":2.4,"stroke-linecap":"round","stroke-linejoin":"round","vector-effect":"non-scaling-stroke"});
@@ -1048,7 +1048,7 @@ function renderOverviewChart(rows=overviewRows(),world=$("#overviewWorld").value
   const inspect=index=>{
     index=Math.max(0,Math.min(rows.length-1,index));const row=rows[index],xx=x(index);
     cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);
-    tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${world==="all"?"Market index":escapeHtml(world)}: ${fmt.format(row[priceKey])} GP`+
+    tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${world==="all"?"Market index":escapeHtml(world)}: ${fmt.format(row[priceKey])} GP`+
       (world==="all"?`<br>Dispersion: ${num(row.disp_pct).toFixed(1)}%`:"");
     tooltip.style.left=`${Math.min(Math.max(8,xx+8),Math.max(8,width-210))}px`;tooltip.style.top="28px";tooltip.classList.add("visible");
     capture.setAttribute("aria-label",tooltip.textContent);
@@ -1113,7 +1113,7 @@ function renderWorldChart(){
   const worldA=$("#worldA").value,worldB=$("#worldB").value,rows=commonSeries(worldA,worldB);
   $$("#worldChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedWorldChartMode));
   const start=$("#worldStart").value,end=$("#worldEnd").value;
-  const fixedWindow=start&&end?`${dateFmt.format(date(start))} to ${dateFmt.format(date(end))}`:"invalid date range";
+  const fixedWindow=start&&end?`${isoDate(start)} to ${isoDate(end)}`:"invalid date range";
   $("#worldChartDescription").textContent=selectedWorldChartMode==="price"
     ?`Actual daily market price in GP per Tibia Coin. Selected window: ${fixedWindow}; missing history is left blank.`
     :`Percentage gain or loss from each world's first observation inside the selected window. Selected window: ${fixedWindow}; 0% means no change.`;
@@ -1133,14 +1133,14 @@ function drawTwoSeries(svg,tooltip,rows,labels,mode){
   const x=i=>m.left+i/(rows.length-1||1)*iw,y=value=>m.top+ih-(value-low)/(high-low||1)*ih;
   svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
   for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},mode==="return"?`${v>=0?"+":""}${v.toFixed(0)}%`:fmt.format(Math.round(v)))}
-  for(const index of uniqueIndexes(Math.min(width<600?4:7,rows.length),rows.length))addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},shortDate.format(date(rows[index].date)));
+  for(const index of uniqueIndexes(Math.min(width<600?3:6,rows.length),rows.length))addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},isoDate(rows[index].date));
   if(mode==="return"&&low<0&&high>0)addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:y(0),y2:y(0),stroke:"#647087","stroke-dasharray":"4 4"});
   const linePath=key=>{let d="",open=false;rows.forEach((row,i)=>{if(!Number.isFinite(row[key])){open=false;return}d+=`${open?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)} `;open=true});return d.trim()};
   for(const [key,color] of [[aKey,COLORS.blue],[bKey,COLORS.gold]])addSvg(svg,"path",{d:linePath(key),fill:"none",stroke:color,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
   const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive world comparison by ${mode==="return"?"percentage return":"actual GP price"}`});
   const reading=(price,ret)=>price===null?"No observation":`${fmt.format(price)} GP · ${signed(ret,1)} since start`;
-  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${dateFmt.format(date(row.date))}</strong><br>${escapeHtml(labels.a)}: ${reading(row.aPrice,row.aReturn)}<br>${escapeHtml(labels.b)}: ${reading(row.bPrice,row.bReturn)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
+  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${escapeHtml(labels.a)}: ${reading(row.aPrice,row.aReturn)}<br>${escapeHtml(labels.b)}: ${reading(row.bPrice,row.bReturn)}`;tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible")};
   capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
