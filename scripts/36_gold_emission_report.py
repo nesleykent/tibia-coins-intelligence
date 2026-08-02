@@ -42,9 +42,9 @@ def main() -> None:
     ].copy()
     labels = {
         "kill_count": "Raw kill count",
-        "direct_coin": "Direct coins",
+        "direct_coin": "Direct GP drops",
         "potential_max": "Potential emission",
-        "realized_50": "Realized estimate (50%)",
+        "realized_50": "Realized GP estimate (50%)",
     }
     headline["series_label"] = headline.series.map(labels)
     headline["horizon"] = headline.horizon_days.map(lambda value: f"{value} day")
@@ -67,11 +67,11 @@ def main() -> None:
         )
         .reset_index()
     )
-    daily_plot["Direct coins"] = daily_plot.direct_coin_gp / daily_plot.online
-    daily_plot["Realized estimate (50%)"] = daily_plot.realized_50_gp / daily_plot.online
+    daily_plot["Direct GP drops"] = daily_plot.direct_coin_gp / daily_plot.online
+    daily_plot["Realized GP estimate (50%)"] = daily_plot.realized_50_gp / daily_plot.online
     daily_plot = daily_plot.melt(
         id_vars=["date", "worlds", "coverage", "online"],
-        value_vars=["Direct coins", "Realized estimate (50%)"],
+        value_vars=["Direct GP drops", "Realized GP estimate (50%)"],
         var_name="series",
         value_name="gp_per_average_online_player",
     )
@@ -134,7 +134,8 @@ def main() -> None:
                 "metric_definitions": [
                     "Direct emission = kills × expected nominal coin GP per kill.",
                     "Potential emission = direct emission + kills × expected player-to-NPC sale GP per kill.",
-                    "Realized estimate (50%) = direct emission + 50% of potential NPC-sale emission.",
+                    "Realized GP estimate (50%) = direct GP drops + 50% of potential NPC-sale emission. "
+                    "GP means Tibia gold pieces; TC means Tibia Coins, which are not counted in these totals.",
                 ],
             },
         },
@@ -222,13 +223,13 @@ def main() -> None:
                     "engine": "SQLite",
                     "language": "sql",
                     "sql": (
-                        "SELECT date, 'Direct coins' AS series, "
+                        "SELECT date, 'Direct GP drops' AS series, "
                         "SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, "
                         "COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, "
                         "SUM(players_online_avg) AS online "
                         "FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date "
                         "UNION ALL "
-                        "SELECT date, 'Realized estimate (50%)' AS series, "
+                        "SELECT date, 'Realized GP estimate (50%)' AS series, "
                         "SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, "
                         "COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, "
                         "SUM(players_online_avg) AS online "
@@ -252,9 +253,9 @@ def main() -> None:
                     "language": "sql",
                     "sql": (
                         "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' "
-                        "WHEN 'direct_coin' THEN 'Direct coins' "
+                        "WHEN 'direct_coin' THEN 'Direct GP drops' "
                         "WHEN 'potential_max' THEN 'Potential emission' "
-                        "WHEN 'realized_50' THEN 'Realized estimate (50%)' END AS series_label, "
+                        "WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, "
                         "CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, "
                         "coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n "
                         "FROM gold_emission_model_comparison "
@@ -285,9 +286,9 @@ def main() -> None:
                     "language": "sql",
                     "sql": (
                         "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' "
-                        "WHEN 'direct_coin' THEN 'Direct coins' "
+                        "WHEN 'direct_coin' THEN 'Direct GP drops' "
                         "WHEN 'potential_max' THEN 'Potential emission' "
-                        "WHEN 'realized_50' THEN 'Realized estimate (50%)' END AS series_label, "
+                        "WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, "
                         "CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, "
                         "rmse_improvement_pct * 100.0 AS rmse_improvement_pp, "
                         "random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n "
@@ -401,7 +402,7 @@ def main() -> None:
                 "type": "markdown",
                 "body": (
                     "## Monetary weighting does not create a stable price signal\n\n"
-                    "At matched horizons, raw kills, direct coins, potential emission, and the 50% realization "
+                    "At matched horizons, raw kills, direct GP drops, potential emission, and the 50% realization "
                     "scenario all have small coefficients relative to their clustered uncertainty. Isolated "
                     "significance elsewhere in the lag grid is not robust across coverage thresholds, boss "
                     "treatment, realization rates, and holdout evaluation. This supports a descriptive null, "
@@ -494,7 +495,7 @@ def main() -> None:
                     "## Limitations define what the estimates cannot establish\n\n"
                     "- Fan-site probabilities are empirical and revision-specific; rare boss loot remains noisy.\n"
                     "- NPC buyer metadata does not fully encode travel, faction, reputation, or quest access. "
-                    "The maximum-price scenario is potential; the conservative scenario therefore uses direct coins only.\n"
+                    "The maximum-price scenario is potential; the conservative scenario therefore uses direct GP drops only.\n"
                     "- Collection and actual NPC sale behavior are unobserved, so realization rates are parameters.\n"
                     "- Event flags are retained without multiplying loot because event-specific mechanics are not encoded in the source cache.\n"
                     "- Summoned or training creatures receive zero only with source evidence; unmatched entries remain uncovered.\n"

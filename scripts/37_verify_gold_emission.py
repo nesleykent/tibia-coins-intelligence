@@ -50,6 +50,11 @@ def main() -> None:
     quality = json.loads((P / "gold_emission_quality.json").read_text())
     artifact = json.loads(REPORT.read_text())
     dashboard = DASHBOARD.read_text(encoding="utf-8")
+    assert "Direct GP drops" in dashboard
+    assert "Potential GP maximum" in dashboard
+    assert "Realized GP estimate" in dashboard
+    assert "GP means Tibia gold pieces. TC means Tibia Coins" in dashboard
+    assert "Direct coins" not in dashboard
 
     assert creatures.creature_id.is_unique
     assert not daily.duplicated(["world", "date"]).any()

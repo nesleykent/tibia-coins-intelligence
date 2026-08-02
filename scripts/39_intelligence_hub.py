@@ -598,7 +598,7 @@ HTML = r"""<!doctype html>
 
       <section id="view-worlds" class="view" hidden>
         <div class="view-header"><div><h1>Worlds</h1><p class="view-intro">Compare actual Tibia Coin prices first, then switch to percentage returns when relative performance matters.</p></div>
-          <div class="filters"><div class="field"><label for="worldA">Primary world</label><select id="worldA"></select></div><div class="field"><label for="worldB">Compare with</label><select id="worldB"></select></div></div>
+          <div class="filters"><div class="field"><label for="worldA">Primary world</label><select id="worldA"></select></div><div class="field"><label for="worldB">Compare with</label><select id="worldB"></select></div><div class="field wide"><label>Date range</label><div class="date-pair"><input id="worldStart" type="date" aria-label="World comparison start date"><input id="worldEnd" type="date" aria-label="World comparison end date"></div></div></div>
         </div>
         <div class="world-layout">
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">World price comparison</h2><p id="worldChartDescription">Actual daily market price in GP per Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="World chart measure"><button class="segment active" data-mode="price">Price (GP)</button><button class="segment" data-mode="return">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
@@ -684,7 +684,7 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-emission" class="view" hidden>
-        <div class="view-header"><div><h1>Gold Emission</h1><p class="view-intro">Explore reconstructed direct coins and NPC-sale potential by world, period and realization scenario.</p></div><a class="button primary" href="gold_emission_dashboard.html" target="_blank" rel="noopener">Open full screen</a></div>
+        <div class="view-header"><div><h1>Gold Emission</h1><p class="view-intro">Explore reconstructed direct GP drops and NPC-sale potential by world, period and realization scenario. GP means gold pieces; Tibia Coins are labeled TC throughout.</p></div><a class="button primary" href="gold_emission_dashboard.html" target="_blank" rel="noopener">Open full screen</a></div>
         <iframe id="emissionFrame" class="emission-frame" title="Interactive gold emission dashboard" loading="lazy"></iframe>
       </section>
 
@@ -796,12 +796,16 @@ function initialize(){
   populateSelect($("#modelBattleye"),[...new Set(allModelRows.map(row=>row.battleye_color))].sort(),params.get("modelBe")||"all","All cohorts");
   populateSelect($("#modelRegion"),[...new Set(allModelRows.map(row=>row.region))].sort(),params.get("modelRegion")||"all","All regions");
   populateSelect($("#modelWorld"),modelWorlds,params.get("modelWorld")||"Belobra");
-  const dates=data.marketIndex.map(row=>row.date);
+  const dates=comparisonDates;
   const min=dates[0],max=dates[dates.length-1];
   $("#overviewStart").min=$("#overviewEnd").min=min;
   $("#overviewStart").max=$("#overviewEnd").max=max;
   $("#overviewStart").value=safeDate(params.get("start"),min,max)||min;
   $("#overviewEnd").value=safeDate(params.get("end"),min,max)||max;
+  $("#worldStart").min=$("#worldEnd").min=min;
+  $("#worldStart").max=$("#worldEnd").max=max;
+  $("#worldStart").value=$("#overviewStart").value;
+  $("#worldEnd").value=$("#overviewEnd").value;
   selectedForecastHorizon=["2w","1m","3m","6m"].includes(params.get("horizon"))?params.get("horizon"):"1m";
   selectedWorldChartMode=["price","return"].includes(params.get("worldMeasure"))?params.get("worldMeasure"):"price";
   selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
@@ -818,10 +822,18 @@ function initialize(){
 
 function bindEvents(){
   $$(".nav-button").forEach(button=>button.addEventListener("click",()=>showView(button.dataset.view)));
-  ["#overviewWorld","#overviewStart","#overviewEnd","#overviewSort"].forEach(selector=>$(selector).addEventListener("change",()=>{renderOverview();updateURL()}));
+  ["#overviewWorld","#overviewSort"].forEach(selector=>$(selector).addEventListener("change",()=>{renderOverview();updateURL()}));
+  ["#overviewStart","#overviewEnd"].forEach(selector=>$(selector).addEventListener("change",()=>{
+    $("#worldStart").value=$("#overviewStart").value;$("#worldEnd").value=$("#overviewEnd").value;
+    renderOverview();updateURL();
+  }));
   $("#overviewSearch").addEventListener("input",renderOverviewTable);
   $("#worldA").addEventListener("change",()=>{renderWorlds();updateURL()});
   $("#worldB").addEventListener("change",()=>{renderWorlds();updateURL()});
+  ["#worldStart","#worldEnd"].forEach(selector=>$(selector).addEventListener("change",()=>{
+    $("#overviewStart").value=$("#worldStart").value;$("#overviewEnd").value=$("#worldEnd").value;
+    renderWorlds();updateURL();
+  }));
   $$("#worldChartMode .segment").forEach(button=>button.addEventListener("click",()=>{selectedWorldChartMode=button.dataset.mode;renderWorldChart();updateURL()}));
   $("#worldSearch").addEventListener("input",renderWorldTable);
   $("#forecastWorld").addEventListener("change",()=>{renderForecasts();updateURL()});
@@ -957,24 +969,31 @@ function overviewRows(){
 function renderOverview(){
   const world=$("#overviewWorld").value;
   const rows=overviewRows();
-  const latestIndex=data.marketIndex[data.marketIndex.length-1]||{};
+  const latestIndex=rows[rows.length-1]||{};
+  const firstIndex=rows[0]||{};
   const prices=data.worlds.map(row=>num(row.px_last)).filter(Boolean).sort((a,b)=>a-b);
   const median=prices.length?prices[Math.floor(prices.length/2)]:0;
   if(world==="all"){
     $("#metricPriceLabel").textContent="Market index";
     $("#metricPrice").textContent=latestIndex.ew_price?`${fmt.format(latestIndex.ew_price)} GP`:"—";
-    $("#metricPriceMeta").textContent=`${signed(data.meta.indexReturn,1)} since Apr 2024`;
+    $("#metricPriceMeta").textContent=firstIndex.ew_price&&latestIndex.ew_price
+      ?`${signed((num(latestIndex.ew_price)/num(firstIndex.ew_price)-1)*100,1)} in selected range`
+      :"No observations in selected range";
     $("#metricWorlds").textContent=fmt.format(data.meta.worlds);
     $("#metricMedian").textContent=`${fmt.format(median)} GP`;
     $("#metricDispersion").textContent=`${num(latestIndex.disp_pct).toFixed(1)}%`;
     $("#overviewChartTitle").textContent="Market index and dispersion";
   }else{
-    const item=worldMap.get(world)||{};
+    const item=worldMap.get(world)||{},first=rows[0]||{},last=rows[rows.length-1]||{};
+    const selectedPrices=rows.map(row=>num(row.price_gp)).filter(Boolean).sort((a,b)=>a-b);
+    const selectedMedian=selectedPrices.length?selectedPrices[Math.floor(selectedPrices.length/2)]:0;
     $("#metricPriceLabel").textContent=`${world} price`;
-    $("#metricPrice").textContent=item.px_last?`${fmt.format(item.px_last)} GP`:"—";
-    $("#metricPriceMeta").textContent=`${signed(item.total_ret_pct,1)} total return`;
+    $("#metricPrice").textContent=last.price_gp?`${fmt.format(last.price_gp)} GP`:"—";
+    $("#metricPriceMeta").textContent=first.price_gp&&last.price_gp
+      ?`${signed((num(last.price_gp)/num(first.price_gp)-1)*100,1)} in selected range`
+      :"No observations in selected range";
     $("#metricWorlds").textContent=item.converged?"Converged":"Launch";
-    $("#metricMedian").textContent=item.px_med?`${fmt.format(item.px_med)} GP`:"—";
+    $("#metricMedian").textContent=selectedMedian?`${fmt.format(selectedMedian)} GP`:"—";
     $("#metricDispersion").textContent=item.vol?`${num(item.vol).toFixed(1)}%`:"—";
     $("#overviewChartTitle").textContent=`${world} price history`;
   }
@@ -1070,8 +1089,11 @@ function commonSeries(worldA,worldB){
   const a=seriesMap.get(worldA)||[],b=seriesMap.get(worldB)||[];
   const aMap=new Map(a.map(row=>[row.date,row]));
   const bMap=new Map(b.map(row=>[row.date,row]));
-  const a0=a.length?num(a[0].price_gp):null,b0=b.length?num(b[0].price_gp):null;
-  return comparisonDates.map(item=>{
+  const start=$("#worldStart").value,end=$("#worldEnd").value;
+  const dates=comparisonDates.filter(item=>item>=start&&item<=end);
+  const firstA=dates.find(item=>aMap.has(item)),firstB=dates.find(item=>bMap.has(item));
+  const a0=firstA?num(aMap.get(firstA).price_gp):null,b0=firstB?num(bMap.get(firstB).price_gp):null;
+  return dates.map(item=>{
     const aPrice=aMap.has(item)?num(aMap.get(item).price_gp):null;
     const bPrice=bMap.has(item)?num(bMap.get(item).price_gp):null;
     return{date:item,aPrice,bPrice,
@@ -1083,10 +1105,11 @@ function commonSeries(worldA,worldB){
 function renderWorldChart(){
   const worldA=$("#worldA").value,worldB=$("#worldB").value,rows=commonSeries(worldA,worldB);
   $$("#worldChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedWorldChartMode));
-  const fixedWindow=`${dateFmt.format(date(comparisonDates[0]))} to ${dateFmt.format(date(comparisonDates[comparisonDates.length-1]))}`;
+  const start=$("#worldStart").value,end=$("#worldEnd").value;
+  const fixedWindow=start&&end?`${dateFmt.format(date(start))} to ${dateFmt.format(date(end))}`:"invalid date range";
   $("#worldChartDescription").textContent=selectedWorldChartMode==="price"
-    ?`Actual daily market price in GP per Tibia Coin. Fixed window: ${fixedWindow}; missing history is left blank.`
-    :`Percentage gain or loss from each world's first observation. Fixed window: ${fixedWindow}; 0% means no change.`;
+    ?`Actual daily market price in GP per Tibia Coin. Selected window: ${fixedWindow}; missing history is left blank.`
+    :`Percentage gain or loss from each world's first observation inside the selected window. Selected window: ${fixedWindow}; 0% means no change.`;
   $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
   drawTwoSeries($("#worldChart"),$("#worldTooltip"),rows,{a:worldA,b:worldB},selectedWorldChartMode);
 }

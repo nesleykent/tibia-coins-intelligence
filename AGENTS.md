@@ -177,6 +177,16 @@ rather than displayed as an unexplained blank.
 - Keep spacing, typography, controls, and chart behavior consistent across the
   Overview and all report sections.
 - Define technical and Tibia-specific terms at first use.
+- Use units as part of the meaning, not as decoration:
+  - **GP** always means Tibia gold pieces;
+  - **TC** always means Tibia Coins;
+  - **GP/TC** is the gold price of one Tibia Coin.
+  Never shorten gold-piece output to “coins,” because readers may interpret it
+  as Tibia Coins. Use labels such as “Direct GP drops,” “Potential GP maximum,”
+  and “Realized GP estimate.”
+- Unit definitions, scope warnings, and interpretive disclaimers established in
+  the canonical report must accompany the same analysis on the site. Moving an
+  exhibit to the site without its governing caveat is a coverage defect.
 - Every chart needs a descriptive title, units, time period, source, and a
   reader-facing takeaway. Legends and tooltips must expose meaningful values.
 - Interactive filters must update all dependent text, metrics, charts, tables,

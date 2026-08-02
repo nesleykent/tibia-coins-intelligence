@@ -310,9 +310,9 @@ HTML = r"""<!doctype html>
       <div class="field series-field">
         <div class="series-summary">Series</div>
         <div class="series-control" role="group" aria-label="Visible chart series">
-          <label class="check"><input type="checkbox" data-series="direct" checked> Direct coins</label>
-          <label class="check"><input type="checkbox" data-series="potential" checked> Potential maximum</label>
-          <label class="check"><input type="checkbox" data-series="realized" checked> Realized estimate</label>
+          <label class="check"><input type="checkbox" data-series="direct" checked> Direct GP drops</label>
+          <label class="check"><input type="checkbox" data-series="potential" checked> Potential GP maximum</label>
+          <label class="check"><input type="checkbox" data-series="realized" checked> Realized GP estimate</label>
         </div>
       </div>
       <div class="actions">
@@ -333,7 +333,7 @@ HTML = r"""<!doctype html>
       <div class="metric">
         <span class="metric-label">Daily average</span>
         <strong id="averageMetric" class="metric-value">—</strong>
-        <span class="metric-meta">gold per day</span>
+        <span class="metric-meta">GP per day</span>
       </div>
       <div class="metric">
         <span class="metric-label">Peak day</span>
@@ -352,7 +352,7 @@ HTML = r"""<!doctype html>
         <div class="panel-inner">
           <div class="panel-heading">
             <h2>Emission over time</h2>
-            <span class="panel-note">Gold per day</span>
+            <span class="panel-note">GP generated per day</span>
           </div>
           <div id="chartLegend" class="legend" aria-hidden="true"></div>
           <div class="chart-wrap">
@@ -373,7 +373,7 @@ HTML = r"""<!doctype html>
             <h2>Emission composition</h2>
           </div>
           <div class="composition-total">
-            Potential maximum in selected period
+            Potential GP maximum in selected period
             <strong id="potentialTotal">—</strong>
           </div>
           <div id="compositionStack" class="stack" aria-label="Composition of maximum potential emission">
@@ -383,7 +383,8 @@ HTML = r"""<!doctype html>
           </div>
           <div id="compositionList" class="composition-list"></div>
           <p class="panel-note">
-            Direct coins are always realized. The selected scenario applies only to NPC-sellable loot.
+            Direct GP drops are always realized. The selected scenario applies only to NPC-sellable loot.
+            GP means gold pieces; Tibia Coins are labeled TC and are not part of these emission totals.
           </p>
         </div>
       </article>
@@ -417,9 +418,9 @@ HTML = r"""<!doctype html>
               <th scope="col">Coverage</th>
               <th scope="col">Quality</th>
               <th scope="col">Daily kills</th>
-              <th scope="col">Direct coins</th>
-              <th scope="col">Potential maximum</th>
-              <th id="realizedHeader" scope="col">Realized estimate</th>
+              <th scope="col">Direct GP drops</th>
+              <th scope="col">Potential GP maximum</th>
+              <th id="realizedHeader" scope="col">Realized GP estimate</th>
               <th scope="col">Top emitter</th>
             </tr>
           </thead>
@@ -433,7 +434,8 @@ HTML = r"""<!doctype html>
 
     <p class="footnote">
       Source: reconstructed creature loot values joined to Tibia world kill statistics. Player-market values are zero.
-      “Potential maximum” assumes all modeled NPC-sellable loot is collected and sold; realized scenarios apply only to that NPC component.
+      “Potential GP maximum” assumes all modeled NPC-sellable loot is collected and sold; realized scenarios apply only to that NPC component.
+      GP means Tibia gold pieces. TC means Tibia Coins; no TC are counted as generated gold.
       Boss emissions remain excluded from the primary series.
     </p>
   </main>
@@ -444,9 +446,9 @@ HTML = r"""<!doctype html>
   const SCHEMA = EMBEDDED.schema;
   const COLORS = { direct: "#2467c9", potential: "#bc643f", realized: "#d39418" };
   const SERIES = {
-    direct: { label: "Direct coins", color: COLORS.direct, dash: "" },
-    potential: { label: "Potential maximum", color: COLORS.potential, dash: "8 6" },
-    realized: { label: "Realized estimate", color: COLORS.realized, dash: "3 5" }
+    direct: { label: "Direct GP drops", color: COLORS.direct, dash: "" },
+    potential: { label: "Potential GP maximum", color: COLORS.potential, dash: "8 6" },
+    realized: { label: "Realized GP estimate", color: COLORS.realized, dash: "3 5" }
   };
   const REQUIRED_CSV = [
     "world", "date", "top_emission_creature_name", "top_emission_creature_gp",
@@ -643,12 +645,12 @@ HTML = r"""<!doctype html>
     const nonboss = sum(rows, "nonboss");
     const modeled = sum(rows, "modeled");
     $("#totalMetric").textContent = metricCompact(total);
-    $("#totalMetric").title = `${number.format(total)} gold`;
-    $("#totalMeta").textContent = `${number.format(total)} gold · ${scenarioLabel()}`;
+    $("#totalMetric").title = `${number.format(total)} GP`;
+    $("#totalMeta").textContent = `${number.format(total)} GP · ${scenarioLabel()}`;
     $("#averageMetric").textContent = metricCompact(total / rows.length);
-    $("#averageMetric").title = `${number.format(total / rows.length)} gold per day`;
+    $("#averageMetric").title = `${number.format(total / rows.length)} GP per day`;
     $("#peakMetric").textContent = metricCompact(peak.realized);
-    $("#peakMetric").title = `${number.format(peak.realized)} gold`;
+    $("#peakMetric").title = `${number.format(peak.realized)} GP`;
     $("#peakMeta").textContent = dateLabel.format(toDate(peak.date));
     $("#coverageMetric").textContent = percent.format(nonboss ? modeled / nonboss : 0);
     $("#coverageMeta").textContent = `${rows.length} observed days`;
@@ -763,7 +765,7 @@ HTML = r"""<!doctype html>
     $("#chartInspector").value = index;
     const tooltip = $("#chartTooltip");
     tooltip.innerHTML = `<div class="tooltip-date">${dateLabel.format(toDate(row.date))}</div>` +
-      keys.map(key => `<div class="tooltip-row"><i class="tooltip-dot" style="background:${SERIES[key].color}"></i><span>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span><span class="tooltip-value">${number.format(row[key])}</span></div>`).join("") +
+      keys.map(key => `<div class="tooltip-row"><i class="tooltip-dot" style="background:${SERIES[key].color}"></i><span>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span><span class="tooltip-value">${number.format(row[key])} GP</span></div>`).join("") +
       `<div class="tooltip-row" style="margin-top:7px"><i></i><span>Coverage</span><span class="tooltip-value">${percent.format(row.coverage)}</span></div>`;
     const chartWidth = $(".chart-wrap").clientWidth;
     const scaledX = xx / width * chartWidth;
@@ -771,7 +773,7 @@ HTML = r"""<!doctype html>
     tooltip.style.top = `${Math.max(8, margin.top + 8)}px`;
     tooltip.classList.add("visible");
     if (fromKeyboard) {
-      $("#chartInspector").setAttribute("aria-valuetext", `${dateLabel.format(toDate(row.date))}: realized ${number.format(row.realized)} gold`);
+      $("#chartInspector").setAttribute("aria-valuetext", `${dateLabel.format(toDate(row.date))}: realized ${number.format(row.realized)} GP`);
     }
   }
 
@@ -791,22 +793,22 @@ HTML = r"""<!doctype html>
     const realizedNpc = npc * rate;
     const unrealizedNpc = npc - realizedNpc;
     const potential = direct + npc;
-    $("#potentialTotal").textContent = `${number.format(potential)} gold`;
+    $("#potentialTotal").textContent = `${number.format(potential)} GP`;
     const segments = [
-      { key: "direct", label: "Direct coins", value: direct, color: COLORS.direct },
+      { key: "direct", label: "Direct GP drops", value: direct, color: COLORS.direct },
       { key: "realized", label: `Realized NPC loot (${scenarioPercent()})`, value: realizedNpc, color: COLORS.realized },
       { key: "unrealized", label: "Unrealized NPC potential", value: unrealizedNpc, color: COLORS.potential }
     ];
     const stackParts = $("#compositionStack").children;
     segments.forEach((segment, index) => {
       stackParts[index].style.width = `${potential ? segment.value / potential * 100 : 0}%`;
-      stackParts[index].title = `${segment.label}: ${number.format(segment.value)} gold`;
+      stackParts[index].title = `${segment.label}: ${number.format(segment.value)} GP`;
     });
     $("#compositionList").innerHTML = segments.map(segment =>
       `<div class="composition-row">
         <i class="swatch" style="background:${segment.color}"></i>
         <span>${segment.label}<small>${potential ? percent.format(segment.value / potential) : "0%"}</small></span>
-        <strong>${number.format(segment.value)}</strong>
+        <strong>${number.format(segment.value)} GP</strong>
       </div>`
     ).join("");
     $("#compositionStack").setAttribute("aria-label", segments.map(segment =>
@@ -833,7 +835,7 @@ HTML = r"""<!doctype html>
   function renderTable(rows) {
     const ordered = [...rows].reverse();
     const visible = showAllRows ? ordered : ordered.slice(0, 30);
-    $("#realizedHeader").textContent = `Realized estimate (${scenarioPercent()})`;
+    $("#realizedHeader").textContent = `Realized GP estimate (${scenarioPercent()})`;
     $("#detailBody").innerHTML = visible.map(row => {
       const quality = qualityOf(row);
       const qualityLabel = quality === "low" ? "Low quality" : quality[0].toUpperCase() + quality.slice(1);
