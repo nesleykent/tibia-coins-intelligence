@@ -82,6 +82,16 @@ The monetary-emission reconstruction is also available as four audit layers:
 | `data/processed/creature_gold_value.csv` | Canonical creature coverage and expected direct/potential GP per kill |
 | `data/processed/gold_emission_daily.csv` | World-day direct, potential, realization-adjusted, boss-separated, cumulative and activity-normalized series |
 | `reports/gold_emission_report_artifact.json` | Validated technical report manifest and bounded evidence snapshot |
+| `reports/gold_emission_dashboard.html` | Self-contained interactive dashboard with world, time, realization and series filters |
+
+Open `reports/gold_emission_dashboard.html` directly in a browser. It includes the current
+world-day dataset, works offline, stores shareable filters in the URL and can load a newer
+`gold_emission_daily.csv` through its **Load updated CSV** control. Regenerate the embedded
+snapshot after the monetary pipeline changes:
+
+```bash
+python scripts/38_gold_emission_dashboard.py
+```
 
 Refresh the public wiki caches only when a new source snapshot is intended:
 
@@ -92,6 +102,7 @@ python scripts/34b_collect_creatures.py
 python scripts/34_gold_emission.py
 python scripts/35_gold_emission_models.py
 python scripts/36_gold_emission_report.py
+python scripts/38_gold_emission_dashboard.py
 python scripts/37_verify_gold_emission.py
 ```
 

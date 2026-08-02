@@ -14,6 +14,7 @@ import pandas as pd
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 P = ROOT / "data" / "processed"
 REPORT = ROOT / "reports" / "gold_emission_report_artifact.json"
+DASHBOARD = ROOT / "reports" / "gold_emission_dashboard.html"
 
 REQUIRED = [
     "creature_loot_items.csv",
@@ -38,6 +39,7 @@ def main() -> None:
     missing = [name for name in REQUIRED if not (P / name).exists()]
     assert not missing, f"missing outputs: {missing}"
     assert REPORT.exists(), "missing report artifact"
+    assert DASHBOARD.exists(), "missing interactive dashboard"
 
     items = pd.read_csv(P / "creature_loot_items.csv")
     creatures = pd.read_csv(P / "creature_gold_value.csv")
@@ -47,6 +49,7 @@ def main() -> None:
     sensitivity = pd.read_csv(P / "gold_emission_sensitivity.csv")
     quality = json.loads((P / "gold_emission_quality.json").read_text())
     artifact = json.loads(REPORT.read_text())
+    dashboard = DASHBOARD.read_text(encoding="utf-8")
 
     assert creatures.creature_id.is_unique
     assert not daily.duplicated(["world", "date"]).any()
@@ -131,11 +134,20 @@ def main() -> None:
         }
         for table in artifact["manifest"]["tables"]
     )
+    assert "__DATA__" not in dashboard
+    assert f'"worldDays":{len(daily)}' in dashboard
+    assert "const EMBEDDED =" in dashboard
+    assert 'id="worldSelect"' in dashboard
+    assert 'id="dateStart"' in dashboard and 'id="dateEnd"' in dashboard
+    assert 'id="scenarioSelect"' in dashboard
+    assert 'id="lineChart"' in dashboard
+    assert 'id="fileInput"' in dashboard
+    assert "<script src=" not in dashboard, "dashboard must remain self-contained"
 
     print(
         f"[GOLD VERIFY] passed: {len(creatures):,} creatures, {len(items):,} loot rows, "
         f"{len(daily):,} world-days, {len(models):,} FE models, "
-        f"{sum(len(rows) for rows in datasets.values()):,} report rows"
+        f"{sum(len(rows) for rows in datasets.values()):,} report rows, dashboard ready"
     )
 
 

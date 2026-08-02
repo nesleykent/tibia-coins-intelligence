@@ -27,7 +27,8 @@ FUND = ["16_killstats.py", "17_features.py", "18_predict.py", "19_regimes.py",
         "25_arbitrage.py", "26_maximise.py", "27_irreducible.py", "28_supply_demand.py",
         "34_gold_emission.py", "35_gold_emission_models.py", "36_gold_emission_report.py",
         "29_scenarios.py", "30_model_artifact.py", "31_participants.py",
-        "32_scenario_backtest.py", "33_strategy.py", "37_verify_gold_emission.py"]
+        "32_scenario_backtest.py", "33_strategy.py", "38_gold_emission_dashboard.py",
+        "37_verify_gold_emission.py"]
 # Order matters from here: 06 recreates results.json, the rest extend it.
 ANALYSE = ["06_analysis.py", "07_forecast.py", "10_advanced.py", "11_finance.py",
            "14_venues.py"] + FUND
@@ -72,7 +73,7 @@ def run(stages):
 
 args = set(sys.argv[1:])
 if "--report" in args:
-    stages = RENDER
+    stages = ["38_gold_emission_dashboard.py"] + RENDER
 elif "--no-collect" in args:
     stages = BUILD + ANALYSE + RENDER
 else:
