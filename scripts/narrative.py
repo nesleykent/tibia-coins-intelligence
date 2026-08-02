@@ -135,6 +135,8 @@ class Claim:
     heading: str
     text: str
     summary: str = ""                # the shorter form, for an executive summary
+    player_heading: str = ""         # simple site-first heading
+    player_text: str = ""            # simple site-first explanation
     tiles: list[Tile] = field(default_factory=list)
     interactive: str | None = None   # a view the site can offer for this claim
     section: str = ""                # where the PDF states it, for cross-reference
@@ -164,6 +166,12 @@ def claims() -> list[Claim]:
                 f"The price of a Tibia Coin measured in GP is an exchange rate, not an asset price: supply "
                 f"is elastic at a fixed money price, neither leg pays a yield, and a "
                 f"{pc(F['feeRatePct'], 0)} fee holds a {pc(F['bandThresholdPct'])} band open."),
+            player_heading="Why TC prices differ between worlds",
+            player_text=(
+                "Players buy and sell TC with GP on each world. Small price differences are "
+                "usually not worth chasing because Market fees consume the profit. Large "
+                "differences can shrink over time. That is why this report compares worlds "
+                "instead of guessing that every TC price will rise or fall together."),
             tiles=[
                 Tile("Friction band", pc(F["bandThresholdPct"]),
                      "estimated from prices alone, with no fee figure supplied"),
@@ -186,6 +194,11 @@ def claims() -> list[Claim]:
             summary=(
                 f"Coins are a currency, not an asset. Held beyond what you intend to spend they "
                 f"pay nothing for {pc(F['annualVolPct'], 0)} of annualised volatility."),
+            player_heading="Do not keep extra TC expecting easy profit",
+            player_text=(
+                "TC are useful for Premium Time, Store products and the Char Bazaar. The data "
+                "does not show a reliable reward for simply holding extra TC and waiting. Keep "
+                "what you plan to use; treat the rest as a risky bet."),
             tiles=[
                 Tile("Annualised volatility", pc(F["annualVolPct"], 0),
                      "carried for no compensation"),
@@ -206,6 +219,11 @@ def claims() -> list[Claim]:
                 f"it does not: {pc(F['strategyNet30'])} net at thirty days, winning on "
                 f"{F['strategyWin30']:.0%} of occasions, across {F['episodes']} distinct "
                 f"episodes rather than one standing gap."),
+            player_heading="Only very large price gaps may be worth trading",
+            player_text=(
+                "Most differences between worlds are too small after Market costs. The biggest "
+                "10% of gaps performed better, but the amount of GP that can be used is limited "
+                "by available offers. This is a signal to investigate, not an automatic trade."),
             tiles=[
                 Tile("Net at 30 days", f"+{pc(F['strategyNet30'])}", "strongest decile, after cost"),
                 Tile("Wins", f"{F['strategyWin30']:.0%}", "of 30-day occasions"),
@@ -227,6 +245,12 @@ def claims() -> list[Claim]:
                 f"leaves {F['holdoutWindows7']} independent windows at seven days, "
                 f"{F['holdoutWindows30']} at thirty and {F['holdoutWindows91']} at ninety-one. "
                 f"Only the seven-day claim is carried by its sample."),
+            player_heading="Trust the 7-day test more than the longer ones",
+            player_text=(
+                f"The later test period contains {F['holdoutWindows7']} separate 7-day windows, "
+                f"but only {F['holdoutWindows30']} 30-day windows and "
+                f"{F['holdoutWindows91']} 91-day window. The longer results may look better, "
+                f"but there are too few separate tests to rely on them."),
             tiles=[
                 Tile("Holdout net, 7 days", f"+{pc(F['holdoutNet7'])}",
                      f"t = {F['holdoutT7']:.1f}, Newey-West"),
@@ -249,6 +273,12 @@ def claims() -> list[Claim]:
                 f"measures this study's {F['marketCoverage']:.0%} coverage rather than the two "
                 f"venues. The GP/TC price is formed in the thin venue and consumed in the thick "
                 f"one, so the marginal price-setter is a small population."),
+            player_heading="Most TC move through the Char Bazaar, not this Market",
+            player_text=(
+                f"In {F['venueYear']}, the Char Bazaar moved about "
+                f"{F['bazaarOverMarket']:.1f} times more TC than the in-game Market after making "
+                f"the periods comparable. The price history used here comes from the smaller "
+                f"in-game Market, so it does not show every place where players use TC."),
             tiles=[
                 Tile("Char Bazaar vs Market", f"{F['bazaarOverMarket']:.1f}×",
                      "coins in a year, on comparable coverage"),
@@ -269,6 +299,12 @@ def claims() -> list[Claim]:
                 f"times. No elasticity is significant at any horizon, and behaviour outperforms "
                 f"production by a factor of {F['behaviourOverProduction']:.0f}. This market is "
                 f"not a monetary phenomenon."),
+            player_heading="More hunting did not reliably move the TC price",
+            player_text=(
+                "Days with more creature deaths and more generated GP were not followed by a "
+                "reliable change in the TC price. This does not prove that GP can never matter. "
+                "It means the available history does not support using hunting activity alone "
+                "to decide when to buy or sell TC."),
             tiles=[
                 Tile("Gold production channel", "Rejected",
                      "same null on the GP-emission series"),

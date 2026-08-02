@@ -62,7 +62,9 @@ def _shared_narrative() -> dict:
     return {
         **narrative.facts(),
         "claims": [
-            {"key": c.key, "heading": c.heading, "text": c.text, "section": c.section,
+            {"key": c.key, "heading": c.heading, "text": c.text,
+             "playerHeading": c.player_heading, "playerText": c.player_text,
+             "section": c.section,
              "interactive": c.interactive,
              "tiles": [{"label": t.label, "value": t.value, "note": t.note} for t in c.tiles]}
             for c in narrative.claims()
@@ -439,7 +441,7 @@ HTML = r"""<!doctype html>
     .thesis-verdict{display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 10px;
       margin:0 0 20px;padding-bottom:18px;border-bottom:1px solid var(--line-soft);
       font-size:19px;line-height:1.3}
-    .thesis-verdict strong{text-transform:capitalize}
+    .thesis-verdict strong{font-weight:750}
     .thesis-confidence{font-size:13px;color:var(--muted);font-weight:500}
     .thesis-body{margin:0 0 16px;max-width:78ch;color:var(--muted);line-height:1.55}
     .thesis-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);
@@ -457,6 +459,10 @@ HTML = r"""<!doctype html>
     .claim-head h3{margin:0;font-size:15px}
     .claim-ref{font-size:11px;color:var(--muted);white-space:nowrap}
     .claim-text{margin:8px 0 16px;color:var(--muted);font-size:14px;line-height:1.6;max-width:82ch}
+    .claim-player{margin:8px 0 12px;color:#34405a;font-size:15px;line-height:1.55;max-width:72ch}
+    .claim-details{margin-top:12px;border-top:1px solid var(--line-soft);padding-top:10px}
+    .claim-details summary{cursor:pointer;color:var(--blue);font-size:13px;font-weight:700}
+    .claim-details[open] summary{margin-bottom:10px}
     .claim-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
     .claim-tiles .thesis-fact{min-height:96px;border:1px solid var(--line-soft);
       border-radius:7px;padding:13px 14px;background:var(--surface-soft)}
@@ -575,9 +581,8 @@ HTML = r"""<!doctype html>
           <div class="chart-wrap"><svg id="overviewChart" class="chart" role="img" aria-labelledby="overviewChartTitle"></svg><div id="overviewTooltip" class="chart-tooltip"></div></div>
         </article>
         <article class="panel thesis">
-          <div class="panel-heading"><div><h2>The verdict, and why</h2><p>Every claim below is
-            defined once in <code>scripts/narrative.py</code> and rendered into both the report
-            and this page. Nothing here is written by hand twice.</p></div></div>
+          <div class="panel-heading"><div><h2>What the data says</h2><p>Start with the simple
+            explanation. Open the numbers only when you want to check the evidence.</p></div></div>
           <p class="thesis-verdict"><strong id="verdictLine">—</strong>
             <span class="thesis-confidence" id="verdictConfidence">—</span></p>
           <div id="claimList" class="claim-list"></div>
@@ -873,11 +878,10 @@ function renderHeadline(){
   // in both artifacts; there is no second place to update.
   const m=data.meta;
   const el=(id,txt)=>{const n=$("#"+id);if(n)n.textContent=txt;};
-  el("verdictLine",m.verdict);
-  el("verdictConfidence",`${m.confidence}/100 confidence`);
+  el("verdictLine","Compare worlds; do not bet on every TC price rising or falling together.");
+  el("verdictConfidence",`Evidence strength: ${m.confidence}/100`);
   el("signalNet",`${signed(m.holdoutNet7,2)} net`);
-  el("signalNote",`7-day true holdout · t = ${Number(m.holdoutT7).toFixed(1)} · `+
-                  `${m.holdoutWindows7} independent windows`);
+  el("signalNote",`7-day result on later unseen dates · ${m.holdoutWindows7} separate test windows`);
   const link=$("#reportLink");
   if(link&&m.reportPages)link.textContent=`Read the ${m.reportPages}-page report`;
 
@@ -886,13 +890,16 @@ function renderHeadline(){
   host.innerHTML=(m.claims||[]).map(c=>`
     <section class="claim" data-claim="${escapeHtml(c.key)}">
       <div class="claim-head">
-        <h3>${escapeHtml(c.heading)}</h3>
-        <span class="claim-ref">Report §${escapeHtml(c.section)}</span>
+        <h3>${escapeHtml(c.playerHeading||c.heading)}</h3>
       </div>
-      <p class="claim-text">${escapeHtml(c.text)}</p>
-      <div class="claim-tiles">${c.tiles.map(t=>`
-        <div class="thesis-fact"><span>${escapeHtml(t.label)}</span>
-          <strong>${escapeHtml(t.value)}</strong><small>${escapeHtml(t.note)}</small></div>`).join("")}</div>
+      <p class="claim-player">${escapeHtml(c.playerText||c.text)}</p>
+      <details class="claim-details"><summary>See the numbers and technical explanation</summary>
+        <span class="claim-ref">Full report §${escapeHtml(c.section)}</span>
+        <p class="claim-text">${escapeHtml(c.text)}</p>
+        <div class="claim-tiles">${c.tiles.map(t=>`
+          <div class="thesis-fact"><span>${escapeHtml(t.label)}</span>
+            <strong>${escapeHtml(t.value)}</strong><small>${escapeHtml(t.note)}</small></div>`).join("")}</div>
+      </details>
       ${c.interactive?`<button class="claim-open button" data-open="${escapeHtml(c.interactive)}">Explore the data</button>`:""}
     </section>`).join("");
   host.querySelectorAll("[data-open]").forEach(b=>b.addEventListener("click",()=>{

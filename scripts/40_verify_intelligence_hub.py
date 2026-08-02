@@ -141,6 +141,11 @@ def main() -> None:
     assert "Interactive rebased world comparison" not in html
     assert "direct GP drops" in html
     assert "GP means gold pieces; Tibia Coins are labeled TC throughout." in html
+    assert "What the data says" in html
+    assert "See the numbers and technical explanation" in html
+    assert "Do not keep extra TC expecting easy profit" in html
+    assert "More hunting did not reliably move the TC price" in html
+    assert 'class="claim-details"' in html
     assert "reports/intelligence_hub.html" in entry
     assert 'meta http-equiv="refresh"' in entry
 
