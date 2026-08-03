@@ -441,6 +441,7 @@ MARKUP = r"""
           <label class="em-hidden" for="emChartInspector">Inspect chart by date</label>
           <input id="emChartInspector" class="em-hidden" type="range" min="0" max="0" value="0">
         </div>
+        <p id="emPriceCoverage" class="em-note"></p>
       </div>
     </article>
 
@@ -618,6 +619,9 @@ SCRIPT = r"""
   let creatureRanking = [];
   let priceByWorldDate = new Map();
   let priceByDateMedian = new Map();
+  let priceWorldsByDate = new Map();
+  // Below this many worlds an all-worlds median describes a handful of markets, not the market.
+  const PRICE_MIN_WORLDS = 10;
   let creatureValueMap = new Map();
   let sourceMeta = {};
   let filtered = [];
@@ -871,6 +875,11 @@ SCRIPT = r"""
       const median = values.length % 2 ? values[middle] : (values[middle - 1] + values[middle]) / 2;
       return [date, median];
     }));
+    // How many worlds stand behind each median. Price history starts in 2023 but only 3 worlds
+    // carry a price that year, 20 in 2024 and 82 in 2025, so an all-worlds median silently
+    // changes meaning across the panel: the same line is 3 worlds on the left and 93 on the
+    // right. Keep the count so the chart can say which, instead of drawing both alike.
+    priceWorldsByDate = new Map([...valuesByDate].map(([date, values]) => [date, values.length]));
     if (ready) render();
   }
 
@@ -939,7 +948,8 @@ SCRIPT = r"""
       coverage: row.nonboss > 0 ? row.modeled / row.nonboss : 0,
       tcPrice: world === "all"
         ? numeric(priceByDateMedian.get(row.date))
-        : numeric(priceByWorldDate.get(`${world}|${row.date}`))
+        : numeric(priceByWorldDate.get(`${world}|${row.date}`)),
+      tcPriceWorlds: world === "all" ? (priceWorldsByDate.get(row.date) || 0) : (priceByWorldDate.has(`${world}|${row.date}`) ? 1 : 0)
     }));
   }
 
@@ -1010,6 +1020,39 @@ SCRIPT = r"""
       ? `<span class="em-legend-item"><i class="em-legend-line" style="border-color:${COLORS.tcPrice}"></i>TC price (GP/TC) · right axis</span>`
       : "";
     $("#emChartLegend").innerHTML = emissionLegend + priceLegend;
+    renderPriceCoverage();
+  }
+
+  /* The TC price line and the emission line do not cover the same span, and nothing on the chart
+     said so. Emission runs from 2022-08-22; prices begin 2023-01-11 and reach most worlds only
+     during 2025, so on a single world the line usually starts years after the bars, and on "All
+     worlds" its early stretch is a median over a handful of markets. Say which, on the chart. */
+  function renderPriceCoverage() {
+    const node = $("#emPriceCoverage");
+    if (!node) return;
+    if (!$("#emTcPriceToggle").checked) { node.textContent = ""; return; }
+    const rows = filtered || [];
+    const world = $("#emWorldSelect").value || "all";
+    const priced = rows.filter(row => row.tcPrice > 0);
+    if (!priced.length) {
+      node.textContent = world === "all"
+        ? "No TC price in this date range."
+        : `No TC price for ${world} in this date range. Price history starts when a world's Market began to be collected, which for most worlds is during 2025.`;
+      return;
+    }
+    const first = priced[0].date;
+    const gap = rows[0] && first > rows[0].date
+      ? ` Emission is drawn from ${isoDate(rows[0].date)}, the price line only from ${isoDate(first)}.`
+      : "";
+    if (world === "all") {
+      const thin = priced.filter(row => row.tcPriceWorlds < PRICE_MIN_WORLDS);
+      const worldsNow = priced[priced.length - 1].tcPriceWorlds;
+      node.textContent = thin.length
+        ? `TC price is the median across worlds reporting each day: ${worldsNow} worlds at the end of the range, but fewer than ${PRICE_MIN_WORLDS} on ${thin.length} of ${priced.length} days, ending ${isoDate(thin[thin.length - 1].date)}. Treat that early stretch as a few markets, not the market.${gap}`
+        : `TC price is the median across the ${worldsNow} worlds reporting each day.${gap}`;
+    } else {
+      node.textContent = `TC price for ${world}, ${priced.length} days with a price out of ${rows.length} shown.${gap}`;
+    }
   }
 
   function addSVG(parent, tag, attributes, text = "") {
