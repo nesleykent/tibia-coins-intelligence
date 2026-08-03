@@ -608,7 +608,7 @@ HTML = r"""<!doctype html>
         </article>
         <div class="split">
           <article class="panel">
-            <div class="panel-heading"><div><h2>Compare worlds</h2><p><span id="overviewTableCount"></span> · The professional terms stay visible, with a short explanation under each one.</p><details class="claim-details"><summary>Method and limitations</summary><p><strong>Deviation</strong> uses the cross-world reference. <strong>Predicted 7d</strong> estimates the change in that deviation, not the future TC price. <strong>Signal</strong> translates the two numbers into a classification. These figures do not show whether enough TC is available to execute a trade.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
+            <div class="panel-heading"><div><h2>Compare worlds</h2><p><span id="overviewTableCount"></span> · <strong>Convergent</strong> means the absolute deviation is expected to shrink. <strong>Divergent</strong> means it is expected to grow. <strong>Inside band</strong> means the gap is too small for that classification.</p><details class="claim-details"><summary>Method and limitations</summary><p><strong>Deviation</strong> uses the cross-world reference. <strong>Predicted 7d</strong> estimates the change in that deviation, not the future TC price. <strong>Signal</strong> compares the current absolute deviation with its model-implied value after seven days. These figures do not show whether enough TC is available to execute a trade.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
             <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>Signal<span class="term-help">How to read the result</span></th></tr></thead><tbody id="overviewTable"></tbody></table></div>
           </article>
           <aside class="panel signal">
@@ -638,7 +638,7 @@ HTML = r"""<!doctype html>
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="forecastChartTitle">Forecast fan</h2><p>Median and 80% simulated range. A wide band is uncertainty, not opportunity.</p></div></div><div class="chart-wrap"><svg id="forecastChart" class="chart" role="img" aria-labelledby="forecastChartTitle"></svg><div id="forecastTooltip" class="chart-tooltip"></div></div></article>
           <aside id="forecastSummary" class="panel forecast-summary"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>80% interval<span class="term-help">Likely range, not a guarantee</span></th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean. <strong>Convergent</strong> means the deviation may shrink; <strong>Divergent</strong> means it may grow.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>Signal<span class="term-help">Convergent, divergent or inside band</span></th><th>80% interval<span class="term-help">Likely range, not a guarantee</span></th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
       </section>
 
       <section id="view-models" class="view" hidden>
@@ -1136,9 +1136,16 @@ function joinedWorlds(){
 }
 
 function signalOf(row){
-  if(!row.prediction)return{label:"Not enough data",className:"neutral"};
-  if(!bool(row.prediction.outside_band))return{label:"Close to other worlds",className:"neutral"};
-  return num(row.prediction.predicted_change_pct)>=0?{label:"May move closer",className:"positive"}:{label:"May move farther",className:"negative"};
+  const prediction=row?.prediction||row;
+  if(!prediction||prediction.deviation_pct===undefined||prediction.predicted_change_pct===undefined)
+    return{label:"Not enough data",className:"neutral"};
+  if(!bool(prediction.outside_band))return{label:"Inside band — gap too small",className:"neutral"};
+  const current=Math.abs(num(prediction.deviation_pct));
+  const next=Math.abs(num(prediction.deviation_pct)+num(prediction.predicted_change_pct));
+  if(Math.abs(next-current)<0.005)return{label:"Flat — little change expected",className:"neutral"};
+  return next<current
+    ?{label:"Convergent — deviation may shrink",className:"positive"}
+    :{label:"Divergent — deviation may grow",className:"negative"};
 }
 
 function renderOverviewTable(){
@@ -1296,11 +1303,12 @@ function renderForecastSummary(){
 
 function renderPredictionTable(){
   const rows=[...data.predictions].sort((a,b)=>num(b.predicted_change_pct)-num(a.predicted_change_pct));
-  $("#predictionTable").innerHTML=rows.map(row=>`<tr data-world="${escapeHtml(row.world)}">
+  $("#predictionTable").innerHTML=rows.map(row=>{const signal=signalOf(row);return`<tr data-world="${escapeHtml(row.world)}">
     <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td><td data-label="Price">${fmt.format(row.price_gp)}</td>
     <td data-label="Deviation" class="${num(row.deviation_pct)>=0?"positive":"negative"}">${signed(row.deviation_pct)}</td>
-    <td data-label="Prediction" class="${num(row.predicted_change_pct)>=0?"positive":"negative"}">${signed(row.predicted_change_pct)}</td>
-    <td data-label="80% interval">${signed(row.low80_pct)} to ${signed(row.high80_pct)}</td></tr>`).join("");
+    <td data-label="Predicted 7d" class="${num(row.predicted_change_pct)>=0?"positive":"negative"}">${signed(row.predicted_change_pct)}</td>
+    <td data-label="Signal" class="${signal.className}">${signal.label}</td>
+    <td data-label="80% interval">${signed(row.low80_pct)} to ${signed(row.high80_pct)}</td></tr>`}).join("");
   $$("#predictionTable tr").forEach(row=>row.addEventListener("click",()=>{if(forecastMap.has(row.dataset.world)){$("#forecastWorld").value=row.dataset.world;renderForecasts();updateURL()}}));
 }
 

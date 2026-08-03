@@ -165,6 +165,12 @@ def main() -> None:
     assert "Expected change in deviation" in html
     assert "Signal" in html
     assert "How to read the result" in html
+    assert "Convergent — deviation may shrink" in html
+    assert "Divergent — deviation may grow" in html
+    assert "Inside band — gap too small" in html
+    assert "May move closer" not in html
+    assert "May move farther" not in html
+    assert "Close to other worlds" not in html
     assert "Method and limitations" in html
     assert "The rule in three steps" in html
     assert "It does not show a trade available right now." in html

@@ -62,6 +62,9 @@ not lose information merely because the default language is simpler.
 | Relative deviation | Deviation — price versus other worlds | How expensive or cheap this world is compared with the market |
 | Predicted 7d | Predicted 7d — expected change over the next 7 days | The model's estimate of how the world's deviation may change; it is not a guaranteed TC price |
 | Signal | Signal — how to read the result | A plain classification of whether the gap is small, may shrink, or may grow |
+| Convergent signal | Convergent — deviation expected to shrink | The model expects the world's price difference versus other worlds to become smaller |
+| Divergent signal | Divergent — deviation expected to grow | The model expects the world's price difference versus other worlds to become larger |
+| Inside band | Inside band — deviation too small to classify | The price difference is inside the estimated friction band and does not receive a convergence trade classification |
 | Convergence | Price difference shrinking | A cheap or expensive world moving back toward the others |
 | Friction/no-trade band | Difference too small to cover costs | A price gap that is not worth trading after Market fees and execution risk |
 | Random walk | Today’s price is the best central estimate | The models could not reliably improve on simply carrying today’s price forward |

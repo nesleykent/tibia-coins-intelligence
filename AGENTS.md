@@ -110,6 +110,9 @@ Examples:
 - “strongest 10% of price gaps” before “top decile”;
 - “likely range, not a guaranteed target” before “80% forecast interval”;
 - “Deviation — price compared with the other worlds.”
+- “Convergent — deviation expected to shrink” and “Divergent — deviation
+  expected to grow”; never replace these classifications with only “move
+  closer” or “move farther.”
 
 Use [design/player_explanation_system.md](design/player_explanation_system.md)
 as the canonical translation and page-review checklist.
