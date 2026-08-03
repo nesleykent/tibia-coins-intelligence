@@ -148,7 +148,9 @@ def main() -> None:
     assert 'id="lineChart"' in dashboard
     assert 'id="tcPriceToggle"' in dashboard
     assert "TC price (GP/TC)" in dashboard
-    assert 'tcPrice: "#a0185a"' in dashboard
+    assert 'direct: "#4E79A7"' in dashboard
+    assert 'potential: "#F28E2B"' in dashboard
+    assert 'tcPrice: "#59A14F"' in dashboard
     assert "priceSchema" in dashboard and "priceRows" in dashboard
     assert "creatureValueSchema" in dashboard and "creatureValues" in dashboard
     assert 'params.set("tcPrice", "1")' in dashboard

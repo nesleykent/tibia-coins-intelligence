@@ -295,6 +295,9 @@ rather than displayed as an unexplained blank.
   exhibit to the site without its governing caveat is a coverage defect.
 - Every chart needs a descriptive title, units, time period, source, and a
   reader-facing takeaway. Legends and tooltips must expose meaningful values.
+- Reuse the canonical PDF chart palette from `scripts/chartstyle.py` in site
+  charts. Do not invent page-specific series colors when the canonical blue,
+  orange, green, red, teal, purple, or neutral roles already fit.
 - Interactive filters must update all dependent text, metrics, charts, tables,
   dates, and provenance consistently.
 - Preserve context when switching worlds; avoid surprising resets.

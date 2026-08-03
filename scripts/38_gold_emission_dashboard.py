@@ -124,8 +124,8 @@ HTML = r"""<!doctype html>
       --muted: #667085;
       --line: #d8dee8;
       --line-soft: #edf0f4;
-      --direct: #2467c9;
-      --potential: #bc643f;
+      --direct: #4E79A7;
+      --potential: #F28E2B;
       --good: #24875d;
       --warning: #b77905;
       --danger: #c43d3d;
@@ -505,7 +505,7 @@ HTML = r"""<!doctype html>
   "use strict";
   const EMBEDDED = __DATA__;
   const SCHEMA = EMBEDDED.schema;
-  const COLORS = { direct: "#2467c9", potential: "#bc643f", tcPrice: "#a0185a" };
+  const COLORS = { direct: "#4E79A7", potential: "#F28E2B", tcPrice: "#59A14F" };
   const SERIES = {
     direct: { label: "Direct GP drops", color: COLORS.direct, dash: "" },
     potential: { label: "Potential GP", color: COLORS.potential, dash: "8 6" }
