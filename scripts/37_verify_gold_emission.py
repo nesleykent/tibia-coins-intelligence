@@ -15,6 +15,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 P = ROOT / "data" / "processed"
 REPORT = ROOT / "reports" / "gold_emission_report_artifact.json"
 DASHBOARD = ROOT / "reports" / "gold_emission_dashboard.html"
+CREATURE_PAGE = ROOT / "reports" / "creature_gp_per_kill.html"
 
 REQUIRED = [
     "creature_loot_items.csv",
@@ -40,6 +41,7 @@ def main() -> None:
     assert not missing, f"missing outputs: {missing}"
     assert REPORT.exists(), "missing report artifact"
     assert DASHBOARD.exists(), "missing interactive dashboard"
+    assert CREATURE_PAGE.exists(), "missing creature GP reference page"
 
     items = pd.read_csv(P / "creature_loot_items.csv")
     creatures = pd.read_csv(P / "creature_gold_value.csv")
@@ -50,7 +52,9 @@ def main() -> None:
     quality = json.loads((P / "gold_emission_quality.json").read_text())
     artifact = json.loads(REPORT.read_text())
     dashboard = DASHBOARD.read_text(encoding="utf-8")
-    assert "Direct GP drops" in dashboard
+    creature_page = CREATURE_PAGE.read_text(encoding="utf-8")
+    assert "Direct GP" in dashboard
+    assert "Direct GP drops" not in dashboard
     assert "Potential GP maximum" in dashboard
     assert "Realized GP estimate" not in dashboard
     assert "GP means Tibia gold pieces. TC means Tibia Coins" in dashboard
@@ -141,29 +145,50 @@ def main() -> None:
     )
     assert "__DATA__" not in dashboard
     assert f'"worldDays":{len(daily)}' in dashboard
-    assert "const EMBEDDED =" in dashboard
-    assert 'id="worldSelect"' in dashboard
-    assert 'id="dateStart"' in dashboard and 'id="dateEnd"' in dashboard
+    assert "const EMISSION_DATA =" in dashboard
+    assert 'id="emWorldSelect"' in dashboard
+    assert 'id="emDateStart"' in dashboard and 'id="emDateEnd"' in dashboard
     assert 'id="scenarioSelect"' not in dashboard
-    assert 'id="lineChart"' in dashboard
-    assert 'id="tcPriceToggle"' in dashboard
+    # The creature ranking is its own page, never a panel under the daily tables.
+    assert 'id="emRankingBody"' not in dashboard
+    assert 'id="emRankingBody"' in creature_page
+    assert "Which creatures pay the most GP per kill" in creature_page
+    assert 'href="creature_gp_per_kill.html"' in dashboard
+    assert 'href="gold_emission_dashboard.html"' in creature_page
+    assert "Potential GP per kill" in creature_page
+    assert "<script src=" not in creature_page, "creature page must remain self-contained"
+    assert 'id="emChart"' in dashboard
+    assert 'id="emTcPriceToggle"' in dashboard
     assert "TC price (GP/TC)" in dashboard
     assert 'direct: "#4E79A7"' in dashboard
     assert 'potential: "#F28E2B"' in dashboard
     assert 'tcPrice: "#59A14F"' in dashboard
     assert "priceSchema" in dashboard and "priceRows" in dashboard
     assert "creatureValueSchema" in dashboard and "creatureValues" in dashboard
-    assert 'params.set("tcPrice", "1")' in dashboard
-    assert 'id="creatureDetail"' in dashboard
-    assert "day-detail-mode" in dashboard
+    assert "creatureValueSchema" in creature_page
+    assert 'map[paramName("tcPrice")] = "1"' in dashboard
+    assert 'id="emDayDetail"' in dashboard
+    assert "em-detail-mode" in dashboard
     assert "← Back to Gold Emission" in dashboard
-    assert 'data-detail-date=' in dashboard
-    assert "async function openCreatureDetail(date, trigger = null, pushRoute = true)" in dashboard
-    assert "function renderCreatureDetail(world, date, rows, sourceUrl)" in dashboard
+    assert "data-em-date=" in dashboard
+    assert 'function openDayDetail(date, mode = "push")' in dashboard
+    assert "function renderDayDetail()" in dashboard
     assert "tibiamaps/tibia-kill-stats/main/data/" in dashboard
-    assert "function enhanceSortableTables(root = document)" in dashboard
-    assert 'class="sort-button"' in dashboard
-    assert 'id="fileInput"' in dashboard
+    # The all-worlds day view must add the worlds up instead of refusing to answer.
+    assert "function worldsReporting(date)" in dashboard
+    assert "worlds added together" in dashboard
+    assert "Select a specific server in the World filter" not in dashboard
+    assert "function killStatsFileDate(date)" in dashboard
+    assert "stamp.setUTCDate(stamp.getUTCDate() + 1)" in dashboard
+    assert "function stopDayDetail()" in dashboard
+    assert 'class="em-sort-button"' in dashboard
+    # Sorting must run on the data, not on the rows that happen to be rendered.
+    assert "function sortRows(tableKey, rows)" in dashboard
+    assert 'sortRows("daily", rows)' in dashboard
+    assert 'sortRows("detail", rows)' in dashboard
+    assert "function markSortHeaders(table, tableKey)" in dashboard
+    assert "data-em-sort-key=" in dashboard
+    assert 'id="emFileInput"' in dashboard
     assert "<script src=" not in dashboard, "dashboard must remain self-contained"
     assert "async function refreshProjectCSV()" in dashboard
     assert 'fetch("../data/processed/gold_emission_daily.csv", { cache: "no-store" })' in dashboard
@@ -172,7 +197,7 @@ def main() -> None:
     assert "void refreshProjectCSV();" in dashboard
     assert "function isoDate(value)" in dashboard
     assert "function isoTimestamp(value)" in dashboard
-    assert 'id="worldBreakdown"' in dashboard
+    assert 'id="emWorldBreakdown"' in dashboard
     assert "function renderWorldBreakdown(rows)" in dashboard
     assert "What generated potential GP in" in dashboard
     assert "Largest creature source on one day" in dashboard
@@ -180,7 +205,7 @@ def main() -> None:
     assert 'Intl.DateTimeFormat("en-US"' not in dashboard
     assert 'toLocaleString("en-US")' not in dashboard
     invalid_guard = dashboard.index(
-        'if ($("#dateStart").value > $("#dateEnd").value)'
+        'if ($("#emDateStart").value > $("#emDateEnd").value)'
     )
     invalid_return = dashboard.index("return;", invalid_guard)
     invalid_block = dashboard[invalid_guard:invalid_return]

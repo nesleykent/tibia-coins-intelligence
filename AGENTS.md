@@ -290,7 +290,7 @@ rather than displayed as an unexplained blank.
   Never expand GP as “gold price.” GP names the in-game currency; price is a
   relationship between units.
   Never shorten gold-piece output to “coins,” because readers may interpret it
-  as Tibia Coins. Use labels such as “Direct GP drops” and “Potential GP.”
+  as Tibia Coins. Use labels such as “Direct GP” and “Potential GP.”
   Realization percentages are technical sensitivity scenarios, not observed
   quantities; do not present “Realized GP estimate” as a primary site metric.
 - Unit definitions, scope warnings, and interpretive disclaimers established in

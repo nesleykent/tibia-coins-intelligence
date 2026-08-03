@@ -80,6 +80,7 @@ def main() -> None:
         "models",
         "strategy",
         "emission",
+        "creatures",
         "library",
     ):
         assert f'id="view-{view}"' in html
@@ -121,13 +122,29 @@ def main() -> None:
     ):
         assert source in html, f"missing live data source: {source}"
 
-    iframe_tag = html[html.index('<iframe id="emissionFrame"'):html.index(
-        "</iframe>", html.index('<iframe id="emissionFrame"')
-    )]
-    assert 'src=' not in iframe_tag, (
-        "the emission iframe must remain lazy until its view opens"
+    # Gold Emission is a native view built from the shared component, not an embedded page.
+    assert "<iframe" not in html, "the hub must not embed a view in an iframe"
+    assert 'id="emissionApp"' in html
+    assert 'id="creatureRanking"' in html
+    assert "window.EmissionView.mount({" in html
+    assert 'rankingRoot: document.getElementById("creatureRanking")' in html
+    assert 'prices: () => data.worldSeries' in html, (
+        "the emission view must reuse the hub prices instead of embedding a second copy"
     )
-    assert '$("#emissionFrame").src="gold_emission_dashboard.html"' in html
+    assert 'if(view==="emission"&&window.EmissionView)window.EmissionView.activate();' in html
+    assert "window.EmissionView.params()" in html, "emission filters must reach the hub URL"
+    assert "Open full screen" not in html
+    assert "Open as its own page" not in html
+    assert 'data-goto-view="creatures"' in html
+    assert 'data-goto-view="emission"' in html
+    assert "Select a specific server in the World filter" not in html
+    assert "worlds added together" in html
+    # Sorting has to survive a re-render instead of leaving a stale arrow behind.
+    assert "const tableSorts=new WeakMap();" in html
+    assert "function applyTableSort(table){" in html
+    assert "new MutationObserver(()=>applyTableSort(table))" in html
+    assert "function columnIsNumeric(table,column){" in html
+    assert "function sortRows(tableKey, rows)" in html
     assert 'href="tibia_coin_market_report.pdf"' in html
     assert 'data-mode="mid">Average</button>' in html
     assert 'data-mode="buy">Buy TC</button>' in html
@@ -156,7 +173,8 @@ def main() -> None:
     assert 'button.className="sort-button"' in html
     assert 'Intl.DateTimeFormat("en-US"' not in html
     assert 'toLocaleString("en-US")' not in html
-    assert "direct GP drops" in html
+    assert "direct GP and NPC-sale potential" in html
+    assert "Direct GP drops" not in html
     assert "GP means gold pieces; Tibia Coins are labeled TC throughout." in html
     assert "What the data says" in html
     assert "Deviation" in html

@@ -48,7 +48,7 @@
      "description": "Aggregate direct and 50%-realization GP per average online player by date.",
      "engine": "SQLite",
      "language": "sql",
-     "sql": "SELECT date, 'Direct GP drops' AS series, SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date UNION ALL SELECT date, 'Realized GP estimate (50%)' AS series, SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date ORDER BY date, series;",
+     "sql": "SELECT date, 'Direct GP' AS series, SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date UNION ALL SELECT date, 'Realized GP estimate (50%)' AS series, SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date ORDER BY date, series;",
      "tables_used": [
       "gold_emission_daily"
      ],
@@ -68,7 +68,7 @@
      "description": "Select matched shock-lag headline models and convert coefficients to percentage points.",
      "engine": "SQLite",
      "language": "sql",
-     "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP drops' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n FROM gold_emission_model_comparison WHERE model_type = 'shock_lag' AND lag_or_window_days = horizon_days AND horizon_days IN (1, 7, 30) AND series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+     "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n FROM gold_emission_model_comparison WHERE model_type = 'shock_lag' AND lag_or_window_days = horizon_days AND horizon_days IN (1, 7, 30) AND series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
      "tables_used": [
       "gold_emission_model_comparison"
      ],
@@ -90,7 +90,7 @@
      "description": "Select comparable holdout models and convert RMSE improvement to percentage points.",
      "engine": "SQLite",
      "language": "sql",
-     "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP drops' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, rmse_improvement_pct * 100.0 AS rmse_improvement_pp, random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n FROM gold_emission_oos WHERE series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+     "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, rmse_improvement_pct * 100.0 AS rmse_improvement_pp, random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n FROM gold_emission_oos WHERE series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
      "tables_used": [
       "gold_emission_oos"
      ],
@@ -473,7 +473,7 @@
      "worlds": 87,
      "coverage": 0.9692691779,
      "online": 12031.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 784541.5087468677
     },
     {
@@ -481,7 +481,7 @@
      "worlds": 87,
      "coverage": 0.9683651886,
      "online": 13520.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 623663.6637684455
     },
     {
@@ -489,7 +489,7 @@
      "worlds": 87,
      "coverage": 0.9681277063,
      "online": 14288.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 529585.9891297664
     },
     {
@@ -497,7 +497,7 @@
      "worlds": 87,
      "coverage": 0.9648649724,
      "online": 14469.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 604133.3653190911
     },
     {
@@ -505,7 +505,7 @@
      "worlds": 87,
      "coverage": 0.9578785737,
      "online": 12811.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 745480.5417703352
     },
     {
@@ -513,7 +513,7 @@
      "worlds": 87,
      "coverage": 0.9589227515,
      "online": 11964.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 786646.1208467047
     },
     {
@@ -521,7 +521,7 @@
      "worlds": 87,
      "coverage": 0.9648124294,
      "online": 11788.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 817339.3626580586
     },
     {
@@ -529,7 +529,7 @@
      "worlds": 87,
      "coverage": 0.9651426933,
      "online": 11472.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 816676.3422713897
     },
     {
@@ -537,7 +537,7 @@
      "worlds": 87,
      "coverage": 0.9657215886,
      "online": 11708.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 784020.2847310476
     },
     {
@@ -545,7 +545,7 @@
      "worlds": 87,
      "coverage": 0.9645628755,
      "online": 12579.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 683215.3737642803
     },
     {
@@ -553,7 +553,7 @@
      "worlds": 87,
      "coverage": 0.9634063435,
      "online": 13082.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 784166.4987134315
     },
     {
@@ -561,7 +561,7 @@
      "worlds": 87,
      "coverage": 0.9624883588,
      "online": 12224.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 856539.592378355
     },
     {
@@ -569,7 +569,7 @@
      "worlds": 87,
      "coverage": 0.9631065635,
      "online": 12333.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 830432.8735879018
     },
     {
@@ -577,7 +577,7 @@
      "worlds": 87,
      "coverage": 0.9644658001,
      "online": 12237.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 847086.5704026107
     },
     {
@@ -585,7 +585,7 @@
      "worlds": 87,
      "coverage": 0.96472899,
      "online": 11965.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 860477.363424245
     },
     {
@@ -593,7 +593,7 @@
      "worlds": 87,
      "coverage": 0.9664478118,
      "online": 11798.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 802166.1148241217
     },
     {
@@ -601,7 +601,7 @@
      "worlds": 87,
      "coverage": 0.965390851,
      "online": 12255.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 734745.1633309475
     },
     {
@@ -609,7 +609,7 @@
      "worlds": 87,
      "coverage": 0.9632086266,
      "online": 12539.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 781510.3303395757
     },
     {
@@ -617,7 +617,7 @@
      "worlds": 87,
      "coverage": 0.9677889418,
      "online": 12496.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1151832.8561697975
     },
     {
@@ -625,7 +625,7 @@
      "worlds": 87,
      "coverage": 0.9705506423,
      "online": 17276.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 752090.9333325851
     },
     {
@@ -633,7 +633,7 @@
      "worlds": 87,
      "coverage": 0.9715291697,
      "online": 21585.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 520409.1970890837
     },
     {
@@ -641,7 +641,7 @@
      "worlds": 87,
      "coverage": 0.9696933626,
      "online": 18545.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 766434.977715953
     },
     {
@@ -649,7 +649,7 @@
      "worlds": 87,
      "coverage": 0.9697549798,
      "online": 20359.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 706520.66117312
     },
     {
@@ -657,7 +657,7 @@
      "worlds": 87,
      "coverage": 0.9689006152,
      "online": 20362.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 748285.4006274062
     },
     {
@@ -665,7 +665,7 @@
      "worlds": 87,
      "coverage": 0.9656445678,
      "online": 20678.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 483262.2541548436
     },
     {
@@ -673,7 +673,7 @@
      "worlds": 87,
      "coverage": 0.9619400083,
      "online": 17046.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 544606.4356886433
     },
     {
@@ -681,7 +681,7 @@
      "worlds": 87,
      "coverage": 0.9656363586,
      "online": 12802.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 589059.9867609215
     },
     {
@@ -689,7 +689,7 @@
      "worlds": 87,
      "coverage": 0.9665792336,
      "online": 12027.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 474520.7325797717
     },
     {
@@ -697,7 +697,7 @@
      "worlds": 87,
      "coverage": 0.9635531172,
      "online": 9396.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1017637.2775925514
     },
     {
@@ -705,7 +705,7 @@
      "worlds": 87,
      "coverage": 0.9636929155,
      "online": 12477.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 765163.4345288452
     },
     {
@@ -713,7 +713,7 @@
      "worlds": 87,
      "coverage": 0.9621990904,
      "online": 13295.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 701486.839000992
     },
     {
@@ -721,7 +721,7 @@
      "worlds": 87,
      "coverage": 0.9603085777,
      "online": 13979.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 756990.2804819064
     },
     {
@@ -729,7 +729,7 @@
      "worlds": 87,
      "coverage": 0.9596282243,
      "online": 13499.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 827278.6597850005
     },
     {
@@ -737,7 +737,7 @@
      "worlds": 87,
      "coverage": 0.9591108869,
      "online": 13997.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 776310.0562611639
     },
     {
@@ -745,7 +745,7 @@
      "worlds": 87,
      "coverage": 0.9626376094,
      "online": 12924.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 879899.7453298477
     },
     {
@@ -753,7 +753,7 @@
      "worlds": 87,
      "coverage": 0.9634374898,
      "online": 12786.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 879650.8341878182
     },
     {
@@ -761,7 +761,7 @@
      "worlds": 87,
      "coverage": 0.9651863775,
      "online": 12779.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 846240.0562889392
     },
     {
@@ -769,7 +769,7 @@
      "worlds": 87,
      "coverage": 0.9646896787,
      "online": 13729.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 738090.0685094806
     },
     {
@@ -777,7 +777,7 @@
      "worlds": 87,
      "coverage": 0.9634560687,
      "online": 14094.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 797875.929998538
     },
     {
@@ -785,7 +785,7 @@
      "worlds": 87,
      "coverage": 0.9621935528,
      "online": 12919.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 876172.1040931513
     },
     {
@@ -793,7 +793,7 @@
      "worlds": 87,
      "coverage": 0.961853237,
      "online": 0.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": null
     },
     {
@@ -801,7 +801,7 @@
      "worlds": 87,
      "coverage": 0.9616161809,
      "online": 13164.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 875639.6005229573
     },
     {
@@ -809,7 +809,7 @@
      "worlds": 87,
      "coverage": 0.9631606006,
      "online": 12695.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 975008.5655706458
     },
     {
@@ -817,7 +817,7 @@
      "worlds": 87,
      "coverage": 0.9640912862,
      "online": 12855.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 904448.848409071
     },
     {
@@ -825,7 +825,7 @@
      "worlds": 87,
      "coverage": 0.9602159915,
      "online": 13871.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 770489.7855368768
     },
     {
@@ -833,7 +833,7 @@
      "worlds": 87,
      "coverage": 0.9599937645,
      "online": 14208.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 771461.0122787853
     },
     {
@@ -841,7 +841,7 @@
      "worlds": 87,
      "coverage": 0.9564784418,
      "online": 12990.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 858769.1604418791
     },
     {
@@ -849,7 +849,7 @@
      "worlds": 87,
      "coverage": 0.9578091102,
      "online": 12809.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 889308.3675803115
     },
     {
@@ -857,7 +857,7 @@
      "worlds": 87,
      "coverage": 0.9600454906,
      "online": 12737.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 893367.6300478084
     },
     {
@@ -865,7 +865,7 @@
      "worlds": 87,
      "coverage": 0.9621481824,
      "online": 12740.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 906590.1279947566
     },
     {
@@ -873,7 +873,7 @@
      "worlds": 87,
      "coverage": 0.9634095072,
      "online": 13134.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 835987.5237899921
     },
     {
@@ -881,7 +881,7 @@
      "worlds": 87,
      "coverage": 0.9619569834,
      "online": 14159.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 730162.0020934192
     },
     {
@@ -889,7 +889,7 @@
      "worlds": 87,
      "coverage": 0.9613490183,
      "online": 14591.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 785084.1441830661
     },
     {
@@ -897,7 +897,7 @@
      "worlds": 87,
      "coverage": 0.9607929635,
      "online": 13526.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 841284.7851853716
     },
     {
@@ -905,7 +905,7 @@
      "worlds": 87,
      "coverage": 0.9615369643,
      "online": 13273.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 893008.2367566866
     },
     {
@@ -913,7 +913,7 @@
      "worlds": 87,
      "coverage": 0.9622666663,
      "online": 13126.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 881446.3340350919
     },
     {
@@ -921,7 +921,7 @@
      "worlds": 87,
      "coverage": 0.9636612284,
      "online": 12870.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 890357.0960470273
     },
     {
@@ -929,7 +929,7 @@
      "worlds": 87,
      "coverage": 0.9639335541,
      "online": 12842.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 842894.4490308808
     },
     {
@@ -937,7 +937,7 @@
      "worlds": 87,
      "coverage": 0.9623043042,
      "online": 13871.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 721129.5257862034
     },
     {
@@ -945,7 +945,7 @@
      "worlds": 87,
      "coverage": 0.96152419,
      "online": 14342.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 801001.851137565
     },
     {
@@ -953,7 +953,7 @@
      "worlds": 87,
      "coverage": 0.9571937086,
      "online": 13516.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 869350.0096729717
     },
     {
@@ -961,7 +961,7 @@
      "worlds": 87,
      "coverage": 0.9573560572,
      "online": 13401.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 868228.5129290029
     },
     {
@@ -969,7 +969,7 @@
      "worlds": 87,
      "coverage": 0.9617543552,
      "online": 12960.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 886821.060859518
     },
     {
@@ -977,7 +977,7 @@
      "worlds": 87,
      "coverage": 0.9668146425,
      "online": 12726.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 852356.543237272
     },
     {
@@ -985,7 +985,7 @@
      "worlds": 87,
      "coverage": 0.9667265087,
      "online": 13786.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 735075.8193805497
     },
     {
@@ -993,7 +993,7 @@
      "worlds": 87,
      "coverage": 0.966100369,
      "online": 15231.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 604684.7255871065
     },
     {
@@ -1001,7 +1001,7 @@
      "worlds": 87,
      "coverage": 0.9620445982,
      "online": 15589.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 639855.7794965605
     },
     {
@@ -1009,7 +1009,7 @@
      "worlds": 87,
      "coverage": 0.9604622302,
      "online": 13109.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 827115.7496849163
     },
     {
@@ -1017,7 +1017,7 @@
      "worlds": 87,
      "coverage": 0.9599004174,
      "online": 12270.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 909461.1218445573
     },
     {
@@ -1025,7 +1025,7 @@
      "worlds": 87,
      "coverage": 0.9612959496,
      "online": 12396.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 900967.0531970626
     },
     {
@@ -1033,7 +1033,7 @@
      "worlds": 87,
      "coverage": 0.9624478188,
      "online": 12351.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 884392.1412409501
     },
     {
@@ -1041,7 +1041,7 @@
      "worlds": 87,
      "coverage": 0.9653807953,
      "online": 12345.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 802669.354002927
     },
     {
@@ -1049,7 +1049,7 @@
      "worlds": 87,
      "coverage": 0.9642040607,
      "online": 12757.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 721778.1542484399
     },
     {
@@ -1057,7 +1057,7 @@
      "worlds": 87,
      "coverage": 0.9608128685,
      "online": 13232.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 824896.2571713164
     },
     {
@@ -1065,7 +1065,7 @@
      "worlds": 87,
      "coverage": 0.9582209733,
      "online": 13122.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 834924.695880472
     },
     {
@@ -1073,7 +1073,7 @@
      "worlds": 90,
      "coverage": 0.9585061403,
      "online": 13040.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 882362.089349196
     },
     {
@@ -1081,7 +1081,7 @@
      "worlds": 90,
      "coverage": 0.9635875126,
      "online": 13688.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 862088.6388071985
     },
     {
@@ -1089,7 +1089,7 @@
      "worlds": 90,
      "coverage": 0.9641116347,
      "online": 13406.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 879032.8749344705
     },
     {
@@ -1097,7 +1097,7 @@
      "worlds": 90,
      "coverage": 0.9633784803,
      "online": 13404.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 836101.9941594648
     },
     {
@@ -1105,7 +1105,7 @@
      "worlds": 90,
      "coverage": 0.9644840716,
      "online": 14527.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 731758.8376613456
     },
     {
@@ -1113,7 +1113,7 @@
      "worlds": 90,
      "coverage": 0.9630696833,
      "online": 15320.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 819897.6269430143
     },
     {
@@ -1121,7 +1121,7 @@
      "worlds": 90,
      "coverage": 0.9637160673,
      "online": 14166.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 826836.6108404233
     },
     {
@@ -1129,7 +1129,7 @@
      "worlds": 90,
      "coverage": 0.9637968821,
      "online": 12642.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1068751.9302694898
     },
     {
@@ -1137,7 +1137,7 @@
      "worlds": 90,
      "coverage": 0.9662112757,
      "online": 13354.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1037150.0176952714
     },
     {
@@ -1145,7 +1145,7 @@
      "worlds": 90,
      "coverage": 0.9660487451,
      "online": 13737.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 991183.6567086162
     },
     {
@@ -1153,7 +1153,7 @@
      "worlds": 90,
      "coverage": 0.9667275132,
      "online": 13492.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 954278.4348104615
     },
     {
@@ -1161,7 +1161,7 @@
      "worlds": 90,
      "coverage": 0.9650777032,
      "online": 14234.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 881195.6506716738
     },
     {
@@ -1169,7 +1169,7 @@
      "worlds": 90,
      "coverage": 0.9585914226,
      "online": 14906.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 800938.7913031843
     },
     {
@@ -1177,7 +1177,7 @@
      "worlds": 90,
      "coverage": 0.9555752775,
      "online": 13166.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 912368.7597886384
     },
     {
@@ -1185,7 +1185,7 @@
      "worlds": 90,
      "coverage": 0.9569700674,
      "online": 12825.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 945439.1985453597
     },
     {
@@ -1193,7 +1193,7 @@
      "worlds": 90,
      "coverage": 0.9597412582,
      "online": 12561.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 893211.3083501772
     },
     {
@@ -1201,7 +1201,7 @@
      "worlds": 90,
      "coverage": 0.9662634351,
      "online": 12201.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1366893.6110480602
     },
     {
@@ -1209,7 +1209,7 @@
      "worlds": 90,
      "coverage": 0.9685250719,
      "online": 16851.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1046876.2631601512
     },
     {
@@ -1217,7 +1217,7 @@
      "worlds": 90,
      "coverage": 0.9682150012,
      "online": 23202.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 793853.3338331078
     },
     {
@@ -1225,7 +1225,7 @@
      "worlds": 90,
      "coverage": 0.9646145817,
      "online": 24786.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 463611.3777377899
     },
     {
@@ -1233,7 +1233,7 @@
      "worlds": 90,
      "coverage": 0.9600879178,
      "online": 17683.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 652761.292931694
     },
     {
@@ -1241,7 +1241,7 @@
      "worlds": 90,
      "coverage": 0.9620794753,
      "online": 12235.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 997178.278730397
     },
     {
@@ -1249,7 +1249,7 @@
      "worlds": 90,
      "coverage": 0.9605660159,
      "online": 12294.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 994445.4808359661
     },
     {
@@ -1257,7 +1257,7 @@
      "worlds": 90,
      "coverage": 0.9621279005,
      "online": 12225.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 991397.7307260677
     },
     {
@@ -1265,7 +1265,7 @@
      "worlds": 90,
      "coverage": 0.9635163993,
      "online": 12422.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 886727.1918342999
     },
     {
@@ -1273,7 +1273,7 @@
      "worlds": 90,
      "coverage": 0.9599432442,
      "online": 13233.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 803341.0814969293
     },
     {
@@ -1281,7 +1281,7 @@
      "worlds": 90,
      "coverage": 0.9605206403,
      "online": 13750.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 865446.6110946981
     },
     {
@@ -1289,7 +1289,7 @@
      "worlds": 90,
      "coverage": 0.9567306005,
      "online": 12810.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 940600.2068726992
     },
     {
@@ -1297,7 +1297,7 @@
      "worlds": 90,
      "coverage": 0.957865892,
      "online": 12763.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 954458.9995320602
     },
     {
@@ -1305,7 +1305,7 @@
      "worlds": 90,
      "coverage": 0.961241006,
      "online": 12411.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 969709.7025601631
     },
     {
@@ -1313,7 +1313,7 @@
      "worlds": 90,
      "coverage": 0.9690725574,
      "online": 12447.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 972517.2966768014
     },
     {
@@ -1321,7 +1321,7 @@
      "worlds": 90,
      "coverage": 0.9717267637,
      "online": 12167.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 942607.1509236889
     },
     {
@@ -1329,7 +1329,7 @@
      "worlds": 90,
      "coverage": 0.9713290548,
      "online": 13053.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 830547.1323017172
     },
     {
@@ -1337,7 +1337,7 @@
      "worlds": 90,
      "coverage": 0.9639475075,
      "online": 13698.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 868591.5262338321
     },
     {
@@ -1345,7 +1345,7 @@
      "worlds": 90,
      "coverage": 0.9610112299,
      "online": 12637.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1029357.9299074498
     },
     {
@@ -1353,7 +1353,7 @@
      "worlds": 90,
      "coverage": 0.9624634197,
      "online": 12320.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1039562.5840489427
     },
     {
@@ -1361,7 +1361,7 @@
      "worlds": 90,
      "coverage": 0.9627694154,
      "online": 12414.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 998510.3282986877
     },
     {
@@ -1369,7 +1369,7 @@
      "worlds": 90,
      "coverage": 0.9615769345,
      "online": 12152.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1015733.4844370511
     },
     {
@@ -1377,7 +1377,7 @@
      "worlds": 90,
      "coverage": 0.9635242043,
      "online": 12129.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 995809.2165433383
     },
     {
@@ -1385,7 +1385,7 @@
      "worlds": 90,
      "coverage": 0.9611322782,
      "online": 13059.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 825139.9024970297
     },
     {
@@ -1393,7 +1393,7 @@
      "worlds": 90,
      "coverage": 0.9607777373,
      "online": 13444.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 865802.0076957077
     },
     {
@@ -1401,7 +1401,7 @@
      "worlds": 90,
      "coverage": 0.9572618446,
      "online": 12635.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 974521.645455552
     },
     {
@@ -1409,7 +1409,7 @@
      "worlds": 90,
      "coverage": 0.9570275725,
      "online": 12226.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1004724.93345861
     },
     {
@@ -1417,7 +1417,7 @@
      "worlds": 90,
      "coverage": 0.9630186347,
      "online": 12180.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1008087.5530660722
     },
     {
@@ -1425,7 +1425,7 @@
      "worlds": 90,
      "coverage": 0.9661795944,
      "online": 12232.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1091417.3706717284
     },
     {
@@ -1433,7 +1433,7 @@
      "worlds": 90,
      "coverage": 0.9671708367,
      "online": 13163.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 916126.792875755
     },
     {
@@ -1441,7 +1441,7 @@
      "worlds": 90,
      "coverage": 0.9664955392,
      "online": 13223.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 777594.5998222324
     },
     {
@@ -1449,7 +1449,7 @@
      "worlds": 90,
      "coverage": 0.9633662397,
      "online": 12349.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 979869.0120090363
     },
     {
@@ -1457,7 +1457,7 @@
      "worlds": 90,
      "coverage": 0.9620322129,
      "online": 13293.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 927353.8997429342
     },
     {
@@ -1465,7 +1465,7 @@
      "worlds": 90,
      "coverage": 0.9617887069,
      "online": 12405.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1007028.8714425949
     },
     {
@@ -1473,7 +1473,7 @@
      "worlds": 90,
      "coverage": 0.9597691969,
      "online": 12019.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1040212.5470048047
     },
     {
@@ -1481,7 +1481,7 @@
      "worlds": 90,
      "coverage": 0.9631859594,
      "online": 11859.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1018641.1409404271
     },
     {
@@ -1489,7 +1489,7 @@
      "worlds": 90,
      "coverage": 0.9639974807,
      "online": 11840.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 973091.3738880976
     },
     {
@@ -1497,7 +1497,7 @@
      "worlds": 90,
      "coverage": 0.9637157849,
      "online": 12649.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 838138.56504033
     },
     {
@@ -1505,7 +1505,7 @@
      "worlds": 90,
      "coverage": 0.9614339551,
      "online": 13373.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 875943.8295640617
     },
     {
@@ -1513,7 +1513,7 @@
      "worlds": 90,
      "coverage": 0.958884632,
      "online": 12524.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 977582.3969627403
     },
     {
@@ -1521,7 +1521,7 @@
      "worlds": 90,
      "coverage": 0.9580078995,
      "online": 12043.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1048472.4302947108
     },
     {
@@ -1529,7 +1529,7 @@
      "worlds": 90,
      "coverage": 0.9618438548,
      "online": 11741.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1039707.4467318369
     },
     {
@@ -1537,7 +1537,7 @@
      "worlds": 90,
      "coverage": 0.9603383119,
      "online": 11585.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1038497.8736810774
     },
     {
@@ -1545,7 +1545,7 @@
      "worlds": 90,
      "coverage": 0.964703889,
      "online": 11537.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 980031.7900321437
     },
     {
@@ -1553,7 +1553,7 @@
      "worlds": 90,
      "coverage": 0.9651774905,
      "online": 12070.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 850509.4741386526
     },
     {
@@ -1561,7 +1561,7 @@
      "worlds": 90,
      "coverage": 0.9626379622,
      "online": 12698.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 922755.8376813268
     },
     {
@@ -1569,7 +1569,7 @@
      "worlds": 90,
      "coverage": 0.9615463194,
      "online": 12329.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1021789.3572729899
     },
     {
@@ -1577,7 +1577,7 @@
      "worlds": 90,
      "coverage": 0.9641013445,
      "online": 12500.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 987690.2429797235
     },
     {
@@ -1585,7 +1585,7 @@
      "worlds": 90,
      "coverage": 0.963505583,
      "online": 11660.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1076242.0483864986
     },
     {
@@ -1593,7 +1593,7 @@
      "worlds": 90,
      "coverage": 0.9624433818,
      "online": 11536.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1105458.5306150427
     },
     {
@@ -1601,7 +1601,7 @@
      "worlds": 90,
      "coverage": 0.9647897679,
      "online": 11491.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1017477.5373994289
     },
     {
@@ -1609,7 +1609,7 @@
      "worlds": 90,
      "coverage": 0.9624997188,
      "online": 12172.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 897489.2056427097
     },
     {
@@ -1617,7 +1617,7 @@
      "worlds": 90,
      "coverage": 0.9583021767,
      "online": 12722.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 948110.0445036724
     },
     {
@@ -1625,7 +1625,7 @@
      "worlds": 90,
      "coverage": 0.9545129716,
      "online": 0.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": null
     },
     {
@@ -1633,7 +1633,7 @@
      "worlds": 90,
      "coverage": 0.955702857,
      "online": 11639.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1095306.8730722994
     },
     {
@@ -1641,7 +1641,7 @@
      "worlds": 90,
      "coverage": 0.9613890379,
      "online": 11662.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 993836.4283894742
     },
     {
@@ -1649,7 +1649,7 @@
      "worlds": 90,
      "coverage": 0.9674512167,
      "online": 11161.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1590753.4914045807
     },
     {
@@ -1657,7 +1657,7 @@
      "worlds": 90,
      "coverage": 0.9676803919,
      "online": 18544.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 974532.0098778679
     },
     {
@@ -1665,7 +1665,7 @@
      "worlds": 90,
      "coverage": 0.9685840825,
      "online": 23378.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 804192.1895981947
     },
     {
@@ -1673,7 +1673,7 @@
      "worlds": 90,
      "coverage": 0.964951377,
      "online": 23084.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 520042.8490624165
     },
     {
@@ -1681,7 +1681,7 @@
      "worlds": 90,
      "coverage": 0.9617678258,
      "online": 16653.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 674654.2677034484
     },
     {
@@ -1689,7 +1689,7 @@
      "worlds": 90,
      "coverage": 0.9625450482,
      "online": 10615.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1144760.2197448092
     },
     {
@@ -1697,7 +1697,7 @@
      "worlds": 90,
      "coverage": 0.9624671999,
      "online": 10678.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1144135.1703055522
     },
     {
@@ -1705,7 +1705,7 @@
      "worlds": 90,
      "coverage": 0.9616036524,
      "online": 11262.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1101077.3418506186
     },
     {
@@ -1713,7 +1713,7 @@
      "worlds": 90,
      "coverage": 0.9626639355,
      "online": 11588.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1047749.528980571
     },
     {
@@ -1721,7 +1721,7 @@
      "worlds": 90,
      "coverage": 0.9636898376,
      "online": 12509.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 790127.5704877763
     },
     {
@@ -1729,7 +1729,7 @@
      "worlds": 90,
      "coverage": 0.9616300574,
      "online": 12429.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 955628.3639258292
     },
     {
@@ -1737,7 +1737,7 @@
      "worlds": 90,
      "coverage": 0.9587299808,
      "online": 11861.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1054168.3612370829
     },
     {
@@ -1745,7 +1745,7 @@
      "worlds": 90,
      "coverage": 0.9579535294,
      "online": 11737.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1100450.7124633186
     },
     {
@@ -1753,7 +1753,7 @@
      "worlds": 90,
      "coverage": 0.9626293095,
      "online": 11785.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1171346.68406399
     },
     {
@@ -1761,7 +1761,7 @@
      "worlds": 90,
      "coverage": 0.963284509,
      "online": 12075.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1148251.5356545993
     },
     {
@@ -1769,7 +1769,7 @@
      "worlds": 90,
      "coverage": 0.9654251236,
      "online": 11953.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1154105.4999929515
     },
     {
@@ -1777,7 +1777,7 @@
      "worlds": 90,
      "coverage": 0.9644144155,
      "online": 12694.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1012691.7785194106
     },
     {
@@ -1785,7 +1785,7 @@
      "worlds": 90,
      "coverage": 0.9646955369,
      "online": 13145.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 989880.8240363289
     },
     {
@@ -1793,7 +1793,7 @@
      "worlds": 90,
      "coverage": 0.9623092279,
      "online": 12373.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1107263.9916834657
     },
     {
@@ -1801,7 +1801,7 @@
      "worlds": 93,
      "coverage": 0.9636333665,
      "online": 12061.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1094697.7330924207
     },
     {
@@ -1809,7 +1809,7 @@
      "worlds": 93,
      "coverage": 0.9632398518,
      "online": 12537.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1011827.5546857895
     },
     {
@@ -1817,7 +1817,7 @@
      "worlds": 93,
      "coverage": 0.9640564622,
      "online": 11981.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1032474.6575877771
     },
     {
@@ -1825,7 +1825,7 @@
      "worlds": 93,
      "coverage": 0.96366992,
      "online": 11896.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 968596.1366975366
     },
     {
@@ -1833,7 +1833,7 @@
      "worlds": 93,
      "coverage": 0.9628303151,
      "online": 12691.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 852947.6651960277
     },
     {
@@ -1841,7 +1841,7 @@
      "worlds": 93,
      "coverage": 0.9626862696,
      "online": 13206.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 923209.7949320803
     },
     {
@@ -1849,7 +1849,7 @@
      "worlds": 93,
      "coverage": 0.9578804166,
      "online": 12652.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1014954.4893978254
     },
     {
@@ -1857,7 +1857,7 @@
      "worlds": 93,
      "coverage": 0.9574242664,
      "online": 12169.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1046808.8545301809
     },
     {
@@ -1865,7 +1865,7 @@
      "worlds": 93,
      "coverage": 0.9614189335,
      "online": 12000.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1081230.1331504358
     },
     {
@@ -1873,7 +1873,7 @@
      "worlds": 93,
      "coverage": 0.9619953397,
      "online": 11864.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1060311.7304619837
     },
     {
@@ -1881,7 +1881,7 @@
      "worlds": 93,
      "coverage": 0.9639763523,
      "online": 11647.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1014814.4193847473
     },
     {
@@ -1889,7 +1889,7 @@
      "worlds": 93,
      "coverage": 0.9623974788,
      "online": 12159.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 898866.5410551691
     },
     {
@@ -1897,7 +1897,7 @@
      "worlds": 93,
      "coverage": 0.9612582868,
      "online": 12684.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 977170.0416940623
     },
     {
@@ -1905,7 +1905,7 @@
      "worlds": 93,
      "coverage": 0.9621467953,
      "online": 12036.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1080702.1686769116
     },
     {
@@ -1913,7 +1913,7 @@
      "worlds": 93,
      "coverage": 0.9624391764,
      "online": 11870.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1097671.3960983295
     },
     {
@@ -1921,7 +1921,7 @@
      "worlds": 93,
      "coverage": 0.9632071173,
      "online": 11814.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1095117.459926338
     },
     {
@@ -1929,7 +1929,7 @@
      "worlds": 93,
      "coverage": 0.9682113589,
      "online": 12994.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 932552.599418783
     },
     {
@@ -1937,7 +1937,7 @@
      "worlds": 93,
      "coverage": 0.9685616282,
      "online": 17428.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 622768.0722699048
     },
     {
@@ -1945,7 +1945,7 @@
      "worlds": 93,
      "coverage": 0.9688582319,
      "online": 22543.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 448799.6422388363
     },
     {
@@ -1953,7 +1953,7 @@
      "worlds": 93,
      "coverage": 0.9634019391,
      "online": 22056.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 509767.6586154948
     },
     {
@@ -1961,7 +1961,7 @@
      "worlds": 93,
      "coverage": 0.9556622432,
      "online": 15963.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 769094.2730973526
     },
     {
@@ -1969,7 +1969,7 @@
      "worlds": 93,
      "coverage": 0.9568855338,
      "online": 11610.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1068379.4920410016
     },
     {
@@ -1977,7 +1977,7 @@
      "worlds": 93,
      "coverage": 0.962131654,
      "online": 11766.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1071460.11377792
     },
     {
@@ -1985,7 +1985,7 @@
      "worlds": 93,
      "coverage": 0.9650773393,
      "online": 11586.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1045387.2926181795
     },
     {
@@ -1993,7 +1993,7 @@
      "worlds": 93,
      "coverage": 0.9664679842,
      "online": 11472.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 982389.1550927082
     },
     {
@@ -2001,7 +2001,7 @@
      "worlds": 93,
      "coverage": 0.9651294187,
      "online": 12119.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 907781.8426125348
     },
     {
@@ -2009,7 +2009,7 @@
      "worlds": 93,
      "coverage": 0.9628921864,
      "online": 12450.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 959792.1678761271
     },
     {
@@ -2017,7 +2017,7 @@
      "worlds": 93,
      "coverage": 0.9645216079,
      "online": 12124.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1293402.8863398738
     },
     {
@@ -2025,7 +2025,7 @@
      "worlds": 93,
      "coverage": 0.9657004561,
      "online": 13142.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1395340.4386575103
     },
     {
@@ -2033,7 +2033,7 @@
      "worlds": 93,
      "coverage": 0.9657057809,
      "online": 13712.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1334960.6094738182
     },
     {
@@ -2041,7 +2041,7 @@
      "worlds": 93,
      "coverage": 0.9658635589,
      "online": 13220.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1358483.208548682
     },
     {
@@ -2049,7 +2049,7 @@
      "worlds": 93,
      "coverage": 0.9687381673,
      "online": 12897.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1329089.836665669
     },
     {
@@ -2057,7 +2057,7 @@
      "worlds": 93,
      "coverage": 0.9664008601,
      "online": 13005.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1255922.8202858889
     },
     {
@@ -2065,7 +2065,7 @@
      "worlds": 93,
      "coverage": 0.9652598166,
      "online": 14280.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1255706.547998681
     },
     {
@@ -2073,7 +2073,7 @@
      "worlds": 93,
      "coverage": 0.9608944811,
      "online": 13382.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1363021.2937808775
     },
     {
@@ -2081,7 +2081,7 @@
      "worlds": 93,
      "coverage": 0.9624151725,
      "online": 12937.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1363537.1364921369
     },
     {
@@ -2089,7 +2089,7 @@
      "worlds": 93,
      "coverage": 0.9678987749,
      "online": 13272.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1463555.391689383
     },
     {
@@ -2097,7 +2097,7 @@
      "worlds": 93,
      "coverage": 0.9689127829,
      "online": 11800.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1789443.172425984
     },
     {
@@ -2105,7 +2105,7 @@
      "worlds": 93,
      "coverage": 0.9684795829,
      "online": 12777.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1661001.3922970952
     },
     {
@@ -2113,7 +2113,7 @@
      "worlds": 93,
      "coverage": 0.9684000252,
      "online": 13672.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1497363.9537099297
     },
     {
@@ -2121,7 +2121,7 @@
      "worlds": 93,
      "coverage": 0.9662045799,
      "online": 14091.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1449748.3589394619
     },
     {
@@ -2129,7 +2129,7 @@
      "worlds": 93,
      "coverage": 0.9658129148,
      "online": 13394.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1577373.5406441465
     },
     {
@@ -2137,7 +2137,7 @@
      "worlds": 93,
      "coverage": 0.9671830679,
      "online": 12779.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1680950.0186452214
     },
     {
@@ -2145,7 +2145,7 @@
      "worlds": 93,
      "coverage": 0.966421092,
      "online": 12696.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1650398.1314973438
     },
     {
@@ -2153,7 +2153,7 @@
      "worlds": 93,
      "coverage": 0.9691063761,
      "online": 12717.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 2295853.113249879
     },
     {
@@ -2161,7 +2161,7 @@
      "worlds": 93,
      "coverage": 0.9702042954,
      "online": 18484.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1706321.903909678
     },
     {
@@ -2169,7 +2169,7 @@
      "worlds": 93,
      "coverage": 0.970274519,
      "online": 24845.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1209611.9994694197
     },
     {
@@ -2177,7 +2177,7 @@
      "worlds": 93,
      "coverage": 0.9665492462,
      "online": 24462.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 734447.0054232526
     },
     {
@@ -2185,7 +2185,7 @@
      "worlds": 93,
      "coverage": 0.9582668054,
      "online": 16626.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1065095.7888525727
     },
     {
@@ -2193,7 +2193,7 @@
      "worlds": 93,
      "coverage": 0.9579549393,
      "online": 12470.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1483968.0300138576
     },
     {
@@ -2201,7 +2201,7 @@
      "worlds": 93,
      "coverage": 0.9642003444,
      "online": 12374.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1551641.4606661086
     },
     {
@@ -2209,7 +2209,7 @@
      "worlds": 93,
      "coverage": 0.9656072017,
      "online": 12608.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1462872.2113484242
     },
     {
@@ -2217,7 +2217,7 @@
      "worlds": 93,
      "coverage": 0.9657536092,
      "online": 12217.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1416997.626532561
     },
     {
@@ -2225,7 +2225,7 @@
      "worlds": 93,
      "coverage": 0.9647402467,
      "online": 12969.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1257084.0118326975
     },
     {
@@ -2233,7 +2233,7 @@
      "worlds": 93,
      "coverage": 0.9644706868,
      "online": 13256.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1267977.092885439
     },
     {
@@ -2241,7 +2241,7 @@
      "worlds": 93,
      "coverage": 0.9621165958,
      "online": 13294.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1349293.7909173295
     },
     {
@@ -2249,7 +2249,7 @@
      "worlds": 93,
      "coverage": 0.9636343254,
      "online": 13340.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1380487.8378124642
     },
     {
@@ -2257,7 +2257,7 @@
      "worlds": 93,
      "coverage": 0.9625013798,
      "online": 13024.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1388030.0717627616
     },
     {
@@ -2265,7 +2265,7 @@
      "worlds": 93,
      "coverage": 0.9621657978,
      "online": 12951.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1400320.144353936
     },
     {
@@ -2273,7 +2273,7 @@
      "worlds": 93,
      "coverage": 0.963638275,
      "online": 12921.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1326722.1512903397
     },
     {
@@ -2281,7 +2281,7 @@
      "worlds": 93,
      "coverage": 0.9654285378,
      "online": 13611.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1088604.0286448977
     },
     {
@@ -2289,7 +2289,7 @@
      "worlds": 93,
      "coverage": 0.9630519102,
      "online": 13769.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1299915.7829647593
     },
     {
@@ -2297,7 +2297,7 @@
      "worlds": 93,
      "coverage": 0.9569908655,
      "online": 12849.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1460669.3413005578
     },
     {
@@ -2305,7 +2305,7 @@
      "worlds": 93,
      "coverage": 0.9578118652,
      "online": 13468.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1405650.1053123889
     },
     {
@@ -2313,7 +2313,7 @@
      "worlds": 93,
      "coverage": 0.9621603914,
      "online": 13410.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1414375.7031463168
     },
     {
@@ -2321,7 +2321,7 @@
      "worlds": 93,
      "coverage": 0.9624837466,
      "online": 13203.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1415691.8348952036
     },
     {
@@ -2329,7 +2329,7 @@
      "worlds": 93,
      "coverage": 0.9654447268,
      "online": 13193.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1350809.467137538
     },
     {
@@ -2337,7 +2337,7 @@
      "worlds": 93,
      "coverage": 0.9643320325,
      "online": 13774.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1189864.4868981943
     },
     {
@@ -2345,7 +2345,7 @@
      "worlds": 93,
      "coverage": 0.9621725139,
      "online": 14024.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1295040.0590657108
     },
     {
@@ -2353,7 +2353,7 @@
      "worlds": 93,
      "coverage": 0.9615753765,
      "online": 13417.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1422261.4636008264
     },
     {
@@ -2361,7 +2361,7 @@
      "worlds": 93,
      "coverage": 0.9624898117,
      "online": 13024.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1434972.9434005825
     },
     {
@@ -2369,7 +2369,7 @@
      "worlds": 93,
      "coverage": 0.9622180839,
      "online": 13031.0,
-     "series": "Direct GP drops",
+     "series": "Direct GP",
      "gp_per_average_online_player": 1389279.5872876006
     },
     {
@@ -4289,7 +4289,7 @@
      "n": 13896
     },
     {
-     "series_label": "Direct GP drops",
+     "series_label": "Direct GP",
      "horizon": "1 day",
      "horizon_days": 1,
      "coefficient_pp": -0.0435360261,
@@ -4329,7 +4329,7 @@
      "n": 13164
     },
     {
-     "series_label": "Direct GP drops",
+     "series_label": "Direct GP",
      "horizon": "7 day",
      "horizon_days": 7,
      "coefficient_pp": 0.0219979079,
@@ -4369,7 +4369,7 @@
      "n": 10358
     },
     {
-     "series_label": "Direct GP drops",
+     "series_label": "Direct GP",
      "horizon": "30 day",
      "horizon_days": 30,
      "coefficient_pp": -0.0352937466,
@@ -4412,7 +4412,7 @@
      "test_n": 4153
     },
     {
-     "series_label": "Direct GP drops",
+     "series_label": "Direct GP",
      "horizon": "1 day",
      "horizon_days": 1,
      "rmse_improvement_pp": -0.1047680402,
@@ -4456,7 +4456,7 @@
      "test_n": 3787
     },
     {
-     "series_label": "Direct GP drops",
+     "series_label": "Direct GP",
      "horizon": "7 day",
      "horizon_days": 7,
      "rmse_improvement_pp": -1.5116568571,
@@ -4500,7 +4500,7 @@
      "test_n": 2384
     },
     {
-     "series_label": "Direct GP drops",
+     "series_label": "Direct GP",
      "horizon": "30 day",
      "horizon_days": 30,
      "rmse_improvement_pp": -19.0246553412,
@@ -4755,7 +4755,7 @@
     "description": "Aggregate direct and 50%-realization GP per average online player by date.",
     "engine": "SQLite",
     "language": "sql",
-    "sql": "SELECT date, 'Direct GP drops' AS series, SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date UNION ALL SELECT date, 'Realized GP estimate (50%)' AS series, SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date ORDER BY date, series;",
+    "sql": "SELECT date, 'Direct GP' AS series, SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date UNION ALL SELECT date, 'Realized GP estimate (50%)' AS series, SUM(realized_estimate_gp_50) / SUM(players_online_avg) AS gp_per_average_online_player, COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, SUM(players_online_avg) AS online FROM gold_emission_daily WHERE low_quality_flag = 0 GROUP BY date ORDER BY date, series;",
     "tables_used": [
      "gold_emission_daily"
     ],
@@ -4775,7 +4775,7 @@
     "description": "Select matched shock-lag headline models and convert coefficients to percentage points.",
     "engine": "SQLite",
     "language": "sql",
-    "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP drops' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n FROM gold_emission_model_comparison WHERE model_type = 'shock_lag' AND lag_or_window_days = horizon_days AND horizon_days IN (1, 7, 30) AND series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+    "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, coefficient * 100.0 AS coefficient_pp, std_error_two_way, p_value, r2_within, n FROM gold_emission_model_comparison WHERE model_type = 'shock_lag' AND lag_or_window_days = horizon_days AND horizon_days IN (1, 7, 30) AND series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
     "tables_used": [
      "gold_emission_model_comparison"
     ],
@@ -4797,7 +4797,7 @@
     "description": "Select comparable holdout models and convert RMSE improvement to percentage points.",
     "engine": "SQLite",
     "language": "sql",
-    "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP drops' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, rmse_improvement_pct * 100.0 AS rmse_improvement_pp, random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n FROM gold_emission_oos WHERE series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
+    "sql": "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' WHEN 'direct_coin' THEN 'Direct GP' WHEN 'potential_max' THEN 'Potential emission' WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, rmse_improvement_pct * 100.0 AS rmse_improvement_pp, random_walk_rmse, model_rmse, direction_accuracy, train_n, test_n FROM gold_emission_oos WHERE series IN ('kill_count', 'direct_coin', 'potential_max', 'realized_50') ORDER BY horizon_days, series_label;",
     "tables_used": [
      "gold_emission_oos"
     ],

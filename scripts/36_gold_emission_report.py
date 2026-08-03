@@ -42,7 +42,7 @@ def main() -> None:
     ].copy()
     labels = {
         "kill_count": "Raw kill count",
-        "direct_coin": "Direct GP drops",
+        "direct_coin": "Direct GP",
         "potential_max": "Potential emission",
         "realized_50": "Realized GP estimate (50%)",
     }
@@ -67,11 +67,11 @@ def main() -> None:
         )
         .reset_index()
     )
-    daily_plot["Direct GP drops"] = daily_plot.direct_coin_gp / daily_plot.online
+    daily_plot["Direct GP"] = daily_plot.direct_coin_gp / daily_plot.online
     daily_plot["Realized GP estimate (50%)"] = daily_plot.realized_50_gp / daily_plot.online
     daily_plot = daily_plot.melt(
         id_vars=["date", "worlds", "coverage", "online"],
-        value_vars=["Direct GP drops", "Realized GP estimate (50%)"],
+        value_vars=["Direct GP", "Realized GP estimate (50%)"],
         var_name="series",
         value_name="gp_per_average_online_player",
     )
@@ -223,7 +223,7 @@ def main() -> None:
                     "engine": "SQLite",
                     "language": "sql",
                     "sql": (
-                        "SELECT date, 'Direct GP drops' AS series, "
+                        "SELECT date, 'Direct GP' AS series, "
                         "SUM(direct_coin_gp) / SUM(players_online_avg) AS gp_per_average_online_player, "
                         "COUNT(DISTINCT world) AS worlds, AVG(coverage_deaths_pct_nonboss) AS coverage, "
                         "SUM(players_online_avg) AS online "
@@ -253,7 +253,7 @@ def main() -> None:
                     "language": "sql",
                     "sql": (
                         "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' "
-                        "WHEN 'direct_coin' THEN 'Direct GP drops' "
+                        "WHEN 'direct_coin' THEN 'Direct GP' "
                         "WHEN 'potential_max' THEN 'Potential emission' "
                         "WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, "
                         "CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, "
@@ -286,7 +286,7 @@ def main() -> None:
                     "language": "sql",
                     "sql": (
                         "SELECT CASE series WHEN 'kill_count' THEN 'Raw kill count' "
-                        "WHEN 'direct_coin' THEN 'Direct GP drops' "
+                        "WHEN 'direct_coin' THEN 'Direct GP' "
                         "WHEN 'potential_max' THEN 'Potential emission' "
                         "WHEN 'realized_50' THEN 'Realized GP estimate (50%)' END AS series_label, "
                         "CAST(horizon_days AS TEXT) || ' day' AS horizon, horizon_days, "

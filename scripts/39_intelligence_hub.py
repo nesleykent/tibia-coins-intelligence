@@ -13,6 +13,7 @@ from datetime import datetime, timezone
 
 import pandas as pd
 
+import emission_view
 import narrative
 
 
@@ -424,8 +425,6 @@ HTML = r"""<!doctype html>
     .evidence{padding:18px;display:grid;gap:14px}
     .evidence-callout{border-left:3px solid var(--gold);background:var(--gold-soft);padding:12px;
       color:#5f4a17;font-size:12px;line-height:1.55}
-    .emission-frame{width:100%;height:1050px;border:1px solid var(--line);border-radius:var(--radius);
-      background:#fff}
     .library-tools{display:grid;grid-template-columns:minmax(240px,1fr) 220px auto;gap:10px;margin:16px 0}
     .library-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
     .exhibit{border:1px solid var(--line);border-radius:var(--radius);background:#fff;overflow:hidden;
@@ -456,7 +455,7 @@ HTML = r"""<!doctype html>
     @media(max-width:1050px){
       :root{--sidebar:190px}.main{padding:24px 20px 44px}.library-grid{grid-template-columns:repeat(2,1fr)}
       .split,.world-layout,.forecast-grid,.model-grid,.strategy-grid{grid-template-columns:1fr}
-      .signal{grid-template-columns:1fr 1fr}.emission-frame{height:1150px}
+      .signal{grid-template-columns:1fr 1fr}
     }
     .thesis{margin-top:16px;padding:22px 24px 24px}
     .thesis>.panel-heading{padding:0 0 16px;margin-bottom:18px;border-bottom:1px solid var(--line-soft)}
@@ -524,7 +523,7 @@ HTML = r"""<!doctype html>
       .claim{padding:16px}
       .claim-head{align-items:start}
       .library-grid{grid-template-columns:1fr}.modal-body{grid-template-columns:1fr}
-      .emission-frame{height:1250px}.footer{display:block}.footer span{display:block;margin-top:5px}
+      .footer{display:block}.footer span{display:block;margin-top:5px}
     }
     @media(max-width:430px){
       .filters{grid-template-columns:1fr}.field.wide{grid-column:auto}.date-pair{grid-template-columns:1fr}
@@ -535,10 +534,11 @@ HTML = r"""<!doctype html>
       .claim-tiles{grid-template-columns:1fr;gap:8px}
       .claim-tiles .thesis-fact{min-height:0}
       .library-tools{grid-template-columns:1fr}.library-tools input{grid-column:auto}
-      .chart{height:270px}.emission-frame{height:1350px}
+      .chart{height:270px}
     }
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
     @media print{.sidebar,.utility,.filters,.button,.library-tools{display:none!important}.app{display:block}.main{max-width:none}}
+__EMISSION_STYLE__
   </style>
 </head>
 <body>
@@ -563,6 +563,9 @@ HTML = r"""<!doctype html>
       </button>
       <button class="nav-button" data-view="emission">
         <svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>Gold Emission
+      </button>
+      <button class="nav-button" data-view="creatures">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V9l4-5 4 3 4-3 4 5v11"/><path d="M9 13h.01M15 13h.01M9.5 17h5"/></svg>Creature GP
       </button>
       <button class="nav-button" data-view="library">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5c3-1 5-.4 8 1.5v13c-3-1.9-5-2.5-8-1.5v-13ZM20 5.5c-3-1-5-.4-8 1.5v13c3-1.9 5-2.5 8-1.5v-13Z"/></svg>Research Library
@@ -711,8 +714,13 @@ HTML = r"""<!doctype html>
       </section>
 
       <section id="view-emission" class="view" hidden>
-        <div class="view-header"><div><h1>Gold Emission</h1><p class="view-intro">Explore reconstructed direct GP drops and NPC-sale potential by world, period and realization scenario. GP means gold pieces; Tibia Coins are labeled TC throughout.</p></div><a class="button primary" href="gold_emission_dashboard.html" target="_blank" rel="noopener">Open full screen</a></div>
-        <iframe id="emissionFrame" class="emission-frame" title="Interactive gold emission dashboard" loading="lazy"></iframe>
+        <div class="view-header"><div><h1>Gold Emission</h1><p class="view-intro">Explore reconstructed direct GP and NPC-sale potential by world and period, and open any day to see every creature killed that day. GP means gold pieces; Tibia Coins are labeled TC throughout.</p></div><button class="button" type="button" data-goto-view="creatures">Which creatures pay the most per kill →</button></div>
+__EMISSION_MARKUP__
+      </section>
+
+      <section id="view-creatures" class="view" hidden>
+        <div class="view-header"><div><h1>Creature GP</h1><p class="view-intro">How much GP one kill is worth, creature by creature: the gold it drops directly plus the most NPCs would pay for the rest of its loot. Use it to compare hunting targets. It does not say how much gold a world produced, because that also depends on how many players hunt each creature.</p></div><button class="button" type="button" data-goto-view="emission">← Back to Gold Emission</button></div>
+__EMISSION_RANKING__
       </section>
 
       <section id="view-library" class="view" hidden>
@@ -850,7 +858,7 @@ function initialize(){
   selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
   bindEvents();
   populateLibraryChapters();
-  showView(["overview","worlds","forecasts","models","strategy","emission","library"].includes(params.get("view"))?params.get("view"):"overview",false);
+  showView(["overview","worlds","forecasts","models","strategy","emission","creatures","library"].includes(params.get("view"))?params.get("view"):"overview",false);
   updateStatus();
   renderAll();
   enhanceSortableTables();
@@ -871,8 +879,39 @@ function sortableCellValue(cell){
   return{type:"text",value:text.toLocaleLowerCase("en-US")};
 }
 
+// A table keeps its sort. Re-rendering a body used to drop the order while the header kept
+// showing the arrow, so every filter change silently contradicted the column state.
+const tableSorts=new WeakMap();
+
+function applyTableSort(table){
+  const state=tableSorts.get(table),body=table.tBodies[0];
+  if(!state||!body||body.rows.length<2)return;
+  const rows=[...body.rows];
+  rows.sort((left,right)=>{
+    const a=sortableCellValue(left.cells[state.column]),b=sortableCellValue(right.cells[state.column]);
+    const compared=a.type==="number"&&b.type==="number"
+      ?a.value-b.value:String(a.value).localeCompare(String(b.value),"en",{numeric:true});
+    return state.direction==="ascending"?compared:-compared;
+  });
+  state.observer.disconnect();
+  rows.forEach(row=>body.appendChild(row));
+  state.observer.observe(body,{childList:true});
+}
+
+function columnIsNumeric(table,column){
+  const body=table.tBodies[0];
+  if(!body)return false;
+  for(const row of body.rows){
+    const value=sortableCellValue(row.cells[column]);
+    if(value.type!=="text")return value.type==="number"||value.type==="date";
+  }
+  return false;
+}
+
 function enhanceSortableTables(root=document){
-  const tables=root.matches?.("table")?[root]:[...root.querySelectorAll("table")];
+  const found=root.matches?.("table")?[root]:[...root.querySelectorAll("table")];
+  // The Gold Emission workspace enhances its own tables with its own markup.
+  const tables=found.filter(table=>!table.closest(".em-root"));
   for(const table of tables){
     if(table.dataset.sortableReady==="true")continue;
     table.dataset.sortableReady="true";
@@ -884,18 +923,18 @@ function enhanceSortableTables(root=document){
       while(th.firstChild)button.appendChild(th.firstChild);
       th.appendChild(button);th.setAttribute("aria-sort","none");
       button.addEventListener("click",()=>{
-        const direction=th.getAttribute("aria-sort")==="ascending"?"descending":"ascending";
+        const current=tableSorts.get(table);
+        // Numbers and dates read best largest-first; names read best A to Z.
+        const direction=current&&current.column===column
+          ?(current.direction==="ascending"?"descending":"ascending")
+          :(columnIsNumeric(table,column)?"descending":"ascending");
         table.querySelectorAll("thead th").forEach(header=>header.setAttribute("aria-sort","none"));
         th.setAttribute("aria-sort",direction);
         const body=table.tBodies[0];if(!body)return;
-        const rows=[...body.rows];
-        rows.sort((left,right)=>{
-          const a=sortableCellValue(left.cells[column]),b=sortableCellValue(right.cells[column]);
-          const compared=a.type==="number"&&b.type==="number"
-            ?a.value-b.value:String(a.value).localeCompare(String(b.value),"en",{numeric:true});
-          return direction==="ascending"?compared:-compared;
-        });
-        rows.forEach(row=>body.appendChild(row));
+        const observer=current?current.observer:new MutationObserver(()=>applyTableSort(table));
+        tableSorts.set(table,{column,direction,observer});
+        observer.disconnect();observer.observe(body,{childList:true});
+        applyTableSort(table);
       });
     });
   }
@@ -903,6 +942,7 @@ function enhanceSortableTables(root=document){
 
 function bindEvents(){
   $$(".nav-button").forEach(button=>button.addEventListener("click",()=>showView(button.dataset.view)));
+  $$("[data-goto-view]").forEach(button=>button.addEventListener("click",()=>showView(button.dataset.gotoView)));
   ["#overviewWorld","#overviewSort"].forEach(selector=>$(selector).addEventListener("change",()=>{renderOverview();updateURL()}));
   ["#overviewStart","#overviewEnd"].forEach(selector=>$(selector).addEventListener("change",()=>{
     $("#worldStart").value=$("#overviewStart").value;$("#worldEnd").value=$("#overviewEnd").value;
@@ -937,7 +977,7 @@ function showView(view,push=true){
   activeView=view;
   $$(".view").forEach(section=>section.hidden=section.id!==`view-${view}`);
   $$(".nav-button").forEach(button=>button.classList.toggle("active",button.dataset.view===view));
-  if(view==="emission"&&!$("#emissionFrame").src)$("#emissionFrame").src="gold_emission_dashboard.html";
+  if(view==="emission"&&window.EmissionView)window.EmissionView.activate();
   if(view==="overview")renderOverview();
   if(view==="worlds")renderWorlds();
   if(view==="forecasts")renderForecasts();
@@ -1529,6 +1569,9 @@ function updateURL(){
   if($("#modelWorld").value!=="Belobra")params.set("modelWorld",$("#modelWorld").value);
   if(selectedStrategyHorizon!==7)params.set("days",selectedStrategyHorizon);
   if(selectedExhibit)params.set("exhibit",selectedExhibit);
+  // The Gold Emission workspace owns its own filters and day drill-down, so it publishes
+  // its state here instead of keeping a second URL.
+  if(window.EmissionView)Object.entries(window.EmissionView.params()).forEach(([key,value])=>params.set(key,value));
   const query=params.toString();try{history.replaceState(null,"",`${location.pathname}${query?`?${query}`:""}${location.hash}`)}catch(_){}
 }
 
@@ -1564,6 +1607,7 @@ async function refreshProjectData(){
     data.meta.generatedAt=updated||new Date().toISOString();
     data.meta.worlds=data.worlds.length;data.meta.worldDays=data.worldSeries.length;
     liveMode=true;rebuildIndexes();updateStatus();renderAll();
+    if(window.EmissionView)window.EmissionView.refreshPrices();
   }catch(_){liveMode=false;updateStatus()}
 }
 
@@ -1571,6 +1615,28 @@ function debounce(fn,wait){let timer;return(...args)=>{clearTimeout(timer);timer
 
 initialize();
 void refreshProjectData();
+</script>
+<script>
+"use strict";
+const EMISSION_DATA = __EMISSION_DATA__;
+</script>
+<script>
+__EMISSION_SCRIPT__
+</script>
+<script>
+"use strict";
+// One component, two surfaces: the standalone dashboard mounts the same module.
+// Here it reuses the hub's daily prices and publishes its filters through the hub URL.
+window.EmissionView.mount({
+  root: document.getElementById("emissionApp"),
+  data: EMISSION_DATA,
+  rankingRoot: document.getElementById("creatureRanking"),
+  params: new URLSearchParams(location.search),
+  prefix: "em",
+  prices: () => data.worldSeries,
+  onStateChange: () => updateURL(),
+  onOpenDetail: () => window.scrollTo({top:0,behavior:"auto"})
+});
 </script>
 </body>
 </html>
@@ -1580,12 +1646,23 @@ void refreshProjectData();
 def main() -> None:
     payload = build_payload()
     embedded = json.dumps(payload, ensure_ascii=False, separators=(",", ":"), allow_nan=False)
-    output = HTML.replace("__DATA__", embedded.replace("</", "<\\/"))
+    # The hub already embeds panel_daily prices for its other views, so the emission
+    # component reads them from the hub instead of shipping a second copy.
+    emission_payload = emission_view.build_payload(include_prices=False)
+    output = (
+        HTML.replace("__EMISSION_STYLE__", emission_view.STYLE)
+        .replace("__EMISSION_MARKUP__", emission_view.MARKUP)
+        .replace("__EMISSION_RANKING__", emission_view.RANKING_MARKUP)
+        .replace("__EMISSION_SCRIPT__", emission_view.SCRIPT)
+        .replace("__EMISSION_DATA__", emission_view.embed(emission_payload))
+        .replace("__DATA__", embedded.replace("</", "<\\/"))
+    )
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     OUTPUT.write_text(output, encoding="utf-8")
     print(
         f"[INTELLIGENCE HUB] wrote {OUTPUT.relative_to(ROOT)} with "
         f"{payload['meta']['worlds']} worlds, {len(payload['worldSeries']):,} price rows, "
+        f"{emission_payload['meta']['worldDays']:,} emission world-days, "
         f"and {payload['meta']['figureCount']} exhibits"
     )
 

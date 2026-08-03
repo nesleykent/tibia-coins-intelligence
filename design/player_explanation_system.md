@@ -85,7 +85,7 @@ classification; one compact visible key should carry the shared definitions.
 | Top decile | Strongest 10% of signals | Only the largest price gaps in every ten signals |
 | Liquidity | Ease of buying or selling | How much TC can trade without waiting too long or moving the price |
 | Capacity | How much GP the strategy can realistically use | A good percentage return may still accept only a limited amount of GP |
-| Gold emission | GP generated through hunting | Direct GP drops plus modeled NPC-sale value from loot |
+| Gold emission | GP generated through hunting | Direct GP plus modeled NPC-sale value from loot |
 | Realization scenario | Assumed share of loot actually turned into GP | Not every dropped item is collected and sold to an NPC |
 | Coverage | Share of deaths represented reliably | Low coverage means more of the generated GP is unknown |
 | General model | Model shared across many worlds | Uses the larger sample and is the default when it performs better |
