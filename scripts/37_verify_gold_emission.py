@@ -52,7 +52,7 @@ def main() -> None:
     dashboard = DASHBOARD.read_text(encoding="utf-8")
     assert "Direct GP drops" in dashboard
     assert "Potential GP maximum" in dashboard
-    assert "Realized GP estimate" in dashboard
+    assert "Realized GP estimate" not in dashboard
     assert "GP means Tibia gold pieces. TC means Tibia Coins" in dashboard
     assert "Direct coins" not in dashboard
 
@@ -144,7 +144,7 @@ def main() -> None:
     assert "const EMBEDDED =" in dashboard
     assert 'id="worldSelect"' in dashboard
     assert 'id="dateStart"' in dashboard and 'id="dateEnd"' in dashboard
-    assert 'id="scenarioSelect"' in dashboard
+    assert 'id="scenarioSelect"' not in dashboard
     assert 'id="lineChart"' in dashboard
     assert 'id="tcPriceToggle"' in dashboard
     assert "TC price (GP/TC)" in dashboard
@@ -168,7 +168,7 @@ def main() -> None:
     assert "function isoTimestamp(value)" in dashboard
     assert 'id="worldBreakdown"' in dashboard
     assert "function renderWorldBreakdown(rows)" in dashboard
-    assert "What generated GP in" in dashboard
+    assert "What generated potential GP in" in dashboard
     assert "Largest creature source on one day" in dashboard
     assert "Days needing extra caution" in dashboard
     assert 'Intl.DateTimeFormat("en-US"' not in dashboard

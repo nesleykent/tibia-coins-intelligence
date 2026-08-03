@@ -126,7 +126,6 @@ HTML = r"""<!doctype html>
       --line-soft: #edf0f4;
       --direct: #2467c9;
       --potential: #bc643f;
-      --realized: #d39418;
       --good: #24875d;
       --warning: #b77905;
       --danger: #c43d3d;
@@ -153,7 +152,7 @@ HTML = r"""<!doctype html>
     h1 { margin: 0; font-size: clamp(28px, 3vw, 42px); line-height: 1.08; letter-spacing: -.035em; }
     .data-status { max-width: 460px; color: var(--muted); font-size: 13px; text-align: right; line-height: 1.45; }
     .filters {
-      display: grid; grid-template-columns: minmax(170px, 1fr) minmax(250px, 1.35fr) minmax(180px, .85fr) minmax(260px, 1.35fr) auto;
+      display: grid; grid-template-columns: minmax(170px, 1fr) minmax(250px, 1.35fr) minmax(260px, 1.35fr) auto;
       gap: 16px; align-items: end; padding: 20px 0;
     }
     .field { display: grid; gap: 7px; min-width: 0; }
@@ -185,7 +184,7 @@ HTML = r"""<!doctype html>
     .metric + .metric { border-left: 1px solid var(--line); }
     .metric-label { font-size: 13px; font-weight: 700; }
     .metric-value {
-      display: block; margin-top: 8px; color: var(--realized); font-weight: 750;
+      display: block; margin-top: 8px; color: var(--potential); font-weight: 750;
       font-size: clamp(22px, 2.3vw, 34px); line-height: 1; font-variant-numeric: tabular-nums;
       overflow-wrap: anywhere;
     }
@@ -200,7 +199,6 @@ HTML = r"""<!doctype html>
     .legend-item { display: inline-flex; align-items: center; gap: 7px; }
     .legend-line { width: 24px; border-top: 3px solid; }
     .legend-line.potential { border-top-style: dashed; }
-    .legend-line.realized { border-top-style: dotted; }
     .chart-wrap { position: relative; width: 100%; min-height: 360px; }
     #lineChart { display: block; width: 100%; height: 360px; overflow: visible; }
     .chart-tooltip {
@@ -226,8 +224,7 @@ HTML = r"""<!doctype html>
     .stack { height: 34px; display: flex; overflow: hidden; border-radius: 5px; margin: 20px 0 12px; background: var(--line-soft); }
     .stack > div { min-width: 0; transition: width .2s ease; }
     .stack-direct { background: var(--direct); }
-    .stack-realized { background: var(--realized); }
-    .stack-unrealized { background: var(--potential); }
+    .stack-npc { background: var(--potential); }
     .composition-list { display: grid; gap: 14px; margin-top: 18px; }
     .composition-row { display: grid; grid-template-columns: 12px 1fr auto; gap: 9px; align-items: start; font-size: 13px; }
     .swatch { width: 11px; height: 11px; margin-top: 2px; border-radius: 2px; }
@@ -345,21 +342,11 @@ HTML = r"""<!doctype html>
           <input id="dateEnd" type="date" aria-label="End date">
         </div>
       </div>
-      <div class="field">
-        <label for="scenarioSelect">Realization scenario</label>
-        <select id="scenarioSelect">
-          <option value="0.25">25% realization</option>
-          <option value="0.5" selected>50% realization</option>
-          <option value="0.75">75% realization</option>
-          <option value="1">100% realization</option>
-        </select>
-      </div>
       <div class="field series-field">
         <div class="series-summary">Series</div>
         <div class="series-control" role="group" aria-label="Visible chart series">
           <label class="check"><input type="checkbox" data-series="direct" checked> Direct GP drops</label>
-          <label class="check"><input type="checkbox" data-series="potential" checked> Potential GP maximum</label>
-          <label class="check"><input type="checkbox" data-series="realized" checked> Realized GP estimate</label>
+          <label class="check"><input type="checkbox" data-series="potential" checked> Potential GP</label>
           <label class="check"><input id="tcPriceToggle" type="checkbox"> TC price (GP/TC)</label>
         </div>
       </div>
@@ -374,17 +361,17 @@ HTML = r"""<!doctype html>
 
     <section class="metrics" aria-label="Summary metrics">
       <div class="metric">
-        <span class="metric-label">Total estimated</span>
+        <span class="metric-label">Total potential GP</span>
         <strong id="totalMetric" class="metric-value">—</strong>
         <span id="totalMeta" class="metric-meta">—</span>
       </div>
       <div class="metric">
-        <span class="metric-label">Daily average</span>
+        <span class="metric-label">Average potential GP</span>
         <strong id="averageMetric" class="metric-value">—</strong>
         <span class="metric-meta">GP per day</span>
       </div>
       <div class="metric">
-        <span class="metric-label">Peak day</span>
+        <span class="metric-label">Highest potential GP day</span>
         <strong id="peakMetric" class="metric-value">—</strong>
         <span id="peakMeta" class="metric-meta">—</span>
       </div>
@@ -423,18 +410,17 @@ HTML = r"""<!doctype html>
             <h2>Emission composition</h2>
           </div>
           <div class="composition-total">
-            Potential GP maximum in selected period
+            Potential GP in selected period
             <strong id="potentialTotal">—</strong>
           </div>
           <div id="compositionStack" class="stack" aria-label="Composition of maximum potential emission">
             <div class="stack-direct"></div>
-            <div class="stack-realized"></div>
-            <div class="stack-unrealized"></div>
+            <div class="stack-npc"></div>
           </div>
           <div id="compositionList" class="composition-list"></div>
           <p class="panel-note">
-            Direct GP drops are always realized. The selected scenario applies only to NPC-sellable loot.
-            GP means gold pieces; Tibia Coins are labeled TC and are not part of these emission totals.
+            Potential GP is direct GP plus the NPC value of all modeled loot. It is a modeled maximum,
+            not proof that every dropped item was collected and sold.
           </p>
         </div>
       </article>
@@ -469,8 +455,7 @@ HTML = r"""<!doctype html>
               <th scope="col">Quality</th>
               <th scope="col">Daily kills</th>
               <th scope="col">Direct GP drops</th>
-              <th scope="col">Potential GP maximum</th>
-              <th id="realizedHeader" scope="col">Realized GP estimate</th>
+              <th scope="col">Potential GP</th>
               <th scope="col">Top emitter</th>
             </tr>
           </thead>
@@ -495,7 +480,7 @@ HTML = r"""<!doctype html>
 
     <p class="footnote">
       Source: reconstructed creature loot values joined to Tibia world kill statistics. Player-market values are zero.
-      “Potential GP maximum” assumes all modeled NPC-sellable loot is collected and sold; realized scenarios apply only to that NPC component.
+      “Potential GP maximum” assumes all modeled NPC-sellable loot is collected and sold.
       GP means Tibia gold pieces. TC means Tibia Coins; no TC are counted as generated gold.
       Boss emissions remain excluded from the primary series.
     </p>
@@ -505,11 +490,10 @@ HTML = r"""<!doctype html>
   "use strict";
   const EMBEDDED = __DATA__;
   const SCHEMA = EMBEDDED.schema;
-  const COLORS = { direct: "#2467c9", potential: "#bc643f", realized: "#d39418", tcPrice: "#a0185a" };
+  const COLORS = { direct: "#2467c9", potential: "#bc643f", tcPrice: "#a0185a" };
   const SERIES = {
     direct: { label: "Direct GP drops", color: COLORS.direct, dash: "" },
-    potential: { label: "Potential GP maximum", color: COLORS.potential, dash: "8 6" },
-    realized: { label: "Realized GP estimate", color: COLORS.realized, dash: "3 5" }
+    potential: { label: "Potential GP", color: COLORS.potential, dash: "8 6" }
   };
   const REQUIRED_CSV = [
     "world", "date", "top_emission_creature_name", "top_emission_creature_gp",
@@ -586,15 +570,11 @@ HTML = r"""<!doctype html>
     if (requestedWorld && [...$("#worldSelect").options].some(option => option.value === requestedWorld)) {
       $("#worldSelect").value = requestedWorld;
     }
-    const requestedScenario = params.get("scenario");
-    if ([...$("#scenarioSelect").options].some(option => option.value === requestedScenario)) {
-      $("#scenarioSelect").value = requestedScenario;
-    }
     const requestedSeries = params.get("series");
     if (requestedSeries) {
       const selected = new Set(requestedSeries.split(","));
       $$("[data-series]").forEach(input => { input.checked = selected.has(input.dataset.series); });
-      if (!$$("[data-series]:checked").length) $("[data-series='realized']").checked = true;
+      if (!$$("[data-series]:checked").length) $("[data-series='potential']").checked = true;
     }
     $("#tcPriceToggle").checked = params.get("tcPrice") === "1";
     bindEvents();
@@ -623,10 +603,6 @@ HTML = r"""<!doctype html>
     ["#worldSelect", "#dateStart", "#dateEnd"].forEach(selector => {
       $(selector).addEventListener("change", () => { closeCreatureDetail(); render(); });
     });
-    $("#scenarioSelect").addEventListener("change", () => {
-      closeCreatureDetail();
-      render();
-    });
     $$("[data-series]").forEach(input => input.addEventListener("change", () => {
       if (!$$("[data-series]:checked").length) input.checked = true;
       render();
@@ -646,7 +622,6 @@ HTML = r"""<!doctype html>
     $("#worldSelect").value = "all";
     $("#dateStart").value = $("#dateStart").min;
     $("#dateEnd").value = $("#dateEnd").max;
-    $("#scenarioSelect").value = "0.5";
     $$("[data-series]").forEach(input => { input.checked = true; });
     $("#tcPriceToggle").checked = false;
     showAllRows = false;
@@ -717,11 +692,9 @@ HTML = r"""<!doctype html>
       }
       byDate.set(row.date, current);
     }
-    const scenario = numeric($("#scenarioSelect").value);
     return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).map(row => ({
       ...row,
       potential: row.direct + row.npc,
-      realized: row.direct + scenario * row.npc,
       coverage: row.nonboss > 0 ? row.modeled / row.nonboss : 0,
       tcPrice: world === "all"
         ? numeric(priceByDateMedian.get(row.date))
@@ -762,17 +735,17 @@ HTML = r"""<!doctype html>
       $("#coverageMeta").textContent = "0 days";
       return;
     }
-    const total = sum(rows, "realized");
-    const peak = rows.reduce((best, row) => row.realized > best.realized ? row : best, rows[0]);
+    const total = sum(rows, "potential");
+    const peak = rows.reduce((best, row) => row.potential > best.potential ? row : best, rows[0]);
     const nonboss = sum(rows, "nonboss");
     const modeled = sum(rows, "modeled");
     $("#totalMetric").textContent = metricCompact(total);
     $("#totalMetric").title = `${number.format(total)} GP`;
-    $("#totalMeta").textContent = `${number.format(total)} GP · ${scenarioLabel()}`;
+    $("#totalMeta").textContent = `${number.format(total)} potential GP`;
     $("#averageMetric").textContent = metricCompact(total / rows.length);
     $("#averageMetric").title = `${number.format(total / rows.length)} GP per day`;
-    $("#peakMetric").textContent = metricCompact(peak.realized);
-    $("#peakMetric").title = `${number.format(peak.realized)} GP`;
+    $("#peakMetric").textContent = metricCompact(peak.potential);
+    $("#peakMetric").title = `${number.format(peak.potential)} potential GP`;
     $("#peakMeta").textContent = isoDate(peak.date);
     $("#coverageMetric").textContent = percent.format(nonboss ? modeled / nonboss : 0);
     $("#coverageMeta").textContent = `${rows.length} observed days`;
@@ -780,7 +753,7 @@ HTML = r"""<!doctype html>
 
   function renderLegend() {
     const emissionLegend = selectedSeries().map(key =>
-      `<span class="legend-item"><i class="legend-line ${key}" style="border-color:${SERIES[key].color}"></i>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span>`
+      `<span class="legend-item"><i class="legend-line ${key}" style="border-color:${SERIES[key].color}"></i>${SERIES[key].label}</span>`
     ).join("");
     const priceLegend = $("#tcPriceToggle").checked
       ? `<span class="legend-item"><i class="legend-line" style="border-color:${COLORS.tcPrice}"></i>TC price (GP/TC) · right axis</span>`
@@ -931,7 +904,7 @@ HTML = r"""<!doctype html>
     $("#chartInspector").value = index;
     const tooltip = $("#chartTooltip");
     tooltip.innerHTML = `<div class="tooltip-date">${isoDate(row.date)}</div>` +
-      keys.map(key => `<div class="tooltip-row"><i class="tooltip-dot" style="background:${SERIES[key].color}"></i><span>${SERIES[key].label}${key === "realized" ? ` (${scenarioPercent()})` : ""}</span><span class="tooltip-value">${number.format(row[key])} GP</span></div>`).join("") +
+      keys.map(key => `<div class="tooltip-row"><i class="tooltip-dot" style="background:${SERIES[key].color}"></i><span>${SERIES[key].label}</span><span class="tooltip-value">${number.format(row[key])} GP</span></div>`).join("") +
       (showTcPrice ? `<div class="tooltip-row"><i class="tooltip-dot" style="background:${COLORS.tcPrice}"></i><span>TC price</span><span class="tooltip-value">${row.tcPrice ? `${number.format(row.tcPrice)} GP/TC` : "No price data"}</span></div>` : "") +
       `<div class="tooltip-row" style="margin-top:7px"><i></i><span>Coverage</span><span class="tooltip-value">${percent.format(row.coverage)}</span></div>`;
     const chartWidth = $(".chart-wrap").clientWidth;
@@ -940,7 +913,7 @@ HTML = r"""<!doctype html>
     tooltip.style.top = `${Math.max(8, margin.top + 8)}px`;
     tooltip.classList.add("visible");
     if (fromKeyboard) {
-      $("#chartInspector").setAttribute("aria-valuetext", `${isoDate(row.date)}: realized ${number.format(row.realized)} GP${showTcPrice && row.tcPrice ? `; TC price ${number.format(row.tcPrice)} GP per TC` : ""}`);
+      $("#chartInspector").setAttribute("aria-valuetext", `${isoDate(row.date)}: potential ${number.format(row.potential)} GP${showTcPrice && row.tcPrice ? `; TC price ${number.format(row.tcPrice)} GP per TC` : ""}`);
     }
   }
 
@@ -956,15 +929,11 @@ HTML = r"""<!doctype html>
   function renderComposition(rows) {
     const direct = sum(rows, "direct");
     const npc = sum(rows, "npc");
-    const rate = numeric($("#scenarioSelect").value);
-    const realizedNpc = npc * rate;
-    const unrealizedNpc = npc - realizedNpc;
     const potential = direct + npc;
     $("#potentialTotal").textContent = `${number.format(potential)} GP`;
     const segments = [
       { key: "direct", label: "Direct GP drops", value: direct, color: COLORS.direct },
-      { key: "realized", label: `Realized NPC loot (${scenarioPercent()})`, value: realizedNpc, color: COLORS.realized },
-      { key: "unrealized", label: "Unrealized NPC potential", value: unrealizedNpc, color: COLORS.potential }
+      { key: "npc", label: "NPC-sellable loot potential", value: npc, color: COLORS.potential }
     ];
     const stackParts = $("#compositionStack").children;
     segments.forEach((segment, index) => {
@@ -994,17 +963,16 @@ HTML = r"""<!doctype html>
     const kills = sum(rows, "kills");
     const direct = sum(rows, "direct");
     const npc = sum(rows, "npc");
-    const realizedNpc = npc * numeric($("#scenarioSelect").value);
     const nonboss = sum(rows, "nonboss");
     const modeled = sum(rows, "modeled");
     const flagged = rows.filter(row => qualityOf(row) !== "complete").length;
     const top = rows.reduce((best, row) => row.topGp > best.topGp ? row : best, rows[0]);
     host.innerHTML = `<div class="panel-inner">
-      <div class="panel-heading"><div><h2>What generated GP in ${escapeHtml(world)}</h2><p class="panel-note">Details for the selected dates. The NPC-loot estimate changes with the chosen realization scenario.</p></div></div>
+      <div class="panel-heading"><div><h2>What generated potential GP in ${escapeHtml(world)}</h2><p class="panel-note">Direct GP plus the maximum NPC value of modeled loot for the selected dates.</p></div></div>
       <div class="world-detail-grid">
         <div class="world-detail"><span>Creature deaths recorded</span><strong>${number.format(kills)}</strong></div>
         <div class="world-detail"><span>GP dropped directly by creatures</span><strong>${number.format(direct)} GP</strong></div>
-        <div class="world-detail"><span>Estimated GP from selling loot to NPCs</span><strong>${number.format(realizedNpc)} GP</strong></div>
+        <div class="world-detail"><span>Potential GP from selling all modeled loot to NPCs</span><strong>${number.format(npc)} GP</strong></div>
         <div class="world-detail"><span>Largest creature source on one day</span><strong>${escapeHtml(top.topName || "—")}</strong><span>${isoDate(top.date)} · ${number.format(top.topGp)} GP</span></div>
         <div class="world-detail"><span>Deaths covered by the GP model</span><strong>${percent.format(nonboss ? modeled / nonboss : 0)}</strong></div>
         <div class="world-detail"><span>Days needing extra caution</span><strong>${number.format(flagged)} of ${number.format(rows.length)}</strong></div>
@@ -1032,7 +1000,6 @@ HTML = r"""<!doctype html>
   function renderTable(rows) {
     const ordered = [...rows].reverse();
     const visible = showAllRows ? ordered : ordered.slice(0, 30);
-    $("#realizedHeader").textContent = `Realized GP estimate (${scenarioPercent()})`;
     $("#detailBody").innerHTML = visible.map(row => {
       const quality = qualityOf(row);
       const qualityLabel = quality === "low" ? "Low quality" : quality[0].toUpperCase() + quality.slice(1);
@@ -1044,7 +1011,6 @@ HTML = r"""<!doctype html>
         <td>${number.format(row.kills)}</td>
         <td>${number.format(row.direct)}</td>
         <td>${number.format(row.potential)}</td>
-        <td>${number.format(row.realized)}</td>
         <td>${escapeHtml(topEmitter || "—")}</td>
       </tr>`;
     }).join("");
@@ -1089,7 +1055,6 @@ HTML = r"""<!doctype html>
       const payload = await response.json();
       const stats = payload.killstatistics || payload;
       const entries = Array.isArray(stats.entries) ? stats.entries : [];
-      const scenario = numeric($("#scenarioSelect").value);
       const details = entries.map(entry => {
         const name = String(entry.race || "").trim();
         const kills = numeric(entry.last_day_killed);
@@ -1102,12 +1067,12 @@ HTML = r"""<!doctype html>
           name, kills, modeled,
           direct: directPerKill * kills,
           npc: npcPerKill * kills,
-          realized: (directPerKill + scenario * npcPerKill) * kills,
+          potential: (directPerKill + npcPerKill) * kills,
           included: model ? bool(model.included_in_main_series) : false,
           boss: model ? bool(model.is_boss) : false,
           status: model?.exclusion_reason || model?.loot_model_status || "No GP model"
         };
-      }).filter(Boolean).sort((a, b) => b.realized - a.realized || b.kills - a.kills || a.name.localeCompare(b.name));
+      }).filter(Boolean).sort((a, b) => b.potential - a.potential || b.kills - a.kills || a.name.localeCompare(b.name));
       renderCreatureDetail(world, date, details, sourceUrl);
     } catch (error) {
       $("#creatureDetailSummary").textContent = `${world} · ${date}`;
@@ -1118,9 +1083,9 @@ HTML = r"""<!doctype html>
   function renderCreatureDetail(world, date, rows, sourceUrl) {
     const modeledRows = rows.filter(row => row.modeled);
     const totalKills = rows.reduce((total, row) => total + row.kills, 0);
-    const realized = modeledRows.reduce((total, row) => total + row.realized, 0);
+    const potential = modeledRows.reduce((total, row) => total + row.potential, 0);
     $("#creatureDetailSummary").textContent =
-      `${world} · ${date} · ${number.format(rows.length)} creature types · ${number.format(totalKills)} deaths · ${number.format(realized)} modeled GP at ${scenarioPercent()} realization`;
+      `${world} · ${date} · ${number.format(rows.length)} creature types · ${number.format(totalKills)} deaths · ${number.format(potential)} potential GP`;
     if (!rows.length) {
       $("#creatureDetailContent").innerHTML = `<div class="detail-message">No creature deaths were recorded for this world and date.</div>`;
       return;
@@ -1131,7 +1096,7 @@ HTML = r"""<!doctype html>
         <th scope="col">Deaths</th>
         <th scope="col">Direct GP drops</th>
         <th scope="col">NPC loot maximum</th>
-        <th scope="col">Realized GP estimate (${scenarioPercent()})</th>
+        <th scope="col">Potential GP</th>
         <th scope="col">Model coverage</th>
       </tr></thead>
       <tbody>${rows.map(row => `<tr>
@@ -1139,7 +1104,7 @@ HTML = r"""<!doctype html>
         <td>${number.format(row.kills)}</td>
         <td>${row.modeled ? number.format(row.direct) : "—"}</td>
         <td>${row.modeled ? number.format(row.npc) : "—"}</td>
-        <td>${row.modeled ? number.format(row.realized) : "—"}</td>
+        <td>${row.modeled ? number.format(row.potential) : "—"}</td>
         <td>${row.modeled ? (row.included ? "Included in main series" : `Modeled · outside main series`) : `Not modeled${row.status ? ` · ${escapeHtml(row.status)}` : ""}`}</td>
       </tr>`).join("")}</tbody>
     </table></div>
@@ -1290,20 +1255,11 @@ HTML = r"""<!doctype html>
     if ($("#worldSelect").value !== "all") params.set("world", $("#worldSelect").value);
     if ($("#dateStart").value !== $("#dateStart").min) params.set("start", $("#dateStart").value);
     if ($("#dateEnd").value !== $("#dateEnd").max) params.set("end", $("#dateEnd").value);
-    if ($("#scenarioSelect").value !== "0.5") params.set("scenario", $("#scenarioSelect").value);
     if ($("#tcPriceToggle").checked) params.set("tcPrice", "1");
     const series = selectedSeries();
-    if (series.length !== 3) params.set("series", series.join(","));
+    if (series.length !== 2) params.set("series", series.join(","));
     const query = params.toString();
     try { history.replaceState(null, "", `${location.pathname}${query ? `?${query}` : ""}${location.hash}`); } catch (_) {}
-  }
-
-  function scenarioPercent() {
-    return `${Math.round(numeric($("#scenarioSelect").value) * 100)}%`;
-  }
-
-  function scenarioLabel() {
-    return `${scenarioPercent()} realization`;
   }
 
   function metricCompact(value) {
