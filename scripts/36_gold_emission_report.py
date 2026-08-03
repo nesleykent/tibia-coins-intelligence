@@ -419,7 +419,13 @@ def main() -> None:
                     "A positive bar means lower RMSE than a zero-return random walk. Nearly every monetary "
                     "specification is at or below zero, and the deterioration grows at 30 days. The appropriate "
                     "conclusion is that the reconstructed production variables do not add dependable directional "
-                    "forecast information in this sample."
+                    "forecast information in this sample.\n\n"
+                    "**Verdict.** Tested directly against later prices, gold emission shows no reliable signal "
+                    "at separately tested delays from 1 to 90 days, and no monetary series beats the random walk "
+                    "out of sample. This is a result about the direct test only. The analysis does not model the "
+                    "intermediate path from GP emission into GP circulation and Tibia Coin turnover, so it cannot "
+                    "reject that economic channel and cannot estimate a GP-to-TC absorption lag. Until that path "
+                    "is identified, the conversion interval and its price effect remain unknown."
                 ),
                 "sourceId": "src_models",
             },
@@ -434,7 +440,12 @@ def main() -> None:
                     "- **Loot table:** possible drops plus empirical frequency and quantity evidence.\n"
                     "- **Direct emission:** nominal Gold, Platinum, and Crystal Coins expected to drop.\n"
                     "- **Potential emission:** direct emission plus the maximum guaranteed NPC value of sellable loot.\n"
-                    "- **Realized emission estimate:** direct emission plus 25%, 50%, 75%, or 100% of potential NPC sales.\n"
+                    "- **Conservative potential emission:** the same, priced only at NPC buyers reachable without a "
+                    "quest or a store purchase. It retains 82.6% of potential emission, which is what the "
+                    "best-buyer-access assumption is worth.\n"
+                    "- **Realized emission estimate:** direct emission plus 25%, 50%, 75%, or 100% of potential NPC sales, "
+                    "plus one scenario using assumed per-item-category sale rates. Realization rates are declared "
+                    "assumptions, not observed quantities.\n"
                     "- **Cumulative emission index:** summed modeled flow since each world's first sample date; it is not the true money stock.\n\n"
                     "Inter-player Market values are zero because they transfer existing GP between accounts. "
                     "No net-flow or true monetary-stock claim is made because measurable sink data are unavailable."

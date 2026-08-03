@@ -45,6 +45,50 @@ REALIZATION_RATES = (0.25, 0.50, 0.75, 1.00)
 PSEUDO_PREFIXES = ("(", "[")
 COINS = {"gold coin": 1.0, "platinum coin": 100.0, "crystal coin": 10_000.0}
 
+# Player-to-NPC buyers that a character cannot reach under ordinary conditions. The main series
+# uses the highest NPC offer of all, which assumes the hunter reaches the best buyer; the
+# conservative series drops these so the reader can price that assumption instead of trusting it.
+# Rashid trades only after the Travelling Trader Quest and moves city every day; a Hireling is
+# bought from the store for Tibia Coins, so its offer is not available to an arbitrary character.
+GATED_BUYERS = {
+    "rashid": "Travelling Trader Quest; buyer rotates city daily",
+    "hireling": "bought from the store with Tibia Coins",
+}
+# Premium account is treated as an ordinary condition: the worlds in this panel are hunted almost
+# entirely by premium characters, so premium-only travel is not counted as an access gate.
+ACCESS_BASELINE_NOTE = "premium travel treated as ordinary; quest- and store-gated buyers excluded"
+
+# Step 5 intermediate scenario. Loot pickup and NPC selling are not observed anywhere in the
+# available data (PROJECT_PLAN DATA-05), so these are declared assumptions, not measurements.
+# Item weight is absent from the item metadata, so value density and the way each category is
+# actually handled on a hunt stand in for carry cost. Every rate is a documented guess and the
+# flat 25/50/75/100% ladder remains the primary sensitivity device.
+CATEGORY_REALIZATION = {
+    "valuables": 0.95,
+    "creature products": 0.90,
+    "amulets": 0.80,
+    "rings": 0.80,
+    "wands rods": 0.45,
+    "distance weapons": 0.40,
+    "swords": 0.35,
+    "axes": 0.35,
+    "clubs": 0.35,
+    "fist weapons": 0.35,
+    "shields": 0.35,
+    "armors": 0.35,
+    "legs": 0.35,
+    "helmets hats": 0.35,
+    "boots": 0.35,
+    "quiver": 0.25,
+    "containers": 0.20,
+    "decoration": 0.20,
+    "tools": 0.20,
+    "others": 0.20,
+    "potions": 0.10,
+    "food": 0.05,
+}
+CATEGORY_REALIZATION_DEFAULT = 0.30
+
 
 def norm(value: object) -> str:
     text = unicodedata.normalize("NFKC", str(value or ""))
@@ -86,35 +130,81 @@ def confidence(samples: int) -> str:
     return "insufficient"
 
 
-def latest_loot2_block(wikitext: str) -> str | None:
-    marker = re.search(r"\{\{Loot2(?:_RC)?(?=[\s|}])", wikitext, flags=re.I)
-    if not marker:
-        return None
-    start = marker.start()
-    depth = 0
-    index = start
-    while index < len(wikitext) - 1:
-        pair = wikitext[index : index + 2]
-        if pair == "{{":
-            depth += 1
-            index += 2
-            continue
-        if pair == "}}":
-            depth -= 1
-            index += 2
-            if depth == 0:
-                return wikitext[start:index]
-            continue
-        index += 1
-    return None
+def loot2_blocks(wikitext: str) -> list[str]:
+    """Every Loot2/Loot2_RC template on the page, newest first, in page order."""
+    blocks: list[str] = []
+    for marker in re.finditer(r"\{\{Loot2(?:_RC)?(?=[\s|}])", wikitext, flags=re.I):
+        start = marker.start()
+        depth = 0
+        index = start
+        while index < len(wikitext) - 1:
+            pair = wikitext[index : index + 2]
+            if pair == "{{":
+                depth += 1
+                index += 2
+                continue
+            if pair == "}}":
+                depth -= 1
+                index += 2
+                if depth == 0:
+                    blocks.append(wikitext[start:index])
+                    break
+                continue
+            index += 1
+    return blocks
+
+
+def block_kills(block: str) -> int:
+    match = re.search(r"\|\s*kills\s*=\s*([\d,]+)", block)
+    return int(match.group(1).replace(",", "")) if match else 0
+
+
+def select_loot2_block(wikitext: str) -> tuple[str | None, str]:
+    """Pick the loot sample to model, and say why it was picked.
+
+    TibiaWiki lists the newest client version first, so the first block is the most current
+    picture of the loot table.  It is also frequently a handful of kills recorded right after a
+    content update, and taking it unconditionally threw away thousands of kills recorded under
+    the previous version: 67 creatures, among them Abyssador (2 kills preferred over 117) and
+    Energuardian of Tales (46 preferred over 8,558), were demoted to `insufficient_sample` that
+    way.  Prefer the newest block that clears the reliability threshold, and fall back to the
+    largest sample on the page when no block clears it.
+    """
+    blocks = loot2_blocks(wikitext)
+    if not blocks:
+        return None, "no Loot2 template on the page"
+    for position, block in enumerate(blocks):
+        if block_kills(block) >= MIN_RELIABLE_SAMPLES:
+            if position == 0:
+                return block, "newest loot table on the page"
+            return block, (
+                f"newest table clearing {MIN_RELIABLE_SAMPLES} kills; "
+                f"{position} newer but smaller table(s) declined"
+            )
+    best = max(range(len(blocks)), key=lambda i: block_kills(blocks[i]))
+    return blocks[best], "largest sample on the page; no table clears the reliability threshold"
 
 
 @dataclass
 class Price:
     max_gp: float
+    conservative_gp: float
     buyers: str
+    conservative_buyers: str
     access_note: str
+    category: str
     source: str
+
+
+def offer_gate(offer: dict) -> str:
+    """Why this offer is not available to an arbitrary character, or "" when it is."""
+    name = norm(offer.get("name"))
+    if name in GATED_BUYERS:
+        return f"{offer.get('name')}: {GATED_BUYERS[name]}"
+    flag = str(offer.get("currency_quest_flag_display_name") or "").strip()
+    if flag:
+        return f"{offer.get('name')}: metadata quest flag {flag}"
+    return ""
 
 
 def item_prices() -> dict[str, Price]:
@@ -126,45 +216,95 @@ def item_prices() -> dict[str, Price]:
         for key in keys - {""}:
             grouped[key].append(item)
 
+    def describe(offers: list[dict]) -> str:
+        return "; ".join(
+            sorted(
+                {
+                    f"{offer.get('name', 'unknown')} @ {offer.get('location', 'unknown')}"
+                    for offer in offers
+                }
+            )
+        )
+
     prices: dict[str, Price] = {}
     for key, candidates in grouped.items():
-        offers = []
+        offers: list[tuple[float, dict]] = []
+        category = ""
         for item in candidates:
+            category = category or str(item.get("category") or "")
             for offer in item.get("npc_buy") or []:
                 gp = number(offer.get("price"))
-                if gp is not None and gp > 0:
+                # A non-zero currency object means the NPC pays in something other than gold,
+                # which is not gold creation.  Every npc_buy offer in the cache pays in gold
+                # (currency_object_type_id 0); the guard keeps that true if the cache changes.
+                currency = number(offer.get("currency_object_type_id")) or 0
+                if gp is not None and gp > 0 and currency == 0:
                     offers.append((gp, offer))
         if not offers:
             continue
         maximum = max(gp for gp, _ in offers)
         best = [offer for gp, offer in offers if gp == maximum]
-        buyers = "; ".join(
-            sorted(
-                {
-                    f"{offer.get('name', 'unknown')} @ {offer.get('location', 'unknown')}"
-                    for offer in best
-                }
+        open_offers = [(gp, offer) for gp, offer in offers if not offer_gate(offer)]
+        conservative = max((gp for gp, _ in open_offers), default=0.0)
+        conservative_best = [offer for gp, offer in open_offers if gp == conservative]
+
+        gates = sorted({gate for _, offer in offers if (gate := offer_gate(offer))})
+        if conservative >= maximum:
+            note = f"best offer reachable without a quest or store purchase; {ACCESS_BASELINE_NOTE}"
+        elif conservative > 0:
+            note = (
+                f"best offer needs access ({'; '.join(gates)}); "
+                f"best open offer pays {conservative:,.0f} GP; {ACCESS_BASELINE_NOTE}"
             )
-        )
-        quest_flags = sorted(
-            {
-                str(offer.get("currency_quest_flag_display_name")).strip()
-                for offer in best
-                if str(offer.get("currency_quest_flag_display_name") or "").strip()
-            }
-        )
-        note = (
-            "metadata flag: " + "; ".join(quest_flags)
-            if quest_flags
-            else "buyer/location known; travel, faction, and quest access not fully encoded"
-        )
+        else:
+            note = (
+                f"every NPC buyer needs access ({'; '.join(gates)}); "
+                f"conservative value is zero; {ACCESS_BASELINE_NOTE}"
+            )
+
         prices[key] = Price(
             max_gp=maximum,
-            buyers=buyers,
+            conservative_gp=conservative,
+            buyers=describe(best),
+            conservative_buyers=describe(conservative_best),
             access_note=note,
-            source="data/raw/tm_item_metadata.json (TibiaMarket item metadata)",
+            category=category,
+            source="data/raw/tm_item_metadata.json (TibiaMarket item metadata, npc_buy offers)",
         )
     return prices
+
+
+LOOT_FIELD = re.compile(r"([A-Za-z_]+)\s*:\s*([^,]*)")
+
+
+def parse_loot_line(body: str) -> dict | None:
+    """Parse one `Name, times:N, amount:A, total:T` row of a Loot2 template.
+
+    Read the fields by name rather than by position.  The previous positional pattern anchored
+    `times:([\\d,]+)` with a greedy character class that included the comma, so it consumed the
+    separator before the optional `amount:` and `total:` groups could match.  Because both groups
+    were optional the match still succeeded, silently, on every row: all 17,681 items in
+    `creature_loot_items.csv` carried quantity 1.  Gold Coin stacks average 66 coins and Platinum
+    Coin stacks average 10, so direct-coin emission was understated by roughly an order of
+    magnitude.  Reading by name also handles the three rows that put `amount:` before `times:`.
+    """
+    first = LOOT_FIELD.search(body)
+    if not first:
+        return None
+    name = body[: first.start()].rstrip().rstrip(",").strip()
+    if not name:
+        return None
+    fields = {key.casefold(): value.strip() for key, value in LOOT_FIELD.findall(body)}
+    times = number(fields.get("times"))
+    if times is None or times <= 0:
+        return None
+    total = number(fields.get("total")) if fields.get("total") else None
+    return {
+        "item_name": name,
+        "times": int(times),
+        "amount": fields.get("amount") or None,
+        "total": int(total) if total is not None else None,
+    }
 
 
 def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dict]:
@@ -175,7 +315,7 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
     models: dict[str, dict] = {}
 
     for page in cache["pages"].values():
-        block = latest_loot2_block(page.get("wikitext", ""))
+        block, block_reason = select_loot2_block(page.get("wikitext", ""))
         title = page["title"].split(":", 1)[-1]
         if not block:
             continue
@@ -190,24 +330,9 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
                 key, value = body.split("=", 1)
                 fields[norm(key)] = value.strip()
                 continue
-            match = re.match(
-                r"^(.*?),\s*times:([\d,]+)"
-                r"(?:,\s*amount:([^,]+))?"
-                r"(?:,\s*total:([\d,]+))?",
-                body,
-                flags=re.I,
-            )
-            if not match:
-                continue
-            item_name, times_raw, amount, total_raw = match.groups()
-            raw_items.append(
-                {
-                    "item_name": item_name.strip(),
-                    "times": int(times_raw.replace(",", "")),
-                    "amount": amount.strip() if amount else None,
-                    "total": int(total_raw.replace(",", "")) if total_raw else None,
-                }
-            )
+            parsed = parse_loot_line(body)
+            if parsed:
+                raw_items.append(parsed)
 
         samples = int(number(fields.get("kills")) or 0)
         creature_name = fields.get("name") or title
@@ -216,7 +341,9 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
         conf = confidence(samples)
         reliable = samples >= MIN_RELIABLE_SAMPLES
         direct_gp = npc_gp = 0.0
+        conservative_npc_gp = category_npc_gp = 0.0
         considered = discarded = complete = 0
+        inconsistent_totals = 0
 
         for raw_item in raw_items:
             item_name = raw_item["item_name"]
@@ -227,25 +354,37 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
             qmin, qmax = parse_range(raw_item["amount"])
             drop_frequency = times / samples
             probability = min(1.0, drop_frequency)
-            if raw_item["total"] is not None and times > 0:
-                expected_quantity = raw_item["total"] / samples
-                conditional_quantity = (
-                    expected_quantity / probability if probability > 0 else 0.0
-                )
+            total = raw_item["total"]
+            if total is not None and total >= times:
+                # `total` is the summed quantity over the whole sample, so total / kills is the
+                # exact empirical expectation per kill.  Prefer it over the range midpoint.
+                expected_quantity = total / samples
                 distribution = "empirical total / kills"
                 complete += 1
             else:
-                expected_quantity_per_stack = (qmin + qmax) / 2
-                expected_quantity = drop_frequency * expected_quantity_per_stack
-                conditional_quantity = (
-                    expected_quantity / probability if probability > 0 else 0.0
+                if total is not None:
+                    # total < times cannot happen if every drop yields at least one unit; the
+                    # wiki row is internally inconsistent, so fall back and record it.
+                    inconsistent_totals += 1
+                expected_quantity = drop_frequency * (qmin + qmax) / 2
+                distribution = (
+                    "range midpoint fallback; source total inconsistent with times"
+                    if total is not None
+                    else "range midpoint fallback"
+                    if raw_item["amount"]
+                    else "unit quantity assumed; source states neither amount nor total"
                 )
-                distribution = "range midpoint fallback"
-                complete += 1
+                if raw_item["amount"]:
+                    complete += 1
+            conditional_quantity = (
+                expected_quantity / probability if probability > 0 else 0.0
+            )
 
             coin_value = COINS.get(norm(item_name), 0.0)
             price = prices.get(norm(item_name))
             npc_value = price.max_gp if price and not coin_value else 0.0
+            npc_conservative = price.conservative_gp if price and not coin_value else 0.0
+            item_category = price.category if price else ""
             category = (
                 "direct_coin"
                 if coin_value
@@ -253,17 +392,29 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
                 if npc_value
                 else "player_only_or_no_npc_buyer"
             )
+            realization = (
+                1.0
+                if category == "direct_coin"
+                else CATEGORY_REALIZATION.get(
+                    norm(item_category), CATEGORY_REALIZATION_DEFAULT
+                )
+            )
             if category == "direct_coin":
                 expected_direct = expected_quantity * coin_value
-                expected_npc = 0.0
+                expected_npc = expected_conservative = expected_category = 0.0
             elif category == "npc_sellable":
                 expected_direct = 0.0
                 expected_npc = expected_quantity * npc_value
+                expected_conservative = expected_quantity * npc_conservative
+                expected_category = expected_npc * realization
             else:
                 expected_direct = expected_npc = 0.0
+                expected_conservative = expected_category = 0.0
                 discarded += 1
             direct_gp += expected_direct
             npc_gp += expected_npc
+            conservative_npc_gp += expected_conservative
+            category_npc_gp += expected_category
 
             item_rows.append(
                 {
@@ -284,12 +435,17 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
                     "expected_quantity_per_kill": expected_quantity,
                     "quantity_distribution_method": distribution,
                     "monetary_category": category,
+                    "item_category": item_category,
                     "nominal_coin_value_gp": coin_value,
                     "npc_sell_value_max_gp": npc_value,
-                    "npc_sell_value_conservative_gp": 0.0,
+                    "npc_sell_value_conservative_gp": npc_conservative,
+                    "category_realization_rate": realization,
                     "expected_direct_coin_gp_per_kill": expected_direct,
                     "expected_npc_sale_gp_per_kill": expected_npc,
+                    "expected_npc_sale_gp_per_kill_conservative": expected_conservative,
+                    "expected_npc_sale_gp_per_kill_category_realized": expected_category,
                     "npc_best_buyers": price.buyers if price else "",
+                    "npc_conservative_buyers": price.conservative_buyers if price else "",
                     "npc_access_requirement": price.access_note if price else "",
                     "npc_price_source": price.source if price else "",
                     "loot_samples": samples,
@@ -314,14 +470,27 @@ def parse_loot_cache() -> tuple[pd.DataFrame, pd.DataFrame, dict[str, dict], dic
             "loot_samples": samples,
             "loot_confidence": conf,
             "loot_version": fields.get("version", ""),
+            "loot_block_selection": block_reason,
             "loot_item_count": considered,
             "valued_item_count": considered - discarded,
             "discarded_item_count": discarded,
             "loot_fields_complete_pct": completeness,
+            "inconsistent_total_rows": inconsistent_totals,
             "expected_direct_coin_gp_per_kill": direct_gp if reliable else np.nan,
             "expected_npc_sale_gp_per_kill": npc_gp if reliable else np.nan,
             "expected_total_potential_gp_per_kill": direct_gp + npc_gp if reliable else np.nan,
-            "expected_total_conservative_gp_per_kill": direct_gp if reliable else np.nan,
+            # Conservative = direct coins plus NPC sales at buyers reachable without a quest or a
+            # store purchase.  It used to be direct coins alone, which made the "conservative NPC
+            # price" scenario indistinguishable from the direct-coin series.
+            "expected_total_conservative_gp_per_kill": (
+                direct_gp + conservative_npc_gp if reliable else np.nan
+            ),
+            "expected_npc_sale_gp_per_kill_conservative": (
+                conservative_npc_gp if reliable else np.nan
+            ),
+            "expected_total_category_realized_gp_per_kill": (
+                direct_gp + category_npc_gp if reliable else np.nan
+            ),
             "loot_source_url": page["source_url"],
             "loot_source_revision_id": page.get("revision_id"),
             "loot_source_revision_utc": page.get("revision_timestamp_utc"),
@@ -465,14 +634,19 @@ def scan_world(world_dir: pathlib.Path) -> tuple[list[dict], dict[str, dict]]:
                 "modeled_kills_all": 0,
                 "modeled_kills_nonboss": 0,
                 "low_confidence_modeled_kills": 0,
+                "low_confidence_potential_gp": 0,
+                "assumed_quantity_potential_gp": 0,
                 "known_zero_emission_kills": 0,
                 "event_creature_kills": 0,
                 "summon_kills": 0,
                 "training_kills": 0,
                 "direct_coin_gp": 0,
                 "npc_potential_gp_max": 0,
+                "npc_potential_gp_conservative": 0,
+                "npc_potential_gp_category_realized": 0,
                 "boss_direct_coin_gp": 0,
                 "boss_npc_potential_gp_max": 0,
+                "boss_npc_potential_gp_conservative": 0,
             }
         )
         top_emission_name = ""
@@ -550,21 +724,40 @@ def scan_world(world_dir: pathlib.Path) -> tuple[list[dict], dict[str, dict]]:
                 if not is_boss:
                     sums["modeled_kills_nonboss"] += kills
                 continue
-            if not model or model["loot_model_status"] != "complete":
+            # `partial` means some rows of an otherwise well-sampled table state no quantity, so
+            # those rows fall back to one unit. The creature still has a usable expected value and
+            # its loot_fields_complete_pct travels with it; excluding it would drop coverage
+            # without making the estimate more honest.
+            if not model or model["loot_model_status"] not in {"complete", "partial"}:
                 continue
             direct = model["expected_direct_coin_gp_per_kill"] * kills
             npc = model["expected_npc_sale_gp_per_kill"] * kills
+            npc_conservative = model["expected_npc_sale_gp_per_kill_conservative"] * kills
+            npc_category = (
+                model["expected_total_category_realized_gp_per_kill"]
+                - model["expected_direct_coin_gp_per_kill"]
+            ) * kills
             sums["modeled_kills_all"] += kills
             if model["loot_confidence"] == "low":
                 sums["low_confidence_modeled_kills"] += kills
             if is_boss:
                 sums["boss_direct_coin_gp"] += direct
                 sums["boss_npc_potential_gp_max"] += npc
+                sums["boss_npc_potential_gp_conservative"] += npc_conservative
             else:
                 sums["modeled_kills_nonboss"] += kills
                 sums["direct_coin_gp"] += direct
                 sums["npc_potential_gp_max"] += npc
+                sums["npc_potential_gp_conservative"] += npc_conservative
+                sums["npc_potential_gp_category_realized"] += npc_category
                 contribution = direct + npc
+                # Step 7 asks for the share of estimated VALUE resting on weak data, which is a
+                # different question from the share of deaths: a rare creature with a thin loot
+                # sample can carry far more GP than its kill count suggests.
+                if model["loot_confidence"] == "low":
+                    sums["low_confidence_potential_gp"] += contribution
+                if model["loot_fields_complete_pct"] < 1:
+                    sums["assumed_quantity_potential_gp"] += contribution
                 if contribution > top_emission_gp:
                     top_emission_name, top_emission_gp = canonical, contribution
 
@@ -655,10 +848,32 @@ def build_daily(daily: pd.DataFrame) -> pd.DataFrame:
     daily["low_confidence_deaths_pct"] = (
         daily.low_confidence_modeled_kills / daily.modeled_kills_all.replace(0, np.nan)
     )
+    potential_denominator = (
+        daily.direct_coin_gp + daily.npc_potential_gp_max
+    ).replace(0, np.nan)
+    # Share of estimated VALUE, not of deaths. A thinly sampled creature can carry far more GP
+    # than its kill count implies, so the death share understates how much of the number rests
+    # on weak loot data.
+    daily["low_confidence_value_pct"] = (
+        daily.low_confidence_potential_gp / potential_denominator
+    )
+    daily["assumed_quantity_value_pct"] = (
+        daily.assumed_quantity_potential_gp / potential_denominator
+    )
     daily["potential_total_gp_max"] = (
         daily.direct_coin_gp + daily.npc_potential_gp_max
     )
-    daily["potential_total_gp_conservative"] = daily.direct_coin_gp
+    # Potential emission priced at NPC buyers a character reaches without a quest or a store
+    # purchase.  This used to be direct coins alone, which answered no question the max-price
+    # series had not already answered.
+    daily["potential_total_gp_conservative"] = (
+        daily.direct_coin_gp + daily.npc_potential_gp_conservative
+    )
+    # Step 5's intermediate scenario: per-item-category realisation rates instead of one flat
+    # rate.  The rates are declared assumptions, not observations - see CATEGORY_REALIZATION.
+    daily["realized_estimate_gp_category"] = (
+        daily.direct_coin_gp + daily.npc_potential_gp_category_realized
+    )
     daily["boss_potential_total_gp_max"] = (
         daily.boss_direct_coin_gp + daily.boss_npc_potential_gp_max
     )
@@ -752,14 +967,18 @@ def main() -> None:
         "loot_samples",
         "loot_confidence",
         "loot_version",
+        "loot_block_selection",
         "loot_item_count",
         "valued_item_count",
         "discarded_item_count",
         "loot_fields_complete_pct",
+        "inconsistent_total_rows",
         "expected_direct_coin_gp_per_kill",
         "expected_npc_sale_gp_per_kill",
+        "expected_npc_sale_gp_per_kill_conservative",
         "expected_total_potential_gp_per_kill",
         "expected_total_conservative_gp_per_kill",
+        "expected_total_category_realized_gp_per_kill",
         "loot_source_url",
         "loot_source_revision_id",
         "loot_source_revision_utc",
@@ -775,11 +994,12 @@ def main() -> None:
     known_zero = coverage[
         ["explicit_no_loot", "is_summon", "is_training"]
     ].fillna(False).any(axis=1)
+    modeled_status = coverage.loot_model_status.isin(["complete", "partial"])
     coverage["coverage_category"] = np.select(
         [
             coverage.is_boss,
             known_zero,
-            coverage.loot_model_status.eq("complete"),
+            modeled_status,
             coverage.loot_model_status.eq("insufficient_sample"),
         ],
         ["boss_separate", "known_zero_emission", "modeled", "insufficient_sample"],
@@ -804,16 +1024,15 @@ def main() -> None:
 
     daily = build_daily(daily)
     total_deaths = coverage.total_kills.sum()
-    covered_deaths = coverage.loc[
-        coverage.loot_model_status.eq("complete") | known_zero, "total_kills"
-    ].sum()
+    covered_deaths = coverage.loc[modeled_status | known_zero, "total_kills"].sum()
     nonboss = coverage[~coverage.is_boss]
     nonboss_known_zero = nonboss[
         ["explicit_no_loot", "is_summon", "is_training"]
     ].fillna(False).any(axis=1)
     nonboss_coverage = (
         nonboss.loc[
-            nonboss.loot_model_status.eq("complete") | nonboss_known_zero, "total_kills"
+            nonboss.loot_model_status.isin(["complete", "partial"]) | nonboss_known_zero,
+            "total_kills",
         ].sum()
         / nonboss.total_kills.sum()
     )
@@ -830,6 +1049,8 @@ def main() -> None:
         "canonical_creatures": int(len(coverage)),
         "loot_statistics_pages": int(cache["category_member_count"]),
         "matched_complete_creatures": int(coverage.loot_model_status.eq("complete").sum()),
+        "matched_partial_creatures": int(coverage.loot_model_status.eq("partial").sum()),
+        "modeled_creatures": int(modeled_status.sum()),
         "insufficient_sample_creatures": int(
             coverage.loot_model_status.eq("insufficient_sample").sum()
         ),
@@ -844,9 +1065,41 @@ def main() -> None:
         "minimum_reliable_loot_samples": MIN_RELIABLE_SAMPLES,
         "daily_coverage_threshold": COVERAGE_THRESHOLD,
         "realization_rates": list(REALIZATION_RATES),
+        "quantity_rule": (
+            "expected quantity per kill is the empirical total / kills reported by the loot "
+            "table; the amount range midpoint is used only when the source omits a total"
+        ),
+        "quantity_rows_empirical": int(
+            items.quantity_distribution_method.eq("empirical total / kills").sum()
+        ),
+        "quantity_rows_midpoint": int(
+            items.quantity_distribution_method.str.startswith("range midpoint").sum()
+        ),
+        "quantity_rows_unit_assumed": int(
+            items.quantity_distribution_method.str.startswith("unit quantity").sum()
+        ),
+        "inconsistent_total_rows": int(
+            items.quantity_distribution_method.str.contains("inconsistent").sum()
+        ),
+        "loot_block_fallbacks": int(
+            loot_creatures.loot_block_selection.str.contains("declined").sum()
+        ),
         "conservative_npc_rule": (
-            "non-coin NPC sale value set to zero because full buyer access prerequisites "
-            "are not encoded in the item source"
+            "conservative NPC value is the highest player-to-NPC offer from a buyer reachable "
+            "without a quest or a store purchase; Rashid (Travelling Trader Quest) and Hirelings "
+            "(bought with Tibia Coins) are excluded, premium travel is treated as ordinary"
+        ),
+        "category_realization_rule": (
+            "assumed, not observed: per-item-category pickup-and-sale rates standing in for "
+            "carry cost and convenience, because loot pickup is unobserved (DATA-05) and item "
+            "weight is absent from the item metadata; the flat 25/50/75/100% ladder remains the "
+            "primary sensitivity device"
+        ),
+        "category_realization_rates": CATEGORY_REALIZATION,
+        "category_realization_default": CATEGORY_REALIZATION_DEFAULT,
+        "npc_currency_rule": (
+            "only offers paid in gold (currency_object_type_id 0) create GP; offers paid in "
+            "another currency object are excluded"
         ),
         "event_rule": (
             "event flags are retained; per-kill values are not multiplied because the cache "
@@ -860,7 +1113,43 @@ def main() -> None:
             "no special creature is assigned a zero value without source evidence; unmatched "
             "summons/training creatures remain explicitly uncovered"
         ),
+        # The summon count is 0 because the source cannot identify one, not because the archive
+        # was searched and found none. TibiaWiki carries "Summonable Creatures" (a creature a
+        # player may summon) and "Creatures that Use Summon"; neither says that a kill-statistics
+        # entry was itself a summoned creature. Reporting a measured zero here would overstate
+        # what the classification can do.
+        "summon_identification": (
+            "not identifiable from the source: TibiaWiki has no category marking a kill-statistics "
+            "entry as a summoned creature, so summon double-counting can be neither confirmed nor "
+            "excluded"
+        ),
+        "training_identification": (
+            "training creatures are matched by title only; Tibia's training targets are objects "
+            "rather than kill-statistics races, so no match is expected"
+        ),
     }
+
+    # The published quality artifacts disagreed with each other and with the series they describe:
+    # the JSON reported 69,010 low-quality world-days out of 21,412 while the CSV reported 1 and
+    # the daily table contained none. Assert the invariants here so a stale or miscounted figure
+    # fails the build instead of being rendered on the dashboard and the hub.
+    if not 0 <= quality["low_quality_world_days"] <= quality["world_days"]:
+        raise SystemExit(
+            f"low_quality_world_days={quality['low_quality_world_days']} outside "
+            f"0..{quality['world_days']}"
+        )
+    if quality["low_quality_world_days"] != int(daily.low_quality_flag.sum()):
+        raise SystemExit("quality low-quality count disagrees with the daily table")
+    if not 0 <= quality["covered_deaths_pct_nonboss"] <= 1:
+        raise SystemExit("non-boss coverage outside 0..1")
+    # The parse regression that valued every stack as one unit was silent. Refuse to ship a build
+    # in which the empirical quantity is missing from most of the loot table.
+    empirical_share = items.quantity_distribution_method.eq("empirical total / kills").mean()
+    if empirical_share < 0.90:
+        raise SystemExit(
+            f"only {empirical_share:.1%} of loot rows carry an empirical total; "
+            "the quantity parser is not reading the source"
+        )
 
     P.mkdir(parents=True, exist_ok=True)
     items.to_csv(P / "creature_loot_items.csv", index=False)

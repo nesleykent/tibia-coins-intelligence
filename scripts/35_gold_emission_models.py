@@ -31,10 +31,17 @@ SERIES = {
     "kill_count": "total_kills",
     "direct_coin": "direct_coin_gp",
     "potential_max": "potential_total_gp_max",
+    # Step 13's NPC-price axis: the same potential emission priced only at buyers reachable
+    # without a quest or a store purchase, so the best-buyer-access assumption can be measured
+    # instead of assumed.
+    "potential_conservative": "potential_total_gp_conservative",
     "realized_25": "realized_estimate_gp_25",
     "realized_50": "realized_estimate_gp_50",
     "realized_75": "realized_estimate_gp_75",
     "realized_100": "realized_estimate_gp_100",
+    # Step 5's intermediate scenario: per-item-category realisation rates rather than one flat
+    # rate across every sellable item.
+    "realized_category": "realized_estimate_gp_category",
 }
 
 
@@ -348,10 +355,18 @@ def oos_models(data: pd.DataFrame) -> pd.DataFrame:
 
 def sensitivity_models(data: pd.DataFrame) -> pd.DataFrame:
     group = data.groupby("world", observed=True)
+    # Every axis Step 13 asks for that the panel can carry: the raw kill count it replaces,
+    # direct coins alone, both NPC price assumptions, the flat realisation ladder, the
+    # category-based intermediate scenario, and boss inclusion.
     candidates = {
         "kill_count": "growth_kill_count",
         "direct_coin": "growth_direct_coin",
+        "realized_25": "growth_realized_25",
         "realized_50": "growth_realized_50",
+        "realized_75": "growth_realized_75",
+        "realized_100": "growth_realized_100",
+        "realized_category": "growth_realized_category",
+        "potential_conservative": "growth_potential_conservative",
         "potential_max": "growth_potential_max",
         "potential_with_bosses": "growth_potential_with_bosses",
     }

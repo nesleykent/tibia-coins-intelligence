@@ -124,7 +124,11 @@ def main() -> None:
         ["model_type", "horizon_days", "lag_or_window_days"], observed=True
     ).n.nunique()
     assert sample_counts.max() == 1, "series were not compared on identical samples"
-    assert set(oos.series) == {
+    # The kill-count baseline and the three headline emission series must always be compared;
+    # scenario series may be added, so require the contract rather than an exact set. Pinning the
+    # set meant that adding the conservative-NPC-price and category-realisation scenarios failed
+    # the verifier for being new rather than for being wrong.
+    required_series = {
         "kill_count",
         "direct_coin",
         "potential_max",
@@ -133,8 +137,19 @@ def main() -> None:
         "realized_75",
         "realized_100",
     }
+    assert required_series <= set(oos.series), sorted(required_series - set(oos.series))
     assert oos.rmse_improvement_pct.between(-1, 1).all()
-    assert len(sensitivity) == 15
+    # Every series must be tested at every coverage threshold, so the table is a full grid.
+    assert required_series <= set(sensitivity.series), sorted(
+        required_series - set(sensitivity.series)
+    )
+    n_series = sensitivity.series.nunique()
+    n_thresholds = sensitivity.coverage_threshold.nunique()
+    assert len(sensitivity) == n_series * n_thresholds, (
+        f"sensitivity is not a full grid: {len(sensitivity)} rows against "
+        f"{n_series} series x {n_thresholds} thresholds"
+    )
+    assert n_thresholds >= 3, n_thresholds
 
     assert artifact["surface"] == "report"
     assert artifact["snapshot"]["status"] == "ready"
