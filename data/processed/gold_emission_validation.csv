@@ -19,15 +19,15 @@ extreme_expected_value,The Duke of the Depths,39348.05194805194,GP per kill,boss
 extreme_expected_value,Obujos,38424.242424242424,GP per kill,boss_separate; 231 source samples; low confidence
 extreme_expected_value,Mitmah Vanguard,38095.439189189194,GP per kill,boss_separate; 296 source samples; low confidence
 extreme_expected_value,Ushuriel,37692.42476489029,GP per kill,boss_separate; 638 source samples; low confidence
-top_emission_creature_share,world-day distribution,0.18514016128971783,99th percentile share,median=0.0337
-top_kill_creature_share,world-day distribution,0.1097910242946018,99th percentile share,median=0.0190
-world_emission_per_activity,Yonabra,8684526.30635183,estimated GP per average online player-day,mean online=162.2; mean coverage=98.5%
-world_emission_per_activity,Terribra,7310998.066247705,estimated GP per average online player-day,mean online=81.5; mean coverage=98.4%
-world_emission_per_activity,Celebra,6806585.63340123,estimated GP per average online player-day,mean online=169.7; mean coverage=98.5%
-world_emission_per_activity,Gentebra,6757982.417231551,estimated GP per average online player-day,mean online=218.8; mean coverage=98.4%
-world_emission_per_activity,Collabra,6598643.672586418,estimated GP per average online player-day,mean online=161.9; mean coverage=98.0%
-world_emission_per_activity,Issobra,6522218.27589186,estimated GP per average online player-day,mean online=100.9; mean coverage=98.6%
-world_emission_per_activity,Kalibra,6274190.938543488,estimated GP per average online player-day,mean online=189.4; mean coverage=98.2%
-world_emission_per_activity,Jadebra,5909115.226367592,estimated GP per average online player-day,mean online=184.5; mean coverage=98.5%
-world_emission_per_activity,Inabra,5853865.69375286,estimated GP per average online player-day,mean online=286.4; mean coverage=98.4%
-world_emission_per_activity,Epoca,5757370.362316972,estimated GP per average online player-day,mean online=38.3; mean coverage=98.8%
+top_emission_creature_share,world-day distribution,0.1793057481803133,99th percentile share,median=0.0350
+top_kill_creature_share,world-day distribution,0.1104177373173775,99th percentile share,median=0.0218
+world_emission_per_activity,Yonabra,8571450.447127204,estimated GP per average online player-day,mean online=159.5; mean coverage=98.5%
+world_emission_per_activity,Terribra,7268073.668728271,estimated GP per average online player-day,mean online=80.0; mean coverage=98.4%
+world_emission_per_activity,Celebra,6738413.706412102,estimated GP per average online player-day,mean online=166.4; mean coverage=98.6%
+world_emission_per_activity,Issobra,6665818.854424628,estimated GP per average online player-day,mean online=99.2; mean coverage=98.6%
+world_emission_per_activity,Collabra,6492486.0965616405,estimated GP per average online player-day,mean online=154.6; mean coverage=98.0%
+world_emission_per_activity,Kalibra,6170878.940396002,estimated GP per average online player-day,mean online=182.5; mean coverage=98.2%
+world_emission_per_activity,Gentebra,6148617.090166628,estimated GP per average online player-day,mean online=203.2; mean coverage=98.4%
+world_emission_per_activity,Epoca,5722673.355706581,estimated GP per average online player-day,mean online=35.1; mean coverage=98.8%
+world_emission_per_activity,Jadebra,5587932.316462301,estimated GP per average online player-day,mean online=192.1; mean coverage=98.6%
+world_emission_per_activity,Ferobra,5457047.38826463,estimated GP per average online player-day,mean online=207.3; mean coverage=98.6%

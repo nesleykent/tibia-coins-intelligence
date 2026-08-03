@@ -88,10 +88,73 @@ have = (set(zip(existing.world, pd.to_datetime(existing.date).dt.strftime("%Y-%m
 print(f"[SPARSE] {len(existing):,} emission rows already present")
 
 
+def _refresh_quality(built: pd.DataFrame) -> None:
+    """Rewrite the panel-level quality metrics to describe the table just written.
+
+    Whoever rewrites the table owns the metrics that describe it. Leaving them behind made the
+    artifact verifier demand a re-run of 34_gold_emission.py, which knows only the recent archive
+    and would have silently cut the series back to eight months, deleting the history this stage
+    exists to add. The loot-level metrics are left alone: they come from the creature catalogue,
+    which this stage does not touch.
+    """
+    qj = P / "gold_emission_quality.json"
+    if not qj.exists():
+        return
+    quality = json.loads(qj.read_text())
+    quality.update({
+        "world_days": int(len(built)),
+        "worlds": int(built.world.nunique()),
+        "date_start": str(pd.to_datetime(built.date).min().date()),
+        "date_end": str(pd.to_datetime(built.date).max().date()),
+        "low_quality_world_days": int(built.low_quality_flag.sum()),
+        "low_quality_world_days_pct": float(built.low_quality_flag.mean()),
+        "partial_date_world_days": int(built.partial_date_flag.sum()),
+        "covered_deaths_pct_nonboss": float(
+            built.modeled_kills_nonboss.sum() / built.nonboss_kills.sum()
+        ),
+        "history_source": REPO,
+    })
+    qj.write_text(json.dumps(quality, indent=1))
+    pd.DataFrame(
+        [{"metric": k, "value": json.dumps(v) if isinstance(v, (list, dict)) else v}
+         for k, v in quality.items()]
+    ).to_csv(P / "gold_emission_quality.csv", index=False)
+    print(f"[QUALITY] {quality['world_days']:,} world-days, "
+          f"{quality['covered_deaths_pct_nonboss']:.1%} non-boss coverage, "
+          f"{quality['low_quality_world_days']:,} low-quality")
+
+
 def sh(*args, **kw):
     return subprocess.run(args, cwd=kw.get("cwd"), check=True,
                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
+
+# Re-derive the published table from the rows already merged, with no network access. The
+# derivation changes more often than the archive does - a corrected coverage flag, a new
+# scenario column - and without this the only way to apply one was to download 17 GB again, or
+# to run 34_gold_emission.py, which knows only the recent archive and would cut the history off.
+if "--rebuild-only" in sys.argv:
+    import importlib.util as _il
+    _spec = _il.spec_from_file_location("ge", ROOT / "scripts" / "34_gold_emission.py")
+    _ge = _il.module_from_spec(_spec)
+    sys.modules["ge"] = _ge
+    _spec.loader.exec_module(_ge)
+    if not OUT.exists():
+        raise SystemExit(f"{OUT} does not exist; there is nothing to re-derive")
+    table = pd.read_csv(OUT, low_memory=False)
+    table["date"] = pd.to_datetime(table.date)
+    missing = [c for c in _ge.RAW_DAILY_COLUMNS if c not in table.columns]
+    if missing:
+        raise SystemExit(f"table is missing raw columns {missing}; re-run the fetch")
+    built = _ge.build_daily(table[_ge.RAW_DAILY_COLUMNS].copy())
+    built.to_csv(OUT, index=False)
+    print(f"[REBUILD] {len(built):,} world-days, {built.world.nunique()} worlds, "
+          f"{built.date.min().date()} to {built.date.max().date()}")
+    print(f"[REBUILD] low-quality {int(built.low_quality_flag.sum()):,} "
+          f"({built.low_quality_flag.mean():.2%}), "
+          f"partial-date {int(built.partial_date_flag.sum()):,}")
+    _refresh_quality(built)
+    raise SystemExit(0)
 
 if not (WORK / ".git").exists():
     shutil.rmtree(WORK, ignore_errors=True)
@@ -108,7 +171,9 @@ if not (WORK / ".git").exists():
 # writes them in the plural while the catalogue is keyed singular.
 _ge.ALIAS_SOURCE = WORK / "normalize-names.mjs"
 if not _ge.ALIAS_SOURCE.exists():
-    sh("git", "sparse-checkout", "add", "--no-cone", "/normalize-names.mjs", cwd=WORK)
+    # `add` inherits the mode set by `init`/`set` and rejects --no-cone itself: git exits 129
+    # with "unknown option `no-cone'", which stderr=DEVNULL hid behind a bare CalledProcessError.
+    sh("git", "sparse-checkout", "add", "/normalize-names.mjs", cwd=WORK)
 print(f"[SPARSE] name normaliser: "
       f"{'present' if _ge.ALIAS_SOURCE.exists() else 'ABSENT - falling back to plural rules'}")
 _load_catalogue()
@@ -174,6 +239,8 @@ if rows:
     print(f"[SPARSE] {OUT.relative_to(ROOT)}: {len(built):,} world-days, "
           f"{built.world.nunique()} worlds, {built.date.min()} to {built.date.max()}")
     print(f"[SPARSE] file is {OUT.stat().st_size / 1e6:.1f} MB")
+
+    _refresh_quality(built)
 
 if not KEEP:
     shutil.rmtree(WORK, ignore_errors=True)

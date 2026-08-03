@@ -4,9 +4,9 @@
  "loot_source": "TibiaWiki / Fandom, Category:Loot Statistics",
  "loot_collection_utc": "2026-08-02T17:23:20.466395+00:00",
  "npc_price_source": "data/raw/tm_item_metadata.json (player-to-NPC offers)",
- "world_days": 21691,
+ "world_days": 90701,
  "worlds": 93,
- "date_start": "2025-12-03",
+ "date_start": "2022-08-22",
  "date_end": "2026-08-02",
  "canonical_creatures": 1618,
  "loot_statistics_pages": 1427,
@@ -18,10 +18,10 @@
  "total_deaths": 20264044697,
  "covered_deaths": 19904976295,
  "covered_deaths_pct_all": 0.9822805166802085,
- "covered_deaths_pct_nonboss": 0.982594785224248,
- "low_quality_world_days": 1,
- "low_quality_world_days_pct": 4.610206998294223e-05,
- "partial_date_world_days": 1,
+ "covered_deaths_pct_nonboss": 0.9816206288000456,
+ "low_quality_world_days": 0,
+ "low_quality_world_days_pct": 0.0,
+ "partial_date_world_days": 0,
  "minimum_reliable_loot_samples": 100,
  "daily_coverage_threshold": 0.8,
  "realization_rates": [
@@ -66,5 +66,6 @@
  "npc_currency_rule": "only offers paid in gold (currency_object_type_id 0) create GP; offers paid in another currency object are excluded",
  "event_rule": "event flags are retained; per-kill values are not multiplied because the cache does not encode event-specific loot mechanics",
  "boss_rule": "TibiaWiki boss classification supplemented by the official Bosstiary list; bosses are excluded from the main series and retained separately",
- "summon_training_rule": "no special creature is assigned a zero value without source evidence; unmatched summons/training creatures remain explicitly uncovered"
+ "summon_training_rule": "no special creature is assigned a zero value without source evidence; unmatched summons/training creatures remain explicitly uncovered",
+ "history_source": "https://github.com/tibiamaps/tibia-kill-stats-from-2022-08-23-to-2025-12-04.git"
 }

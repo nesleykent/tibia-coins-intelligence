@@ -69,6 +69,22 @@ def main() -> None:
     )
     daily_plot["Direct GP"] = daily_plot.direct_coin_gp / daily_plot.online
     daily_plot["Realized GP estimate (50%)"] = daily_plot.realized_50_gp / daily_plot.online
+    # The artifact is a portable page with a 2,000-row ceiling per dataset. Once the panel
+    # reached 3.5 years, two series over 1,435 days came to 2,870 rows. Daily resolution is not
+    # what a multi-year trend chart is read for, so fall back to weekly means and say which
+    # resolution is on screen rather than truncating the span.
+    trend_resolution = "daily"
+    if len(daily_plot) * 2 > 2000:
+        trend_resolution = "weekly"
+        daily_plot = (
+            daily_plot.set_index("date")
+            .resample("W-MON")[
+                ["Direct GP", "Realized GP estimate (50%)", "worlds", "coverage", "online"]
+            ]
+            .mean()
+            .dropna(subset=["Direct GP"])
+            .reset_index()
+        )
     daily_plot = daily_plot.melt(
         id_vars=["date", "worlds", "coverage", "online"],
         value_vars=["Direct GP", "Realized GP estimate (50%)"],
@@ -577,8 +593,14 @@ def main() -> None:
         "charts": [
             {
                 "id": "daily_chart",
-                "title": "Daily GP emission per average online player",
-                "description": "The 50% scenario remains an estimated realization rate, not observed item sales.",
+                "title": (
+                    "GP emission per average online player"
+                    + (", weekly mean" if trend_resolution == "weekly" else ", daily")
+                ),
+                "description": (
+                    f"Plotted at {trend_resolution} resolution. "
+                    "The 50% scenario remains an estimated realization rate, not observed item sales."
+                ),
                 "type": "line",
                 "dataset": "daily_trend",
                 "encodings": {

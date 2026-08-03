@@ -838,6 +838,40 @@ def merge_creature_totals(parts: list[dict[str, dict]]) -> pd.DataFrame:
     return pd.DataFrame(rows).sort_values("total_kills", ascending=False)
 
 
+# Exactly what scan_world emits, and therefore the only columns build_daily may be handed.
+# build_daily merges population, world metadata and events itself, so passing it a table that
+# already carries those columns collides on the join and produces suffixed duplicates it then
+# cannot find. Stating the contract here lets any stage re-derive the published table without
+# having to re-scan an archive to discover which columns were raw.
+RAW_DAILY_COLUMNS = [
+    "world",
+    "date",
+    "top_kill_creature_name",
+    "top_kill_creature_kills",
+    "top_emission_creature_name",
+    "top_emission_creature_gp",
+    "total_kills",
+    "nonboss_kills",
+    "boss_kills",
+    "modeled_kills_all",
+    "modeled_kills_nonboss",
+    "low_confidence_modeled_kills",
+    "low_confidence_potential_gp",
+    "assumed_quantity_potential_gp",
+    "known_zero_emission_kills",
+    "event_creature_kills",
+    "summon_kills",
+    "training_kills",
+    "direct_coin_gp",
+    "npc_potential_gp_max",
+    "npc_potential_gp_conservative",
+    "npc_potential_gp_category_realized",
+    "boss_direct_coin_gp",
+    "boss_npc_potential_gp_max",
+    "boss_npc_potential_gp_conservative",
+]
+
+
 def build_daily(daily: pd.DataFrame) -> pd.DataFrame:
     daily["coverage_deaths_pct_all"] = (
         daily.modeled_kills_all / daily.total_kills.replace(0, np.nan)
@@ -894,7 +928,22 @@ def build_daily(daily: pd.DataFrame) -> pd.DataFrame:
     daily["low_quality_flag"] = daily.coverage_deaths_pct_nonboss < COVERAGE_THRESHOLD
     reporting = daily.groupby("date", observed=True).world.transform("nunique")
     daily["worlds_reporting_date"] = reporting
-    daily["partial_date_flag"] = reporting < int(np.ceil(daily.world.nunique() * 0.80))
+    # A date is partial when the worlds that existed then did not report, not when the panel had
+    # fewer worlds than it has today. Comparing against every world ever seen flagged the whole
+    # pre-2025 archive - 44 worlds existed in 2022 against 93 in 2026 - and the quality filter
+    # then dropped 68% of the panel, so extending the series to 3.5 years changed no model at all.
+    # A world counts as expected on a date when that date lies inside its own observed span.
+    span = daily.groupby("world", observed=True).date.agg(["min", "max"])
+    dates = np.sort(daily.date.unique())
+    starts = np.sort(span["min"].to_numpy())
+    ends = np.sort(span["max"].to_numpy())
+    expected = pd.Series(
+        np.searchsorted(starts, dates, side="right")
+        - np.searchsorted(ends, dates, side="left"),
+        index=dates,
+    )
+    daily["worlds_expected_date"] = daily.date.map(expected)
+    daily["partial_date_flag"] = reporting < np.ceil(daily.worlds_expected_date * 0.80)
     daily["low_quality_flag"] = daily.low_quality_flag | daily.partial_date_flag
 
     population = pd.read_csv(P / "population_daily.csv", parse_dates=["date"])
