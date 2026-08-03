@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-03T07:01:05.423947</dc:date>
+    <dc:date>2026-08-03T09:31:07.647710</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -1233,22 +1233,22 @@ L 126.26661 224.64
 L 126.26661 15.84 
 L 118.039692 15.84 
 z
-" clip-path="url(#p2d06cea29d)" style="fill: #4e79a7; opacity: 0.13"/>
+" clip-path="url(#pf3a9ffbe88)" style="fill: #4e79a7; opacity: 0.13"/>
    </g>
    <g id="line2d_13">
     <path d="M 44.064 206.520043 
 L 510.624 206.520043 
-" clip-path="url(#p2d06cea29d)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #d9d9d9; stroke-width: 0.8"/>
+" clip-path="url(#pf3a9ffbe88)" style="fill: none; stroke-dasharray: 2.96,1.28; stroke-dashoffset: 0; stroke: #d9d9d9; stroke-width: 0.8"/>
    </g>
    <g id="line2d_14">
     <path d="M 121.656651 224.64 
 L 121.656651 15.84 
-" clip-path="url(#p2d06cea29d)" style="fill: none; stroke: #4e79a7; stroke-linecap: round"/>
+" clip-path="url(#pf3a9ffbe88)" style="fill: none; stroke: #4e79a7; stroke-linecap: round"/>
    </g>
    <g id="line2d_15">
     <path d="M 244.372532 224.64 
 L 244.372532 15.84 
-" clip-path="url(#p2d06cea29d)" style="fill: none; stroke-dasharray: 1.2,1.98; stroke-dashoffset: 0; stroke: #e15759; stroke-width: 1.2"/>
+" clip-path="url(#pf3a9ffbe88)" style="fill: none; stroke-dasharray: 1.2,1.98; stroke-dashoffset: 0; stroke: #e15759; stroke-width: 1.2"/>
    </g>
    <g id="text_15">
     <!--   estimate 1.79% -->
@@ -2175,12 +2175,12 @@ L 504.127897 100.835644
 L 507.167918 102.650436 
 L 510.624 107.795131 
 L 510.624 107.795131 
-" clip-path="url(#p2d06cea29d)" style="fill: none; stroke: #4e79a7; stroke-width: 1.4; stroke-linecap: round"/>
+" clip-path="url(#pf3a9ffbe88)" style="fill: none; stroke: #4e79a7; stroke-width: 1.4; stroke-linecap: round"/>
    </g>
   </g>
  </g>
  <defs>
-  <clipPath id="p2d06cea29d">
+  <clipPath id="pf3a9ffbe88">
    <rect x="44.064" y="15.84" width="466.56" height="208.8"/>
   </clipPath>
  </defs>

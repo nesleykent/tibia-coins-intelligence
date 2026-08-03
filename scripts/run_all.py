@@ -25,21 +25,28 @@ FUND = ["16_killstats.py", "16b_killstats_history.py", "17_features.py", "18_pre
         "20_hierarchy.py", "21_models_extra.py",
         "22_discovery.py", "23_timeseries.py", "24_deep.py",
         "25_arbitrage.py", "26_maximise.py", "27_irreducible.py", "28_supply_demand.py",
-        "34_gold_emission.py", "34b_emission_history.py", "35_gold_emission_models.py", "36_gold_emission_report.py",
+        "34_gold_emission.py", "34b_emission_history.py", "35_gold_emission_models.py",
         "29_scenarios.py", "30_model_artifact.py", "41_group_models.py",
         "42_verify_group_models.py", "44_launch_phase_models.py",
         "45_verify_launch_models.py", "43_build_group_model_notebook.py",
         "31_participants.py",
-        "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py", "49_long_horizon_production.py", "50_testing_ledger.py",
-        "38_gold_emission_dashboard.py",
-        "37_verify_gold_emission.py"]
+        "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py",
+        "49_long_horizon_production.py", "50_testing_ledger.py"]
 # Order matters from here: 06 recreates results.json, the rest extend it.
 ANALYSE = ["06_analysis.py", "07_forecast.py", "10_advanced.py", "11_finance.py",
            "14_venues.py", "47_bazaar_history.py"] + FUND
-# 46 runs last on purpose: it compares the finished PDF against the finished site, so both
-# must already be rebuilt for its answer to mean anything.
+# Every stage that writes a published artifact, and every stage that checks one. The project
+# publishes four surfaces, not two, and the two Gold Emission pages are as public as the PDF.
+# Listing 36 only in the analysis chain meant --report rebuilt the report, the hub and the
+# dashboard while the Gold Emission report kept whatever it was last given, so it could sit a
+# day behind the numbers it quotes without any stage failing.
+#
+# 46 runs last on purpose: it compares the finished artifacts against each other, so all of
+# them must already be rebuilt for its answer to mean anything.
 RENDER = ["12_art.py", "13_icons.py", "08_figures.py", "09_report.py",
-          "15_verify.py", "39_intelligence_hub.py", "40_verify_intelligence_hub.py",
+          "15_verify.py", "36_gold_emission_report.py",
+          "38_gold_emission_dashboard.py", "37_verify_gold_emission.py",
+          "39_intelligence_hub.py", "40_verify_intelligence_hub.py",
           "46_verify_artifacts.py"]
 
 # Every top-level block the report expects to find when it renders.
@@ -82,7 +89,7 @@ def run(stages):
 
 args = set(sys.argv[1:])
 if "--report" in args:
-    stages = ["38_gold_emission_dashboard.py"] + RENDER
+    stages = RENDER
 elif "--no-collect" in args:
     stages = BUILD + ANALYSE + RENDER
 else:

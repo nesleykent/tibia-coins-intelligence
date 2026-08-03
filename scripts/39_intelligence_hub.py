@@ -101,6 +101,19 @@ def build_payload() -> dict:
         ],
         where=lambda frame: frame[frame["price_gp"].notna()],
     )
+    # Standing offers over time. The order book proper is one capture per world, so the depth in
+    # coins that the Worlds table shows has no history; what does have a history is the count of
+    # offers left resting each day, which the daily panel carries. It is a different measurement
+    # and the chart says so rather than presenting it as the same series over time.
+    #
+    # Only the rows that actually carry a count are shipped. Around three quarters of the panel
+    # predates the field, and padding those dates with nulls would draw a chart whose flat early
+    # stretch is an absence of collection rather than an absence of offers.
+    depth_series = records(
+        P / "panel_daily.csv",
+        ["world", "date", "sell_offers", "buy_offers", "tc_sold", "tc_bought"],
+        where=lambda frame: frame[frame["sell_offers"].notna()],
+    )
     order_books = records(
         P / "order_books.csv",
         [
@@ -256,6 +269,7 @@ def build_payload() -> dict:
         "marketIndex": market_index,
         "worlds": worlds,
         "worldSeries": world_series,
+        "depthSeries": depth_series,
         "orderBooks": order_books,
         "forecasts": forecasts,
         "predictions": predictions,
@@ -371,6 +385,7 @@ HTML = r"""<!doctype html>
       padding:9px 11px;font-size:11px;line-height:1.5;opacity:0;transition:opacity .1s;min-width:180px}
     .chart-tooltip.visible{opacity:1}
     .chart-empty{color:var(--muted);text-align:center;padding:100px 20px}
+    .chart-note{margin:10px 2px 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
     .split{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(260px,.8fr);gap:16px;margin-top:16px}
     .table-tools{display:flex;gap:8px;align-items:center}
     .table-tools input{min-width:200px}
@@ -646,6 +661,7 @@ __EMISSION_STYLE__
         </div>
         <div class="world-layout">
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">Compare TC prices</h2><p id="worldChartDescription">The daily average paid in GP for one Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="Choose what price to compare"><button class="segment active" data-mode="mid" title="Mid — the average of the buy and sell sides">Mid</button><button class="segment" data-mode="buy" title="What players paid to buy TC">Buy TC</button><button class="segment" data-mode="sell" title="What players received for selling TC">Sell TC</button><button class="segment" data-mode="return" title="Return — price change since the first day in the period">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
+          <article class="panel chart-panel" style="margin-top:16px"><div class="panel-heading"><div><h2 id="depthChartTitle">Supply depth over time</h2><p id="depthChartDescription">How many offers are left resting on each side of the Market, day by day.</p><details class="claim-details"><summary>What this counts, and what it does not</summary><p>This chart counts <strong>offers</strong>, not coins. The Market shows how many buy and sell offers are open on a world each day, and that count is what is plotted here. The <strong>Supply depth</strong> column in the table above is a different measurement: it is the number of TC resting in open sell offers, taken from a single reading of the complete offer list, so it has no history to draw. A world can have few offers holding many coins, or many offers holding few, and the two series will not move together.</p><p>The series starts when the field began to be collected, not when the worlds opened, so it is shorter than the price chart above it. Days with no collection are skipped rather than drawn as zero.</p></details></div><div><div id="depthLegend" class="legend"></div><div id="depthChartMode" class="segmented" aria-label="Choose what to plot"><button class="segment active" data-mode="both" title="Both sides of the book">Both sides</button><button class="segment" data-mode="sell" title="Offers to sell TC — the supply side">Supply</button><button class="segment" data-mode="buy" title="Offers to buy TC — the demand side">Demand</button><button class="segment" data-mode="ratio" title="Sell offers as a share of all offers">Supply share</button></div></div></div><div class="chart-wrap"><svg id="depthChart" class="chart" role="img" aria-labelledby="depthChartTitle depthChartDescription"></svg><div id="depthTooltip" class="chart-tooltip"></div></div><p id="depthCoverage" class="chart-note"></p></article>
           <aside id="worldFacts" class="panel world-facts"></aside>
         </div>
         <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Executable prices now</h2><p>“Buy TC” is the cheapest current sell offer; “Sell TC” is the highest current buy offer. Mid is only a reference and may not be executable.</p><details class="claim-details"><summary>How these numbers are calculated</summary><p>Each world runs its own Market, where buy and sell offers rest until another player accepts them. <strong>Buy TC</strong> and <strong>Sell TC</strong> are the two prices that can be taken immediately. <strong>Mid</strong> is the midpoint between them and is a reference only; nobody is obliged to trade there. <strong>Spread</strong> is the gap between those two prices as a percentage of mid, and it is a round-trip cost before the Market fee. <strong>Demand depth</strong> and <strong>supply depth</strong> count the TC resting in the open buy and sell offers, so an order larger than the depth reaches worse prices.</p></details></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Buy TC<span class="term-help">What you pay for 1 TC</span></th><th>Sell TC<span class="term-help">What you receive for 1 TC</span></th><th>Mid<span class="term-help">Halfway point, not executable</span></th><th>Spread<span class="term-help">Gap between the two prices</span></th><th>Demand depth<span class="term-help">TC players want to buy</span></th><th>Supply depth<span class="term-help">TC offered for sale</span></th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
@@ -782,6 +798,8 @@ const pct1 = new Intl.NumberFormat("en-US",{style:"percent",maximumFractionDigit
 let data = structuredClone(EMBEDDED);
 let worldMap = new Map();
 let seriesMap = new Map();
+let depthMap = new Map();
+let selectedDepthMode = "both";
 let orderBookMap = new Map();
 let comparisonDates = [];
 let predictionMap = new Map();
@@ -828,6 +846,12 @@ function rebuildIndexes(){
     seriesMap.get(row.world).push(row);
   }
   for(const rows of seriesMap.values())rows.sort((a,b)=>a.date.localeCompare(b.date));
+  depthMap=new Map();
+  for(const row of data.depthSeries||[]){
+    if(!depthMap.has(row.world))depthMap.set(row.world,[]);
+    depthMap.get(row.world).push(row);
+  }
+  for(const rows of depthMap.values())rows.sort((a,b)=>a.date.localeCompare(b.date));
   comparisonDates=[...new Set(data.worldSeries.map(row=>row.date))].sort();
   predictionMap=new Map(data.predictions.map(row=>[row.world,row]));
   specificPredictionMap=new Map(data.specificPredictions.map(row=>[row.world,row]));
@@ -970,6 +994,7 @@ function bindEvents(){
     renderWorlds();updateURL();
   }));
   $$("#worldChartMode .segment").forEach(button=>button.addEventListener("click",()=>{selectedWorldChartMode=button.dataset.mode;renderWorldChart();updateURL()}));
+  $$("#depthChartMode .segment").forEach(button=>button.addEventListener("click",()=>{selectedDepthMode=button.dataset.mode;renderDepthChart()}));
   $("#worldSearch").addEventListener("input",renderWorldTable);
   $("#forecastWorld").addEventListener("change",()=>{renderForecasts();updateURL()});
   $$("#forecastHorizon .segment").forEach(button=>button.addEventListener("click",()=>{selectedForecastHorizon=button.dataset.horizon;renderForecasts();updateURL()}));
@@ -984,7 +1009,7 @@ function bindEvents(){
   $("#copyView").addEventListener("click",copyView);
   $("#modalClose").addEventListener("click",closeExhibit);
   $("#exhibitDialog").addEventListener("click",event=>{if(event.target===$("#exhibitDialog"))closeExhibit()});
-  window.addEventListener("resize",debounce(()=>{if(activeView==="overview")renderOverviewChart();if(activeView==="worlds")renderWorldChart();if(activeView==="forecasts")renderForecastChart();if(activeView==="models")renderModelChart()},120));
+  window.addEventListener("resize",debounce(()=>{if(activeView==="overview")renderOverviewChart();if(activeView==="worlds"){renderWorldChart();renderDepthChart()}if(activeView==="forecasts")renderForecastChart();if(activeView==="models")renderModelChart()},120));
 }
 
 function showView(view,push=true){
@@ -1226,7 +1251,7 @@ function renderOverviewTable(){
 }
 
 function renderWorlds(){
-  renderWorldChart();renderWorldFacts();renderWorldTable();
+  renderWorldChart();renderDepthChart();renderWorldFacts();renderWorldTable();
 }
 
 function commonSeries(worldA,worldB){
@@ -1291,6 +1316,84 @@ function drawTwoSeries(svg,tooltip,rows,labels,mode){
   capture.addEventListener("pointermove",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerdown",event=>{const b=svg.getBoundingClientRect(),px=(event.clientX-b.left)/b.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
   capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
+}
+
+function renderDepthChart(){
+  const worldA=$("#worldA").value,worldB=$("#worldB").value;
+  $$("#depthChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedDepthMode));
+  const start=$("#worldStart").value,end=$("#worldEnd").value;
+  const pick=world=>(depthMap.get(world)||[]).filter(row=>row.date>=start&&row.date<=end);
+  const a=pick(worldA),b=pick(worldB);
+  const descriptions={
+    both:"Open buy and sell offers on each world, counted daily. Supply is the sell side, demand the buy side.",
+    sell:"Open sell offers — players asking to hand over TC. More resting offers means a seller has more competition.",
+    buy:"Open buy offers — players asking to receive TC. More resting offers means a buyer has more competition.",
+    ratio:"Sell offers as a share of all open offers. Above 50% the book leans to supply, below 50% to demand."
+  };
+  $("#depthChartDescription").textContent=descriptions[selectedDepthMode];
+  $("#depthLegend").innerHTML=selectedDepthMode==="both"
+    ?`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)} supply</span><span class="legend-item"><i class="legend-line dashed"></i>${escapeHtml(worldA)} demand</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)} supply</span>`
+    :`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
+  // State the window the data actually covers. The price chart above spans the whole panel and
+  // this one cannot, so leaving the difference unexplained would read as missing worlds.
+  const all=[...a,...b];
+  $("#depthCoverage").textContent=all.length
+    ?`Offer counts collected from ${isoDate(all.reduce((min,row)=>row.date<min?row.date:min,all[0].date))} onward; ${fmt.format(a.length)} days for ${worldA}, ${fmt.format(b.length)} for ${worldB} inside the selected range.`
+    :"No offer counts were collected for these worlds inside the selected range.";
+  drawDepth($("#depthChart"),$("#depthTooltip"),a,b,{a:worldA,b:worldB},selectedDepthMode);
+}
+
+function drawDepth(svg,tooltip,a,b,labels,mode){
+  svg.innerHTML="";
+  // Both worlds are drawn against one date axis, so the union of their dates is the axis and a
+  // world missing a day leaves a gap in its line rather than shifting it sideways.
+  const dates=[...new Set([...a.map(row=>row.date),...b.map(row=>row.date)])].sort();
+  if(!dates.length){addSvg(svg,"text",{x:400,y:150,"text-anchor":"middle",fill:"#647087"},"No offer counts collected for this selection");return}
+  const aMap=new Map(a.map(row=>[row.date,row])),bMap=new Map(b.map(row=>[row.date,row]));
+  const value=(row,side)=>{
+    if(!row)return null;
+    const sell=num(row.sell_offers),buy=num(row.buy_offers);
+    if(mode==="ratio"){const total=sell+buy;return total>0?sell/total*100:null}
+    return side==="buy"?buy:sell;
+  };
+  const rows=dates.map(date=>({date,
+    aMain:value(aMap.get(date),mode==="buy"?"buy":"sell"),
+    aAlt:mode==="both"?value(aMap.get(date),"buy"):null,
+    bMain:value(bMap.get(date),mode==="buy"?"buy":"sell")}));
+  const values=rows.flatMap(row=>[row.aMain,row.aAlt,row.bMain]).filter(Number.isFinite);
+  if(!values.length){addSvg(svg,"text",{x:400,y:150,"text-anchor":"middle",fill:"#647087"},"No offer counts collected for this selection");return}
+  const width=Math.max(320,svg.clientWidth||900),height=300,m={top:22,right:18,bottom:42,left:58};
+  const iw=width-m.left-m.right,ih=height-m.top-m.bottom;
+  // Counts start at zero. Cropping the axis to the observed minimum would turn a book that
+  // merely thinned into one that looks emptied.
+  const high=mode==="ratio"?100:Math.max(...values)*1.08,low=mode==="ratio"?0:0;
+  const x=i=>m.left+i/(rows.length-1||1)*iw,y=v=>m.top+ih-(v-low)/(high-low||1)*ih;
+  svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
+  for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);
+    addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});
+    addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},mode==="ratio"?`${v.toFixed(0)}%`:fmt.format(Math.round(v)))}
+  for(const index of uniqueIndexes(Math.min(width<600?3:6,rows.length),rows.length))
+    addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},isoDate(rows[index].date));
+  if(mode==="ratio")addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:y(50),y2:y(50),stroke:"#647087","stroke-dasharray":"4 4"});
+  const linePath=key=>{let d="",open=false;rows.forEach((row,i)=>{if(!Number.isFinite(row[key])){open=false;return}d+=`${open?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)} `;open=true});return d.trim()};
+  addSvg(svg,"path",{d:linePath("aMain"),fill:"none",stroke:COLORS.blue,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
+  if(mode==="both")addSvg(svg,"path",{d:linePath("aAlt"),fill:"none",stroke:COLORS.blue,"stroke-width":1.8,"stroke-dasharray":"6 5","vector-effect":"non-scaling-stroke"});
+  addSvg(svg,"path",{d:linePath("bMain"),fill:"none",stroke:COLORS.gold,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
+  const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
+  const measure={both:"open offers on each side",sell:"open sell offers",buy:"open buy offers",ratio:"sell offers as a share of all offers"}[mode];
+  const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive chart of ${measure} over time`});
+  const unit=v=>v===null||!Number.isFinite(v)?"No collection":mode==="ratio"?`${v.toFixed(1)}% supply`:`${fmt.format(Math.round(v))} offers`;
+  const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);
+    cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);
+    tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${escapeHtml(labels.a)}: ${unit(row.aMain)}`
+      +(mode==="both"?`<br>${escapeHtml(labels.a)} demand: ${unit(row.aAlt)}`:"")
+      +`<br>${escapeHtml(labels.b)}: ${unit(row.bMain)}`;
+    tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible");
+    capture.setAttribute("aria-label",tooltip.textContent)};
+  capture.addEventListener("pointermove",event=>{const r=svg.getBoundingClientRect(),px=(event.clientX-r.left)/r.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
+  capture.addEventListener("pointerdown",event=>{const r=svg.getBoundingClientRect(),px=(event.clientX-r.left)/r.width*width;inspect(Math.round((px-m.left)/iw*(rows.length-1)))});
+  capture.addEventListener("pointerleave",()=>{cross.setAttribute("opacity",0);tooltip.classList.remove("visible")});
+  capture.addEventListener("keydown",event=>{if(!["ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;event.preventDefault();let i=Number(capture.dataset.index||0);if(event.key==="ArrowLeft")i--;if(event.key==="ArrowRight")i++;if(event.key==="Home")i=0;if(event.key==="End")i=rows.length-1;capture.dataset.index=Math.max(0,Math.min(rows.length-1,i));inspect(Number(capture.dataset.index))});
 }
 
 function renderWorldFacts(){
