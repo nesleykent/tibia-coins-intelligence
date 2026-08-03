@@ -145,19 +145,49 @@ print("\n[CLASSICAL]"); print(cs.to_string(index=False))
 # ============================================================ 2. latent cross-world factors
 # Common shocks the worlds share. Components are estimated on the training window only and then
 # applied forward, so the factor construction cannot see the test period.
-wide = d.pivot_table(index="date", columns="world", values="ret").sort_index()
-wide = wide.dropna(axis=1, thresh=int(len(wide) * 0.8)).fillna(0.0)
+full = d.pivot_table(index="date", columns="world", values="ret").sort_index()
+
+# A common-factor model needs a balanced block, and asking for one directly is the only way to
+# get it here. Worlds launch on a staggered schedule, so over the full span no world is present
+# throughout: requiring coverage of the whole panel leaves a single column, and filling the
+# absences with zero would not rescue it - a zero return reads as "no shock", which is a claim
+# about a world that did not exist. The block below is chosen for area instead. For each
+# candidate start the worlds nearly complete from that date onward are counted, and the start
+# maximising worlds x dates wins, so the components are estimated on observations that are
+# actually there.
+COVER = 0.95
+best = None
+for i in range(0, len(full) - 120, 5):
+    blk = full.iloc[i:]
+    keep = blk.columns[blk.notna().mean() >= COVER]
+    if len(keep) < 3:
+        continue
+    area = len(keep) * len(blk)
+    if best is None or area > best[0]:
+        best = (area, i, list(keep))
+if best is None:
+    raise SystemExit("no balanced block of three or more worlds exists; factors cannot be built")
+_, start, keep = best
+wide = full.iloc[start:][keep]
+print(f"\n[FACTORS] balanced block: {len(keep)} worlds from "
+      f"{pd.Timestamp(wide.index[0]).date()}, {len(wide)} dates, "
+      f"{wide.notna().mean().mean():.1%} observed")
+# Within the block the gaps are scattered single days rather than absent histories, so carrying
+# the last observation across them is a statement the data supports.
+wide = wide.ffill().fillna(0.0)
 dates = wide.index.values
 cut = int(len(dates) * 0.7)
 Z = (wide - wide.iloc[:cut].mean()) / wide.iloc[:cut].std().replace(0, np.nan)
 Z = Z.fillna(0.0)
 _, sv, Vt = np.linalg.svd(Z.iloc[:cut].values, full_matrices=False)
-K = 5
+# Never ask for more components than the block can identify; that mismatch is what the earlier
+# fixed K hid until the panel lengthened.
+K = min(5, Vt.shape[0], wide.shape[1])
 fac = pd.DataFrame(Z.values @ Vt[:K].T, index=wide.index,
                    columns=[f"factor{i + 1}" for i in range(K)])
 var_share = (sv ** 2 / (sv ** 2).sum())[:K]
 fac.to_csv(P / "latent_factors.csv")
-print(f"\n[FACTORS] {K} components explain "
+print(f"[FACTORS] {K} components explain "
       f"{', '.join(f'{v:.1%}' for v in var_share)} of training-window return variance "
       f"({var_share.sum():.1%} together)")
 

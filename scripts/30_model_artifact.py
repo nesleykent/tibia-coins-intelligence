@@ -7,7 +7,8 @@ row into a prediction with a calibrated interval.
 
 What is shipped is deliberately the modest one. Section 6.6.7a establishes that the forecastable
 quantity is a world's deviation from the cross-world mean, not the price level, and Section 6.6
-that the level is not forecastable by anything tested. So the artefact predicts the deviation,
+that the level is beaten out of sample only at one and seven days, by a few percent of
+variance, and not at all by thirty. So the artefact predicts the deviation,
 carries a conformal interval whose coverage was measured rather than assumed, and refuses to
 emit a level forecast at all.
 

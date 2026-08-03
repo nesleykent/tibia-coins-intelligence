@@ -332,13 +332,44 @@ try:
         print(mdf.reindex(mdf.t_pooled.abs().sort_values(ascending=False).index)
               .head(5)[cols].round(5).to_string(index=False))
         if "t_honest" in mdf.columns:
-            _ms = mdf.dropna(subset=["t_honest"])
-            _surv = _ms[_ms.t_honest.abs() > 2]
-            RES["monetary_n_significant_pooled"] = int((mdf.p_pooled < 0.05).sum())
+            # Three ways a cell can fail, and the first two were being scored as passes.
+            #
+            # Estimability comes first. A 180-day forward relationship needs the calendar to
+            # contain 180-day windows, and this series spans well under a year, so most cells
+            # carry zero or one independent window. A t-statistic computed over less than one
+            # window is not a weak result, it is not a result: the standard error has nothing
+            # to average over. Those cells are not estimable and are excluded from the count
+            # rather than counted as survivors.
+            #
+            # Sign comes second. Several cells pair a positive pooled coefficient with a large
+            # negative per-date slope. Taking the absolute value called that agreement. A
+            # reversal is the pooled estimate being contradicted, which is the clearest form of
+            # not surviving.
+            MIN_W = 3
+            _est = mdf.dropna(subset=["t_honest", "independent_windows"])
+            _est = _est[_est.independent_windows >= MIN_W]
+            _surv = _est[(_est.t_honest.abs() > 2)
+                         & (np.sign(_est.mean_slope) == np.sign(_est.coef))]
+            _flip = int((np.sign(_est.mean_slope) != np.sign(_est.coef)).sum()) if len(_est) else 0
+            n_pooled = int((mdf.p_pooled < 0.05).sum())
+            RES["monetary_n_significant_pooled"] = n_pooled
+            RES["monetary_n_estimable"] = int(len(_est))
+            RES["monetary_min_independent_windows"] = MIN_W
+            RES["monetary_n_sign_reversals"] = _flip
             RES["monetary_n_survive_honest"] = int(len(_surv))
             RES["monetary_max_abs_elasticity"] = float(mdf.coef.abs().max())
-            print(f"[MONETARY] {int((mdf.p_pooled < 0.05).sum())} of {len(mdf)} cells "
-                  f"significant pooled; {len(_surv)} survive the per-date test")
+            RES["monetary_not_estimable_note"] = (
+                f"the emission series spans {span_years:.2f} years, so horizons of "
+                f"{max(HORIZONS)} days leave fewer than {MIN_W} independent windows in "
+                f"{len(mdf) - len(_est)} of {len(mdf)} cells; those cells are reported as not "
+                f"estimable rather than as findings")
+            print(f"[MONETARY] {n_pooled} of {len(mdf)} cells significant pooled; "
+                  f"{len(_est)} estimable at {MIN_W}+ independent windows; "
+                  f"{_flip} reverse sign per date; {len(_surv)} survive")
+            if len(_est) == 0:
+                print(f"[MONETARY] nothing is estimable: {span_years:.2f} years of emission "
+                      f"cannot support horizons up to {max(HORIZONS)} days. The monetary "
+                      f"channel is untested at long horizons, not rejected at them.")
             print(f"[MONETARY] largest absolute elasticity anywhere: "
                   f"{mdf.coef.abs().max():.5f} - a one percent rise in cumulative emission "
                   f"moves the price by {mdf.coef.abs().max():.3f} percent")

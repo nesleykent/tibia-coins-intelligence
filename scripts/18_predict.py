@@ -52,6 +52,10 @@ RES = (json.load(open(P / "fundamentals_results.json"))
        if (P / "fundamentals_results.json").exists() else {})
 RES |= {"panel": {"rows": int(len(d)), "worlds": int(d.world.nunique()),
                  "start": str(d.date.min().date()), "end": str(d.date.max().date()),
+                 # Worlds launch on a staggered schedule, so rows divided by worlds overstates
+                 # what any single world offers. The median is what a per-world model actually
+                 # gets to fit on, and the report quotes it when arguing sample adequacy.
+                 "median_obs_per_world": int(d.groupby("world").size().median()),
                  "n_features": len(FEATS)}}
 
 # ============================================================ 1. leading indicators
@@ -241,7 +245,22 @@ fam = summary.dropna(subset=["dm_p"]).query("model != 'RandomWalk'").copy()
 fam = fam.sort_values("dm_p").reset_index(drop=True)
 k = len(fam)
 fam["bh_threshold"] = (fam.index + 1) / k * 0.05
-fam["beats_rw"] = (fam.dm_z > 0) & (fam.dm_p <= fam.bh_threshold)
+# The Diebold-Mariano statistic is computed on errors pooled across worlds, and the worlds move
+# together - that common component is what Section 6.6 estimates as latent factors. Pooling
+# therefore counts correlated observations as independent and inflates the statistic, which is
+# why significance alone cannot define the flag. Two conditions are added, and both are
+# properties of the same run rather than new tests.
+#
+# The model must win more folds than it loses. A model ahead on the pooled average while behind
+# in half the walk-forward folds has an edge that does not persist, and persistence is the whole
+# claim.
+#
+# The model must also beat a forecast of zero out of sample. A negative out-of-sample R-squared
+# says the model's squared error exceeds that of predicting no change at all, so pairing it with
+# a significant Diebold-Mariano statistic is a contradiction, not a finding. Three cells at the
+# thirty-day horizon sat in exactly that position.
+fam["beats_rw"] = ((fam.dm_z > 0) & (fam.dm_p <= fam.bh_threshold)
+                   & (fam.folds_better > fam.folds / 2) & (fam.r2_oos > 0))
 summary = summary.merge(
     fam[["target", "horizon", "model", "bh_threshold", "beats_rw"]],
     on=["target", "horizon", "model"], how="left")

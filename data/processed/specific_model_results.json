@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-02T20:52:59.793485+00:00",
+  "generated_at": "2026-08-03T09:25:12.170762+00:00",
   "target": "Seven-day change in a world's log-price deviation from the cross-world mean",
   "hierarchy": [
     "PvP \u00d7 BattlEye \u00d7 region",
@@ -32,16 +32,16 @@
     "n_test": 7200,
     "n_dates": 121,
     "n_worlds": 61,
-    "general_rmse_pct": 1.8673801868183708,
+    "general_rmse_pct": 1.8673801868183706,
     "specific_rmse_pct": 1.8850309376177927,
-    "specific_improvement_pct": -0.9452146340641602,
+    "specific_improvement_pct": -0.945214634064179,
     "general_mae_pct": 1.3017017798782937,
     "specific_mae_pct": 1.3142088964668868,
-    "general_r2_oos": 0.0881784356251506,
+    "general_r2_oos": 0.08817843562515071,
     "specific_r2_oos": 0.07085962896084375,
     "general_direction_accuracy": 0.6180555555555556,
     "specific_direction_accuracy": 0.6173611111111111,
-    "dm_t_specific_vs_general": -2.2103461244428004,
+    "dm_t_specific_vs_general": -2.2103461244428013,
     "dm_p_specific_vs_general": 0.027081149792171466,
     "better_model": "general"
   },

@@ -1,6 +1,6 @@
 model,val_r2,min_samples_leaf,max_features,num_leaves,learning_rate,max_depth,depth
 RandomForest,0.09990086552013089,20.0,0.4,,,,
-RandomForest,0.09543542754073475,20.0,0.7,,,,
+RandomForest,0.09543542754073497,20.0,0.7,,,,
 RandomForest,0.1036172750009835,50.0,0.4,,,,
 RandomForest,0.10096791649192083,50.0,0.7,,,,
 RandomForest,0.10070559713103666,120.0,0.4,,,,

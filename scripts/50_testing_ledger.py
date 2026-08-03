@@ -82,11 +82,20 @@ if lh:
         lh.get("n_survive_bh", 0),
         "four families of specification searched jointly over horizons and windows")
     if "monetary_long" in lh:
+        # The monetary series is eight months long while the horizons run to a year, so the
+        # calendar supplies no independent windows and the cells are not estimable. Recording
+        # them as a corrected family with zero survivors would read as a rejection; the
+        # honest label is that the family was attempted and could not be tested.
+        n_est = lh.get("monetary_n_estimable", 0)
         add("Production, monetary series",
-            len(lh["monetary_long"]), "corrected",
-            "per-date Newey-West on every cell significant pooled",
-            lh.get("monetary_n_survive_honest"),
-            "the same search on GP emission rather than on kill counts")
+            len(lh["monetary_long"]),
+            "corrected" if n_est else "not estimable",
+            "per-date Newey-West with a minimum independent-window count and a sign check"
+            if n_est else "none possible",
+            lh.get("monetary_n_survive_honest") if n_est else None,
+            "the same search on GP emission rather than on kill counts" if n_est else
+            f"{lh.get('monetary_span_years', 0):.2f} years of emission cannot support "
+            f"horizons to a year; untested rather than rejected")
 
 disc = count(["discovery"], {})
 if isinstance(disc, dict) and disc:
