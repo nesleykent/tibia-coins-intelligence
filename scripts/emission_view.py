@@ -122,8 +122,12 @@ def build_payload(*, include_prices: bool = True) -> dict[str, object]:
     # builds the answer - a chain-linked index that compounds the median change among worlds
     # present on both days, so entries and exits never shift the level - and it is the
     # repository's canonical cross-world price. Use it rather than defining a second one here.
+    # Always carried, even when include_prices is off. That flag exists to keep the hub from
+    # duplicating ~40,000 per-world price rows it already holds, but the hub has no equivalent of
+    # this series and cannot derive one: it is 831 rows, and leaving it out silently emptied the
+    # all-worlds price line on the hub while the standalone dashboard looked fine.
     index_rows: list[list[object]] = []
-    if include_prices and INDEX_SOURCE.exists():
+    if INDEX_SOURCE.exists():
         with INDEX_SOURCE.open(newline="", encoding="utf-8") as handle:
             reader = csv.DictReader(handle)
             required = {"date", "ew_price", "n_worlds", "index_valid"}
@@ -165,8 +169,8 @@ def build_payload(*, include_prices: bool = True) -> dict[str, object]:
     if include_prices:
         payload["priceSchema"] = ["world", "date", "price_gp"]
         payload["priceRows"] = price_rows
-        payload["indexSchema"] = ["date", "ew_price", "n_worlds"]
-        payload["indexRows"] = index_rows
+    payload["indexSchema"] = ["date", "ew_price", "n_worlds"]
+    payload["indexRows"] = index_rows
     return payload
 
 
