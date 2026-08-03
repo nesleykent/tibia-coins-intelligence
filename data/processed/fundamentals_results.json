@@ -6388,5 +6388,639 @@
    "sign_stable": true,
    "widest_gap_vs_pooled": 0.18054482600550548
   }
+ },
+ "long_horizon_production": {
+  "panel": {
+   "rows": 40631,
+   "worlds": 93,
+   "start": "2023-01-11",
+   "end": "2026-07-30",
+   "years": 3.5482546201232035
+  },
+  "flow": [
+   {
+    "specification": "flow, lagged one day",
+    "horizon": 1,
+    "coef": -6.939730765046539e-05,
+    "se": 0.0017507462647722326,
+    "t": -0.03963870096246859,
+    "p": 0.9683811727656484,
+    "n": 40352,
+    "n_worlds": 93,
+    "r2_within": 2.453364249532797e-07
+   },
+   {
+    "specification": "flow, lagged one day",
+    "horizon": 7,
+    "coef": 0.0035908492080726265,
+    "se": 0.003464577892942377,
+    "t": 1.036446377894252,
+    "p": 0.29999394332167784,
+    "n": 39794,
+    "n_worlds": 93,
+    "r2_within": 0.0001007986438968933
+   },
+   {
+    "specification": "flow, lagged one day",
+    "horizon": 30,
+    "coef": 0.003495818890992105,
+    "se": 0.010261816357846025,
+    "t": 0.34066278026104574,
+    "p": 0.7333574614009146,
+    "n": 37655,
+    "n_worlds": 93,
+    "r2_within": 3.017000786054158e-05
+   },
+   {
+    "specification": "flow, lagged one day",
+    "horizon": 90,
+    "coef": 0.005293776043543637,
+    "se": 0.01609223297143842,
+    "t": 0.328964665931657,
+    "p": 0.7421823954574027,
+    "n": 32211,
+    "n_worlds": 85,
+    "r2_within": 3.769331004910281e-05
+   },
+   {
+    "specification": "flow, lagged one day",
+    "horizon": 180,
+    "coef": 0.006399557174441697,
+    "se": 0.018707504652073992,
+    "t": 0.3420850238159484,
+    "p": 0.7322869075894147,
+    "n": 24593,
+    "n_worlds": 81,
+    "r2_within": 5.950894779105376e-05
+   },
+   {
+    "specification": "flow, lagged one day",
+    "horizon": 365,
+    "coef": 0.0054579406944747335,
+    "se": 0.008934519424437133,
+    "t": 0.6108824028684205,
+    "p": 0.54127743536201,
+    "n": 12025,
+    "n_worlds": 35,
+    "r2_within": 8.485655554324456e-05
+   }
+  ],
+  "cumulative": [
+   {
+    "specification": "cumulative 30d",
+    "window": 30,
+    "horizon": 30,
+    "coef": 0.019147749767841026,
+    "se": 0.012376113989844352,
+    "t": 1.547153636719359,
+    "p": 0.12182620276800504,
+    "n": 36446,
+    "n_worlds": 93,
+    "r2_within": 0.003137191601756961
+   },
+   {
+    "specification": "acceleration 30d",
+    "window": 30,
+    "horizon": 30,
+    "coef": 0.0009449638226327455,
+    "se": 0.021242943246706024,
+    "t": 0.04448365801566945,
+    "p": 0.9645188780963294,
+    "n": 35051,
+    "n_worlds": 93,
+    "r2_within": 1.3321128863319487e-06
+   },
+   {
+    "specification": "cumulative 30d",
+    "window": 30,
+    "horizon": 90,
+    "coef": 0.02560289827407034,
+    "se": 0.030054418300857852,
+    "t": 0.8518846719232476,
+    "p": 0.39427810508619165,
+    "n": 31106,
+    "n_worlds": 85,
+    "r2_within": 0.002453643247821047
+   },
+   {
+    "specification": "acceleration 30d",
+    "window": 30,
+    "horizon": 90,
+    "coef": -0.07583413644177685,
+    "se": 0.026919004984168292,
+    "t": -2.817122567731486,
+    "p": 0.0048456029938366285,
+    "n": 29831,
+    "n_worlds": 85,
+    "r2_within": 0.004397952748739442
+   },
+   {
+    "specification": "cumulative 30d",
+    "window": 30,
+    "horizon": 180,
+    "coef": -0.002677522733844123,
+    "se": 0.029330460819671552,
+    "t": -0.0912881236440835,
+    "p": 0.9272636545440063,
+    "n": 23540,
+    "n_worlds": 81,
+    "r2_within": 2.3546919161510083e-05
+   },
+   {
+    "specification": "acceleration 30d",
+    "window": 30,
+    "horizon": 180,
+    "coef": -0.1123133794953855,
+    "se": 0.032794531284770105,
+    "t": -3.4247594063813995,
+    "p": 0.0006153440865983573,
+    "n": 22325,
+    "n_worlds": 81,
+    "r2_within": 0.01252960563322103
+   },
+   {
+    "specification": "cumulative 30d",
+    "window": 30,
+    "horizon": 365,
+    "coef": 0.07354615843641993,
+    "se": 0.02994970669340988,
+    "t": 2.455655382181188,
+    "p": 0.014062794297904135,
+    "n": 11570,
+    "n_worlds": 35,
+    "r2_within": 0.01754539359714835
+   },
+   {
+    "specification": "acceleration 30d",
+    "window": 30,
+    "horizon": 365,
+    "coef": -0.028418289650407196,
+    "se": 0.024105619852711015,
+    "t": -1.1789072350782617,
+    "p": 0.23843511644043258,
+    "n": 11045,
+    "n_worlds": 35,
+    "r2_within": 0.0011608330532185684
+   },
+   {
+    "specification": "cumulative 90d",
+    "window": 90,
+    "horizon": 90,
+    "coef": 0.04514795577202053,
+    "se": 0.029362179858420354,
+    "t": 1.537622751093979,
+    "p": 0.12414088135784218,
+    "n": 28556,
+    "n_worlds": 85,
+    "r2_within": 0.008616419491971339
+   },
+   {
+    "specification": "acceleration 90d",
+    "window": 90,
+    "horizon": 90,
+    "coef": -0.11342692209750396,
+    "se": 0.028297097317128934,
+    "t": -4.008429586480725,
+    "p": 6.112385763556993e-05,
+    "n": 24755,
+    "n_worlds": 81,
+    "r2_within": 0.025195229617615333
+   },
+   {
+    "specification": "cumulative 90d",
+    "window": 90,
+    "horizon": 180,
+    "coef": -0.00041639379769358754,
+    "se": 0.023890667717967433,
+    "t": -0.01742914022367113,
+    "p": 0.9860942621467834,
+    "n": 21110,
+    "n_worlds": 81,
+    "r2_within": 6.350112717878886e-07
+   },
+   {
+    "specification": "acceleration 90d",
+    "window": 90,
+    "horizon": 180,
+    "coef": -0.030500904178110896,
+    "se": 0.043212043353919115,
+    "t": -0.7058426728007209,
+    "p": 0.4802859814041267,
+    "n": 17543,
+    "n_worlds": 72,
+    "r2_within": 0.0016159116282888908
+   },
+   {
+    "specification": "cumulative 90d",
+    "window": 90,
+    "horizon": 365,
+    "coef": 0.05041802113845571,
+    "se": 0.024131183508451295,
+    "t": 2.089330642270329,
+    "p": 0.036677969876847794,
+    "n": 10520,
+    "n_worlds": 35,
+    "r2_within": 0.011516626766252647
+   },
+   {
+    "specification": "acceleration 90d",
+    "window": 90,
+    "horizon": 365,
+    "coef": -0.04231943202354789,
+    "se": 0.039260968486089974,
+    "t": -1.077900868353299,
+    "p": 0.2810779978792779,
+    "n": 8945,
+    "n_worlds": 35,
+    "r2_within": 0.0055066533907357496
+   },
+   {
+    "specification": "cumulative 180d",
+    "window": 180,
+    "horizon": 90,
+    "coef": 0.012636572432195363,
+    "se": 0.02008077034202251,
+    "t": 0.6292872343523164,
+    "p": 0.5291610272068374,
+    "n": 24755,
+    "n_worlds": 81,
+    "r2_within": 0.0008186347545762196
+   },
+   {
+    "specification": "acceleration 180d",
+    "window": 180,
+    "horizon": 90,
+    "coef": 0.14709673786447833,
+    "se": 0.03678975011279648,
+    "t": 3.9983076105024717,
+    "p": 6.379700590830595e-05,
+    "n": 17543,
+    "n_worlds": 72,
+    "r2_within": 0.0637159769387633
+   },
+   {
+    "specification": "cumulative 180d",
+    "window": 180,
+    "horizon": 180,
+    "coef": -0.11332140323802434,
+    "se": 0.02391703548370392,
+    "t": -4.738104072941518,
+    "p": 2.157270201585959e-06,
+    "n": 17543,
+    "n_worlds": 72,
+    "r2_within": 0.05000889286854482
+   },
+   {
+    "specification": "acceleration 180d",
+    "window": 180,
+    "horizon": 180,
+    "coef": 0.1786420819343706,
+    "se": 0.036510125037701374,
+    "t": 4.892946319682548,
+    "p": 9.933750795276808e-07,
+    "n": 12270,
+    "n_worlds": 35,
+    "r2_within": 0.088860735860266
+   },
+   {
+    "specification": "cumulative 180d",
+    "window": 180,
+    "horizon": 365,
+    "coef": 0.031848698313883435,
+    "se": 0.034313845424332134,
+    "t": 0.9281588210250359,
+    "p": 0.3533251914148543,
+    "n": 8945,
+    "n_worlds": 35,
+    "r2_within": 0.006421722692805609
+   },
+   {
+    "specification": "acceleration 180d",
+    "window": 180,
+    "horizon": 365,
+    "coef": -0.019587039332079347,
+    "se": 0.04952760060506582,
+    "t": -0.39547725092250746,
+    "p": 0.6924907073242703,
+    "n": 5795,
+    "n_worlds": 35,
+    "r2_within": 0.0016738882705015223
+   },
+   {
+    "specification": "cumulative 365d",
+    "window": 365,
+    "horizon": 365,
+    "coef": -0.0038853869107286308,
+    "se": 0.033384225134787324,
+    "t": -0.11638391770489068,
+    "p": 0.9073482805863897,
+    "n": 5725,
+    "n_worlds": 35,
+    "r2_within": 0.00013066760954172363
+   },
+   {
+    "specification": "acceleration 365d",
+    "window": 365,
+    "horizon": 365,
+    "coef": -0.03712024434143166,
+    "se": 0.08839162753227782,
+    "t": -0.41995204045628104,
+    "p": 0.6745204897115828,
+    "n": 2510,
+    "n_worlds": 14,
+    "r2_within": 0.010900194318038459
+   }
+  ],
+  "threshold": [
+   {
+    "horizon": 30,
+    "activity": "below median",
+    "coef": -0.0021847665203957177,
+    "se": 0.01020777602912778,
+    "t": -0.2140296293885671,
+    "p": 0.8305239515988079,
+    "n": 19660
+   },
+   {
+    "horizon": 30,
+    "activity": "50-90th pct",
+    "coef": 0.006401666075496775,
+    "se": 0.007839035448727584,
+    "t": 0.8166395109918632,
+    "p": 0.4141344685680992,
+    "n": 14667
+   },
+   {
+    "horizon": 30,
+    "activity": "top decile",
+    "coef": -0.05738844580086906,
+    "se": 0.025018631703944215,
+    "t": -2.29382831483233,
+    "p": 0.02180036232828675,
+    "n": 3142
+   },
+   {
+    "horizon": 90,
+    "activity": "below median",
+    "coef": -0.006885279071587203,
+    "se": 0.019747532169951332,
+    "t": -0.34866529206439933,
+    "p": 0.7273406038898149,
+    "n": 18098
+   },
+   {
+    "horizon": 90,
+    "activity": "50-90th pct",
+    "coef": 0.018591885759156154,
+    "se": 0.01329177541018573,
+    "t": 1.3987511213068535,
+    "p": 0.16188762838552684,
+    "n": 11801
+   },
+   {
+    "horizon": 90,
+    "activity": "top decile",
+    "coef": -0.04232767159434863,
+    "se": 0.04644328418333296,
+    "t": -0.911384118040875,
+    "p": 0.36209301877478706,
+    "n": 2143
+   },
+   {
+    "horizon": 180,
+    "activity": "below median",
+    "coef": 0.0002544029000765653,
+    "se": 0.018799973553455477,
+    "t": 0.013532088189017983,
+    "p": 0.9892032852706396,
+    "n": 15599
+   },
+   {
+    "horizon": 180,
+    "activity": "50-90th pct",
+    "coef": 0.03774240050967105,
+    "se": 0.019415904643458312,
+    "t": 1.94389090813687,
+    "p": 0.0519086078765949,
+    "n": 7301
+   },
+   {
+    "horizon": 180,
+    "activity": "top decile",
+    "coef": -0.04893874970184407,
+    "se": 0.0627272587366856,
+    "t": -0.7801831402720392,
+    "p": 0.43528308466472154,
+    "n": 1534
+   },
+   {
+    "horizon": 365,
+    "activity": "below median",
+    "coef": 0.001054786366838559,
+    "se": 0.012572183811682906,
+    "t": 0.08389842072292815,
+    "p": 0.9331371952156897,
+    "n": 9503
+   },
+   {
+    "horizon": 365,
+    "activity": "50-90th pct",
+    "coef": -0.0035732751904862525,
+    "se": 0.015017311057184726,
+    "t": -0.23794374218390396,
+    "p": 0.8119247282749427,
+    "n": 2068
+   }
+  ],
+  "n_specifications": 39,
+  "n_significant_uncorrected": 9,
+  "n_survive_bh": 6,
+  "survivors": [
+   {
+    "family": "acceleration 180d",
+    "horizon": 180,
+    "coef": 0.1786420819343706,
+    "t": 4.892946319682548,
+    "p": 9.933750795276808e-07,
+    "n": 12270,
+    "bh_threshold": 0.001282051282051282,
+    "survives_bh": true
+   },
+   {
+    "family": "cumulative 180d",
+    "horizon": 180,
+    "coef": -0.11332140323802434,
+    "t": -4.738104072941518,
+    "p": 2.157270201585959e-06,
+    "n": 17543,
+    "bh_threshold": 0.002564102564102564,
+    "survives_bh": true
+   },
+   {
+    "family": "acceleration 90d",
+    "horizon": 90,
+    "coef": -0.11342692209750396,
+    "t": -4.008429586480725,
+    "p": 6.112385763556993e-05,
+    "n": 24755,
+    "bh_threshold": 0.0038461538461538464,
+    "survives_bh": true
+   },
+   {
+    "family": "acceleration 180d",
+    "horizon": 90,
+    "coef": 0.14709673786447833,
+    "t": 3.9983076105024717,
+    "p": 6.379700590830595e-05,
+    "n": 17543,
+    "bh_threshold": 0.005128205128205128,
+    "survives_bh": true
+   },
+   {
+    "family": "acceleration 30d",
+    "horizon": 180,
+    "coef": -0.1123133794953855,
+    "t": -3.4247594063813995,
+    "p": 0.0006153440865983573,
+    "n": 22325,
+    "bh_threshold": 0.00641025641025641,
+    "survives_bh": true
+   },
+   {
+    "family": "acceleration 30d",
+    "horizon": 90,
+    "coef": -0.07583413644177685,
+    "t": -2.817122567731486,
+    "p": 0.0048456029938366285,
+    "n": 29831,
+    "bh_threshold": 0.007692307692307693,
+    "survives_bh": true
+   }
+  ],
+  "max_abs_elasticity": 0.1786420819343706,
+  "horizons_tested": [
+   1,
+   7,
+   30,
+   90,
+   180,
+   365
+  ],
+  "windows_tested": [
+   30,
+   90,
+   180,
+   365
+  ],
+  "emission_note": "kill counts span the full joint sample; the monetary emission series still covers only 2025-12-05 onward, because reconstructing GP needs per-creature detail that lives only in the raw archive",
+  "honest_inference": [
+   {
+    "specification": "acceleration 30d",
+    "horizon": 90,
+    "pooled_t": -2.817122567731486,
+    "mean_slope": -0.05345621407218676,
+    "t_newey_west": -0.7256441877858109,
+    "n_dates": 782,
+    "independent_windows": 13,
+    "n_world_days": 29831,
+    "t_inflation": 3.882236797523994
+   },
+   {
+    "specification": "acceleration 30d",
+    "horizon": 180,
+    "pooled_t": -3.4247594063813995,
+    "mean_slope": -0.3164612328698978,
+    "t_newey_west": -2.0657273593612957,
+    "n_dates": 692,
+    "independent_windows": 6,
+    "n_world_days": 22325,
+    "t_inflation": 1.6578951674630984
+   },
+   {
+    "specification": "cumulative 30d",
+    "horizon": 365,
+    "pooled_t": 2.455655382181188,
+    "mean_slope": -0.1108002353628961,
+    "t_newey_west": -7.323444021758144,
+    "n_dates": 517,
+    "independent_windows": 2,
+    "n_world_days": 11570,
+    "t_inflation": 0.3353142831276339
+   },
+   {
+    "specification": "acceleration 90d",
+    "horizon": 90,
+    "pooled_t": -4.008429586480725,
+    "mean_slope": -0.13913900130810605,
+    "t_newey_west": -1.8390961743848702,
+    "n_dates": 722,
+    "independent_windows": 12,
+    "n_world_days": 24755,
+    "t_inflation": 2.1795649636547365
+   },
+   {
+    "specification": "cumulative 90d",
+    "horizon": 365,
+    "pooled_t": 2.089330642270329,
+    "mean_slope": -0.08877037244496067,
+    "t_newey_west": -6.502455948204217,
+    "n_dates": 491,
+    "independent_windows": 2,
+    "n_world_days": 10520,
+    "t_inflation": 0.3213140786978094
+   },
+   {
+    "specification": "acceleration 180d",
+    "horizon": 90,
+    "pooled_t": 3.9983076105024717,
+    "mean_slope": -0.07011819536846656,
+    "t_newey_west": -1.5014848201989413,
+    "n_dates": 632,
+    "independent_windows": 11,
+    "n_world_days": 17543,
+    "t_inflation": 2.6629024527685274
+   },
+   {
+    "specification": "cumulative 180d",
+    "horizon": 180,
+    "pooled_t": -4.738104072941518,
+    "mean_slope": -0.05486130459930883,
+    "t_newey_west": -2.8276923163677496,
+    "n_dates": 632,
+    "independent_windows": 5,
+    "n_world_days": 17543,
+    "t_inflation": 1.6756080728852938
+   },
+   {
+    "specification": "acceleration 180d",
+    "horizon": 180,
+    "pooled_t": 4.892946319682548,
+    "mean_slope": -0.12254519156833633,
+    "t_newey_west": -1.1672723187901368,
+    "n_dates": 542,
+    "independent_windows": 5,
+    "n_world_days": 12270,
+    "t_inflation": 4.191777908992159
+   }
+  ],
+  "n_survive_honest": 4,
+  "acceleration_sign_by_window": {
+   "30": "mixed",
+   "90": "negative",
+   "180": "mixed",
+   "365": "negative"
+  },
+  "acceleration_signs": {
+   "positive": 3,
+   "negative": 8
+  },
+  "overlap_diagnostic": {
+   "spearman_windows_vs_t": -0.7831893756568049,
+   "n_cells_with_10plus_windows": 3,
+   "max_abs_t_among_them": 1.8390961743848702,
+   "any_significant_with_10plus_windows": false,
+   "sign_flips_pooled_vs_honest": 4,
+   "n_rechecked": 8
+  }
  }
 }

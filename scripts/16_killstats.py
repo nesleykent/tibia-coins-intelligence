@@ -25,7 +25,8 @@ P, RAW = ROOT / "data" / "processed", ROOT / "data" / "raw"
 SRC = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else "/tmp/tibia-kill-stats") / "data"
 OUT = P / "kill_stats_daily.csv"
 MIX = P / "kill_stats_mix.csv"
-TOP_RACES = 40           # how many creature types the hunting-mix block tracks
+TOP_RACES = 40
+RACE_PREFIX = "race::"   # intermediate only; dropped before writing           # how many creature types the hunting-mix block tracks
 BOSSES = set(json.loads((RAW / "boss_names.json").read_text())) \
     if (RAW / "boss_names.json").exists() else set()
 

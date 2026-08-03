@@ -69,6 +69,11 @@ CONFIDENCE = 78
 STO = pd.DataFrame(STA["long_only"])
 STOV = pd.DataFrame(STA["overlap"])
 STD = pd.DataFrame(STA["delayed_entry"])
+LHP = FD["long_horizon_production"]
+LHF = pd.DataFrame(LHP["flow"])
+LHC = pd.DataFrame(LHP["cumulative"])
+LHH = pd.DataFrame(LHP["honest_inference"])
+LHD = LHP["overlap_diagnostic"]
 SEAS = FD["stability_seasonality"]
 SEM = pd.DataFrame(SEAS["month_effects"])
 SEST = SEAS["stability"]
@@ -3484,6 +3489,60 @@ para(tag("judg") + "<b>The report's economic interpretation needs correcting, an
      "one. The missing series named in Section 6.1.3 would still be worth having, but the "
      "expectation that it would explain the level should be lowered.")
 
+h3("6.6.16 A year of horizon, a stock instead of a flow, and a threshold")
+para(tag("judg") + f"<b>The production tests in this chapter ran at one, seven and thirty days "
+     f"on eight months of data, and that combination can only find a fast channel.</b> A "
+     f"monetary effect need not arrive within a month, need not be linear in the flow, and need "
+     f"not appear at all until enough has accumulated. Folding in the 2022-2025 kill-statistics "
+     f"archive extends the joint sample to {LHP['panel']['rows']:,} world-days across "
+     f"{LHP['panel']['worlds']} worlds and {LHP['panel']['years']:.1f} years, which makes the "
+     f"slow versions estimable for the first time.")
+para(tag("stat") + f"<b>Four stories, {LHP['n_specifications']} specifications.</b> The flow, as "
+     f"before. The cumulative total, because gold persists and a stock is not a flow. The "
+     f"acceleration, because a steady level may already be priced. And a threshold, because an "
+     f"effect could switch on only where activity is unusual. Horizons run to a year; windows "
+     f"run to a year. Before any correction {LHP['n_significant_uncorrected']} cells are "
+     f"significant at 5%, and {LHP['n_survive_bh']} survive Benjamini-Hochberg.")
+para(tag("judg") + "<b>That would be the finding, and it does not survive the test this report "
+     "already applies to its own trading results.</b> These are overlapping forward returns on "
+     "a pooled panel: many worlds on one date are one observation, and a 180-day return "
+     "measured on consecutive days is one window seen many times. Re-estimated as a per-date "
+     "cross-sectional slope with a Newey-West correction at the horizon, and counted in "
+     "non-overlapping windows rather than in rows, the picture inverts.")
+table([["Specification", "Horizon", "Pooled t", "Honest t", "Independent windows"]] +
+      [[r.specification.capitalize(), f"{int(r.horizon)}d", f"{r.pooled_t:+.2f}",
+        f"{r.t_newey_west:+.2f}", f"{int(r.independent_windows)}"]
+       for _, r in LHH.sort_values("independent_windows", ascending=False).iterrows()],
+      [46 * mm, 20 * mm, 22 * mm, 22 * mm, AVAIL - 110 * mm], fs=7,
+      align=[None, "R", "R", "R", "R"],
+      caption="Table 6.24 - Every cell that was significant before correction, re-tested on a "
+              "per-date series. Sorted by how many genuinely independent windows the sample "
+              "holds.")
+para(tag("stat") + f"<b>Strength runs inversely with evidence, which is the signature of an "
+     f"artefact rather than a channel.</b> The rank correlation between a cell's number of "
+     f"independent windows and its honest t-statistic is {LHD['spearman_windows_vs_t']:+.2f}. "
+     f"Of the {LHD['n_cells_with_10plus_windows']} cells resting on ten or more independent "
+     f"windows, the largest absolute t is {LHD['max_abs_t_among_them']:.2f} - none is "
+     f"significant. The two cells with the largest honest statistics rest on two windows each. "
+     f"And the sign itself flips between the two inferences in "
+     f"{LHD['sign_flips_pooled_vs_honest']} of {LHD['n_rechecked']} cells: the acceleration "
+     f"specification that looked positive at {pc(0.179 * 100, 0) if False else '+0.18'} pooled "
+     f"is negative on the per-date series.")
+para(tag("judg") + "<b>So the answer to the long-horizon objection is that the objection was "
+     "right about the method and the conclusion holds anyway.</b> The earlier tests could not "
+     "have found a slow channel; these can, and they do not. A production effect that needs a "
+     "year to arrive, or a stock rather than a flow, or a threshold, would show up as a "
+     "coefficient that strengthens as the sample lengthens. What shows up instead is one that "
+     "weakens as the sample is counted honestly, and changes sign depending on how the same "
+     "variable is windowed.")
+para(tag("lim") + f"<b>One half of the test is still missing and this section does not claim "
+     f"otherwise.</b> Kill counts now span {LHP['panel']['years']:.1f} years; the monetary "
+     f"emission series of Section 6.6.15 still spans eight months, because reconstructing GP "
+     f"needs per-creature detail that lives only in the raw daily archive rather than in the "
+     f"aggregated panel. The long-horizon monetary test is therefore not done - only the "
+     f"long-horizon activity test is - and a reader should treat the two as separate claims.")
+story.append(PageBreak())
+
 h3("6.6.15 The same null on the money, not just on the bodies")
 para(tag("judg") + "<b>The obvious objection to the section above is that a kill count is not a "
      "gold series.</b> Creatures differ by orders of magnitude in what they drop, so counting "
@@ -3517,7 +3576,7 @@ table([["Series", "1 day", "7 days", "30 days"]] +
        for ser in ("kill_count", "direct_coin", "potential_max", "realized_50")],
       [56 * mm, 30 * mm, 30 * mm, AVAIL - 116 * mm], fs=7.2,
       align=[None, "R", "R", "R"],
-      caption="Table 6.24 - Elasticity of the forward price to each emission measure, with the "
+      caption="Table 6.25 - Elasticity of the forward price to each emission measure, with the "
               "two-way clustered p-value in brackets. No cell is significant at 5%.")
 para(tag("stat") + f"<b>Out of sample the monetary series does not beat a random walk either.</b> "
      f"Across {len(GEO)} series-horizon pairs the best root-mean-square error improvement is "
@@ -3552,7 +3611,7 @@ para(tag("lim") + f"<b>What the emission series is not.</b> It bounds gold <i>cr
      f"percentage of deaths rather than assumed complete.")
 story.append(PageBreak())
 
-h3("6.6.16 Unpredictable in principle, or only with the data we have?")
+h3("6.6.17 Unpredictable in principle, or only with the data we have?")
 para(tag("judg") + "Everything to this point answers a narrower question than it appears to. "
      "Testing 140 observable features against a random walk establishes whether <i>this</i> "
      "information predicts the price. It says nothing about whether some other information - "
@@ -3580,7 +3639,7 @@ table([["What the observer knows", "Share of world return variance explained"],
        ["The factor smoothed with the whole sample - perfect hindsight",
         f"{IRR['latent_state']['r2_factor_smoothed']:.1%}"]],
       [92 * mm, AVAIL - 92 * mm], align=[None, "R"],
-      caption="Table 6.25 - A common-factor state-space model. The smoothed row is the ceiling "
+      caption="Table 6.26 - A common-factor state-space model. The smoothed row is the ceiling "
               "for any observer of the common driver, however well informed; the first row is "
               "what is available in advance.")
 para(tag("econ") + f"That is the answer to the broader question, and it is sharper than the "
@@ -5432,7 +5491,7 @@ h3("8.3.10 Reproducibility")
 # The table claims to run in pipeline order, so it is generated from run_all.py's own stage
 # lists rather than maintained by hand. A hand-kept ordering drifted: 08_figures.py sat ahead
 # of every analysis stage whose output it draws.
-_PURPOSE = {'01_collect.py': 'Per-world GuildStats and order-book collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the order-book size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement', '48_stability_and_seasonality.py': 'Within-year seasonality, rolling parameter stability, forecast error in economic units, and regime splits'}
+_PURPOSE = {'01_collect.py': 'Per-world GuildStats and order-book collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the order-book size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement', '48_stability_and_seasonality.py': 'Within-year seasonality, rolling parameter stability, forecast error in economic units, and regime splits', '16b_killstats_history.py': 'Folds the 2022-2025 archive in a world at a time, reclaiming the disk as it goes', '49_long_horizon_production.py': 'Flow, cumulative, acceleration and threshold production tests to a one-year horizon, with per-date inference', 'emission_view.py': 'Shared Gold Emission workspace: payload, styles, markup and behaviour for both publication surfaces'}
 _runall = (ROOT / "scripts" / "run_all.py").read_text()
 _stage_order, _seen = [], set()
 for _name in re.findall(r'"([0-9a-z_]+\.py)"', _runall):

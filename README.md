@@ -15,8 +15,8 @@ content and are checked for coverage and numerical agreement across artifacts.
 overview, worlds, forecasts, general-versus-specific models, strategy, gold emission and all
 34 research exhibits.
 
-**Technical report:** `reports/tibia_coin_market_report.pdf` — 185 pages, 8 chapters,
-34 exhibits, 114 tables, 5 appendices.
+**Technical report:** `reports/tibia_coin_market_report.pdf` — 186 pages, 8 chapters,
+34 exhibits, 115 tables, 5 appendices.
 
 **Window:** 2023-01-11 to 2026-07-30 — 40,658 cleaned world-days across 93 worlds.
 
@@ -86,6 +86,17 @@ count cannot be, since the Market accepts no other quantity. Every traded-volume
 converted at the lot. The order book is the opposite case — minimum 25, every amount a whole
 lot, quoted against a per-coin price — so those are already coins and are left alone. Two
 verifier checks now re-derive both classifications from the data on every build.
+
+**Three and a half years of kill statistics, and the long-horizon test still finds nothing.**
+The 2022-2025 archive was never used; folded in, the joint panel reaches 40,631 world-days over
+3.5 years and makes 90-, 180- and 365-day horizons estimable for the first time, along with
+cumulative, acceleration and threshold specifications. Six of 39 cells survive Benjamini-Hochberg
+on pooled inference — and none survives the correction this report already applies to its own
+trading results. Re-estimated per date with Newey-West, the rank correlation between a cell's
+independent windows and its t-statistic is **−0.78**: the fewer genuine windows, the stronger it
+looks. Of the cells resting on ten or more windows the largest |t| is 1.84, and the sign flips
+between the two inferences in 4 of 8. The archive is folded in a world at a time and deleted as
+it goes — 18 GB transient, 9.4 MB kept.
 
 **No direct gold-to-price channel is identified, and the circulation step is unmeasured.** 21,412 world-days of kill
 statistics were joined to revision-audited TibiaWiki loot tables and guaranteed player-to-NPC

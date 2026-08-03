@@ -345,9 +345,17 @@ n_worlds = res["window"]["n_worlds"]
 # begin with "worlds", which reads as a 133-world subsample that does not exist.
 cited = {int(x.replace(",", "")) for x in re.findall(r"(?<!Page )(\d[\d,]*) worlds", doc)
          if x.replace(",", "").isdigit()}
-check("no subsample is larger than the panel",
-      not (over := sorted(c for c in cited if c > n_worlds)), f"{over}" if over else
-      f"max {max(cited)} of {n_worlds}")
+# The kill-statistics archive reaches back to 2022 and so covers worlds that have since been
+# merged away - more worlds than are live today. The bound is that universe, not the price
+# panel, and it is read from the data rather than assumed.
+try:
+    _ks_worlds = int(pd.read_csv(P / "kill_stats_daily.csv", usecols=["world"]).world.nunique())
+except Exception:
+    _ks_worlds = 0
+_universe = max(n_worlds, _ks_worlds)
+check("no subsample is larger than any observed universe",
+      not (over := sorted(c for c in cited if c > _universe)), f"{over}" if over else
+      f"max {max(cited)} against {n_worlds} priced and {_ks_worlds} in the kill archive")
 
 tar = res["advanced"]["tar"]
 check("the threshold estimate lies inside its confidence set",

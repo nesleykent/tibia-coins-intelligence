@@ -21,7 +21,7 @@ BUILD = ["02_ingest_prices.py", "03_build_metadata.py", "04_population.py",
          "04b_diurnal.py", "05_clean_panel.py"]
 # The fundamentals study. 16 needs a local clone of the kill-stats repository and is skipped
 # when the aggregated panel already exists, since the clone is 4 GB.
-FUND = ["16_killstats.py", "17_features.py", "18_predict.py", "19_regimes.py",
+FUND = ["16_killstats.py", "16b_killstats_history.py", "17_features.py", "18_predict.py", "19_regimes.py",
         "20_hierarchy.py", "21_models_extra.py",
         "22_discovery.py", "23_timeseries.py", "24_deep.py",
         "25_arbitrage.py", "26_maximise.py", "27_irreducible.py", "28_supply_demand.py",
@@ -30,7 +30,7 @@ FUND = ["16_killstats.py", "17_features.py", "18_predict.py", "19_regimes.py",
         "42_verify_group_models.py", "44_launch_phase_models.py",
         "45_verify_launch_models.py", "43_build_group_model_notebook.py",
         "31_participants.py",
-        "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py",
+        "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py", "49_long_horizon_production.py",
         "38_gold_emission_dashboard.py",
         "37_verify_gold_emission.py"]
 # Order matters from here: 06 recreates results.json, the rest extend it.
