@@ -75,6 +75,7 @@ def _shared_narrative() -> dict:
 
 def build_payload() -> dict:
     results = json.loads((P / "results.json").read_text())
+    results_fund = json.loads((P / "fundamentals_results.json").read_text())
     manifest = json.loads(FIGURES.read_text())
 
     market_index = records(
@@ -268,6 +269,7 @@ def build_payload() -> dict:
         ),
         "marketIndex": market_index,
         "worlds": worlds,
+        "testingLedger": results_fund["testing_ledger"],
         "worldSeries": world_series,
         "depthSeries": depth_series,
         "orderBooks": order_books,
@@ -661,7 +663,7 @@ __EMISSION_STYLE__
         </div>
         <div class="world-layout">
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="worldChartTitle">Compare TC prices</h2><p id="worldChartDescription">The daily average paid in GP for one Tibia Coin.</p></div><div><div id="worldLegend" class="legend"></div><div id="worldChartMode" class="segmented" aria-label="Choose what price to compare"><button class="segment active" data-mode="mid" title="Mid — the average of the buy and sell sides">Mid</button><button class="segment" data-mode="buy" title="What players paid to buy TC">Buy TC</button><button class="segment" data-mode="sell" title="What players received for selling TC">Sell TC</button><button class="segment" data-mode="return" title="Return — price change since the first day in the period">Return (%)</button></div></div></div><div class="chart-wrap"><svg id="worldChart" class="chart" role="img" aria-labelledby="worldChartTitle worldChartDescription"></svg><div id="worldTooltip" class="chart-tooltip"></div></div></article>
-          <article class="panel chart-panel" style="margin-top:16px"><div class="panel-heading"><div><h2 id="depthChartTitle">Supply depth over time</h2><p id="depthChartDescription">How many offers are left resting on each side of the Market, day by day.</p><details class="claim-details"><summary>What this counts, and what it does not</summary><p>This chart counts <strong>offers</strong>, not coins. The Market shows how many buy and sell offers are open on a world each day, and that count is what is plotted here. The <strong>Supply depth</strong> column in the table above is a different measurement: it is the number of TC resting in open sell offers, taken from a single reading of the complete offer list, so it has no history to draw. A world can have few offers holding many coins, or many offers holding few, and the two series will not move together.</p><p>The series starts when the field began to be collected, not when the worlds opened, so it is shorter than the price chart above it. Days with no collection are skipped rather than drawn as zero.</p></details></div><div><div id="depthLegend" class="legend"></div><div id="depthChartMode" class="segmented" aria-label="Choose what to plot"><button class="segment active" data-mode="both" title="Both sides of the book">Both sides</button><button class="segment" data-mode="sell" title="Offers to sell TC — the supply side">Supply</button><button class="segment" data-mode="buy" title="Offers to buy TC — the demand side">Demand</button><button class="segment" data-mode="ratio" title="Sell offers as a share of all offers">Supply share</button></div></div></div><div class="chart-wrap"><svg id="depthChart" class="chart" role="img" aria-labelledby="depthChartTitle depthChartDescription"></svg><div id="depthTooltip" class="chart-tooltip"></div></div><p id="depthCoverage" class="chart-note"></p></article>
+          <article class="panel chart-panel" style="margin-top:16px"><div class="panel-heading"><div><h2 id="depthChartTitle">Supply on the Market, day by day</h2><p id="depthChartDescription">Coins traded and offers left open, over time.</p><details class="claim-details"><summary>Why resting depth is not plotted here</summary><p>The <strong>Supply depth</strong> column in the table above is the number of TC sitting in open sell offers right now. It comes from a single reading of the complete offer list, and it cannot be drawn over time: an offer list read today shows only the offers that still exist, so reconstructing past depth from it would count the offers that survived and miss every one already taken or withdrawn.</p><p>Two things about supply do have a history, and both are plotted here. <strong>Coins sold</strong> is TC that actually changed hands that day, so it is measured in coins and covers the whole price history. <strong>Open offers</strong> is how many sell or buy offers were left standing, so it is a count rather than a quantity and starts only when the field began to be collected. A world can have few offers holding many coins, or many offers holding few, so the two do not move together.</p></details></div><div><div id="depthLegend" class="legend"></div><div id="depthChartMode" class="segmented" aria-label="Choose what to plot"><button class="segment active" data-mode="coins" title="TC that actually changed hands each day">Coins sold</button><button class="segment" data-mode="both" title="Open offers on both sides">Open offers</button><button class="segment" data-mode="sell" title="Open offers to sell TC">Sell offers</button><button class="segment" data-mode="ratio" title="Sell offers as a share of all open offers">Supply share</button></div></div></div><div class="chart-wrap"><svg id="depthChart" class="chart" role="img" aria-labelledby="depthChartTitle depthChartDescription"></svg><div id="depthTooltip" class="chart-tooltip"></div></div><p id="depthCoverage" class="chart-note"></p></article>
           <aside id="worldFacts" class="panel world-facts"></aside>
         </div>
         <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Executable prices now</h2><p>“Buy TC” is the cheapest current sell offer; “Sell TC” is the highest current buy offer. Mid is only a reference and may not be executable.</p><details class="claim-details"><summary>How these numbers are calculated</summary><p>Each world runs its own Market, where buy and sell offers rest until another player accepts them. <strong>Buy TC</strong> and <strong>Sell TC</strong> are the two prices that can be taken immediately. <strong>Mid</strong> is the midpoint between them and is a reference only; nobody is obliged to trade there. <strong>Spread</strong> is the gap between those two prices as a percentage of mid, and it is a round-trip cost before the Market fee. <strong>Demand depth</strong> and <strong>supply depth</strong> count the TC resting in the open buy and sell offers, so an order larger than the depth reaches worse prices.</p></details></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Buy TC<span class="term-help">What you pay for 1 TC</span></th><th>Sell TC<span class="term-help">What you receive for 1 TC</span></th><th>Mid<span class="term-help">Halfway point, not executable</span></th><th>Spread<span class="term-help">Gap between the two prices</span></th><th>Demand depth<span class="term-help">TC players want to buy</span></th><th>Supply depth<span class="term-help">TC offered for sale</span></th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
@@ -758,6 +760,8 @@ __EMISSION_RANKING__
         <div class="library-tools"><input id="librarySearch" type="search" placeholder="Search titles, topics or notes…" aria-label="Search research library"><select id="libraryTopic" aria-label="Filter research topic"><option value="all">All topics</option></select><button id="clearLibrary" class="button" type="button">Clear filters</button></div>
         <div id="libraryCount" class="source"></div>
         <div id="libraryGrid" class="library-grid" style="margin-top:12px"></div>
+
+        <article class="panel" style="margin-top:20px"><div class="panel-heading"><div><h2>How many questions this study asks, and which answers are corrected</h2><p id="ledgerIntro"></p><details class="claim-details"><summary>Why this table is here</summary><p>Test enough ideas and some will look convincing by luck alone. The usual guard is a correction that raises the bar according to how many things were tried — but a correction only means something if you know what it was applied across. A study that corrects in five places without ever saying how many tests it ran leaves you unable to tell a serious result from a lucky one.</p><p>So the count is published. It is assembled from the result files rather than written by hand, so it cannot drift from what the analysis actually did. Three families are listed as reported without correction on purpose: they state sizes and directions rather than claiming anything is distinguishable from chance, and correcting those would be as wrong as correcting nothing. One is listed as not estimable, which means the test was attempted and the data could not support it — untested, not disproved.</p></details></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>Family of questions</th><th>Tests</th><th>Status</th><th>Guard applied</th><th>Survive</th></tr></thead><tbody id="ledgerTable"></tbody></table></div></article>
       </section>
 
       <footer class="footer"><span>Independent study · GP per Tibia Coin · not affiliated with CipSoft</span><span id="footerCoverage"></span></footer>
@@ -799,7 +803,7 @@ let data = structuredClone(EMBEDDED);
 let worldMap = new Map();
 let seriesMap = new Map();
 let depthMap = new Map();
-let selectedDepthMode = "both";
+let selectedDepthMode = "coins";
 let orderBookMap = new Map();
 let comparisonDates = [];
 let predictionMap = new Map();
@@ -1322,71 +1326,79 @@ function renderDepthChart(){
   const worldA=$("#worldA").value,worldB=$("#worldB").value;
   $$("#depthChartMode .segment").forEach(button=>button.classList.toggle("active",button.dataset.mode===selectedDepthMode));
   const start=$("#worldStart").value,end=$("#worldEnd").value;
-  const pick=world=>(depthMap.get(world)||[]).filter(row=>row.date>=start&&row.date<=end);
+  // Coins traded come from the price series, which covers the whole history. Offer counts come
+  // from their own series, which begins only when the field started being collected. Reading
+  // both from the filtered series would have cut the coin history down to the offer history.
+  const source=selectedDepthMode==="coins"?seriesMap:depthMap;
+  const pick=world=>(source.get(world)||[]).filter(row=>row.date>=start&&row.date<=end);
   const a=pick(worldA),b=pick(worldB);
   const descriptions={
-    both:"Open buy and sell offers on each world, counted daily. Supply is the sell side, demand the buy side.",
-    sell:"Open sell offers — players asking to hand over TC. More resting offers means a seller has more competition.",
-    buy:"Open buy offers — players asking to receive TC. More resting offers means a buyer has more competition.",
-    ratio:"Sell offers as a share of all open offers. Above 50% the book leans to supply, below 50% to demand."
+    coins:"TC that actually changed hands each day, counted in coins. This is supply reaching the Market, not supply waiting on it.",
+    both:"How many buy and sell offers were left open each day. A count of offers, not a quantity of coins.",
+    sell:"How many sell offers were left open each day — players waiting to hand over TC.",
+    ratio:"Sell offers as a share of all open offers. Above 50% the offers lean to the selling side, below 50% to the buying side."
   };
   $("#depthChartDescription").textContent=descriptions[selectedDepthMode];
   $("#depthLegend").innerHTML=selectedDepthMode==="both"
-    ?`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)} supply</span><span class="legend-item"><i class="legend-line dashed"></i>${escapeHtml(worldA)} demand</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)} supply</span>`
+    ?`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)} sell</span><span class="legend-item"><i class="legend-line dashed"></i>${escapeHtml(worldA)} buy</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)} sell</span>`
     :`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
-  // State the window the data actually covers. The price chart above spans the whole panel and
-  // this one cannot, so leaving the difference unexplained would read as missing worlds.
   const all=[...a,...b];
   $("#depthCoverage").textContent=all.length
-    ?`Offer counts collected from ${isoDate(all.reduce((min,row)=>row.date<min?row.date:min,all[0].date))} onward; ${fmt.format(a.length)} days for ${worldA}, ${fmt.format(b.length)} for ${worldB} inside the selected range.`
-    :"No offer counts were collected for these worlds inside the selected range.";
+    ?(selectedDepthMode==="coins"
+      ?`Coins traded, collected from ${isoDate(all.reduce((min,row)=>row.date<min?row.date:min,all[0].date))} onward; ${fmt.format(a.length)} days for ${worldA}, ${fmt.format(b.length)} for ${worldB} inside the selected range.`
+      :`Offer counts began being collected on 2023-10-15, later than the price history above; ${fmt.format(a.length)} days for ${worldA}, ${fmt.format(b.length)} for ${worldB} inside the selected range.`)
+    :"Nothing was collected for these worlds inside the selected range.";
   drawDepth($("#depthChart"),$("#depthTooltip"),a,b,{a:worldA,b:worldB},selectedDepthMode);
 }
 
 function drawDepth(svg,tooltip,a,b,labels,mode){
   svg.innerHTML="";
-  // Both worlds are drawn against one date axis, so the union of their dates is the axis and a
-  // world missing a day leaves a gap in its line rather than shifting it sideways.
+  // Both worlds share one date axis, so the union of their dates is the axis and a world
+  // missing a day leaves a gap in its line rather than shifting it sideways.
   const dates=[...new Set([...a.map(row=>row.date),...b.map(row=>row.date)])].sort();
-  if(!dates.length){addSvg(svg,"text",{x:400,y:150,"text-anchor":"middle",fill:"#647087"},"No offer counts collected for this selection");return}
+  const blank=text=>{addSvg(svg,"text",{x:400,y:150,"text-anchor":"middle",fill:"#647087"},text)};
+  if(!dates.length){blank("Nothing collected for this selection");return}
   const aMap=new Map(a.map(row=>[row.date,row])),bMap=new Map(b.map(row=>[row.date,row]));
   const value=(row,side)=>{
     if(!row)return null;
+    if(mode==="coins")return side==="alt"?num(row.tc_bought):num(row.tc_sold);
     const sell=num(row.sell_offers),buy=num(row.buy_offers);
     if(mode==="ratio"){const total=sell+buy;return total>0?sell/total*100:null}
-    return side==="buy"?buy:sell;
+    return side==="alt"?buy:sell;
   };
+  const paired=mode==="both"||mode==="coins";
   const rows=dates.map(date=>({date,
-    aMain:value(aMap.get(date),mode==="buy"?"buy":"sell"),
-    aAlt:mode==="both"?value(aMap.get(date),"buy"):null,
-    bMain:value(bMap.get(date),mode==="buy"?"buy":"sell")}));
+    aMain:value(aMap.get(date),"main"),
+    aAlt:paired?value(aMap.get(date),"alt"):null,
+    bMain:value(bMap.get(date),"main")}));
   const values=rows.flatMap(row=>[row.aMain,row.aAlt,row.bMain]).filter(Number.isFinite);
-  if(!values.length){addSvg(svg,"text",{x:400,y:150,"text-anchor":"middle",fill:"#647087"},"No offer counts collected for this selection");return}
-  const width=Math.max(320,svg.clientWidth||900),height=300,m={top:22,right:18,bottom:42,left:58};
+  if(!values.length){blank("Nothing collected for this selection");return}
+  const width=Math.max(320,svg.clientWidth||900),height=300,m={top:22,right:18,bottom:42,left:62};
   const iw=width-m.left-m.right,ih=height-m.top-m.bottom;
-  // Counts start at zero. Cropping the axis to the observed minimum would turn a book that
-  // merely thinned into one that looks emptied.
-  const high=mode==="ratio"?100:Math.max(...values)*1.08,low=mode==="ratio"?0:0;
+  // Quantities start at zero. Cropping to the observed minimum would turn a market that merely
+  // slowed into one that looks halted.
+  const low=0,high=mode==="ratio"?100:Math.max(...values)*1.08;
   const x=i=>m.left+i/(rows.length-1||1)*iw,y=v=>m.top+ih-(v-low)/(high-low||1)*ih;
   svg.setAttribute("viewBox",`0 0 ${width} ${height}`);
   for(let i=0;i<=4;i++){const v=low+(high-low)*i/4,yy=y(v);
     addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:yy,y2:yy,stroke:"#e5eaf1"});
-    addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},mode==="ratio"?`${v.toFixed(0)}%`:fmt.format(Math.round(v)))}
+    addSvg(svg,"text",{x:m.left-8,y:yy+4,"text-anchor":"end",fill:"#647087","font-size":10},mode==="ratio"?`${v.toFixed(0)}%`:compact(v))}
   for(const index of uniqueIndexes(Math.min(width<600?3:6,rows.length),rows.length))
     addSvg(svg,"text",{x:x(index),y:height-13,"text-anchor":"middle",fill:"#647087","font-size":10},isoDate(rows[index].date));
   if(mode==="ratio")addSvg(svg,"line",{x1:m.left,x2:width-m.right,y1:y(50),y2:y(50),stroke:"#647087","stroke-dasharray":"4 4"});
   const linePath=key=>{let d="",open=false;rows.forEach((row,i)=>{if(!Number.isFinite(row[key])){open=false;return}d+=`${open?"L":"M"} ${x(i).toFixed(2)} ${y(row[key]).toFixed(2)} `;open=true});return d.trim()};
   addSvg(svg,"path",{d:linePath("aMain"),fill:"none",stroke:COLORS.blue,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
-  if(mode==="both")addSvg(svg,"path",{d:linePath("aAlt"),fill:"none",stroke:COLORS.blue,"stroke-width":1.8,"stroke-dasharray":"6 5","vector-effect":"non-scaling-stroke"});
+  if(paired)addSvg(svg,"path",{d:linePath("aAlt"),fill:"none",stroke:COLORS.blue,"stroke-width":1.7,"stroke-dasharray":"6 5","vector-effect":"non-scaling-stroke"});
   addSvg(svg,"path",{d:linePath("bMain"),fill:"none",stroke:COLORS.gold,"stroke-width":2.3,"vector-effect":"non-scaling-stroke"});
   const cross=addSvg(svg,"line",{x1:m.left,x2:m.left,y1:m.top,y2:m.top+ih,stroke:"#34405a",opacity:0});
-  const measure={both:"open offers on each side",sell:"open sell offers",buy:"open buy offers",ratio:"sell offers as a share of all offers"}[mode];
+  const measure={coins:"coins traded each day",both:"open offers on each side",sell:"open sell offers",ratio:"sell offers as a share of all open offers"}[mode];
   const capture=addSvg(svg,"rect",{x:m.left,y:m.top,width:iw,height:ih,fill:"transparent",tabindex:"0","aria-label":`Interactive chart of ${measure} over time`});
-  const unit=v=>v===null||!Number.isFinite(v)?"No collection":mode==="ratio"?`${v.toFixed(1)}% supply`:`${fmt.format(Math.round(v))} offers`;
+  const unit=v=>!Number.isFinite(v)?"No collection":mode==="ratio"?`${v.toFixed(1)}% sell side`:mode==="coins"?`${fmt.format(Math.round(v))} TC`:`${fmt.format(Math.round(v))} offers`;
+  const altLabel=mode==="coins"?"bought":"buy offers";
   const inspect=i=>{i=Math.max(0,Math.min(rows.length-1,i));const row=rows[i],xx=x(i);
     cross.setAttribute("x1",xx);cross.setAttribute("x2",xx);cross.setAttribute("opacity",1);
     tooltip.innerHTML=`<strong>${isoDate(row.date)}</strong><br>${escapeHtml(labels.a)}: ${unit(row.aMain)}`
-      +(mode==="both"?`<br>${escapeHtml(labels.a)} demand: ${unit(row.aAlt)}`:"")
+      +(paired?`<br>${escapeHtml(labels.a)} ${altLabel}: ${unit(row.aAlt)}`:"")
       +`<br>${escapeHtml(labels.b)}: ${unit(row.bMain)}`;
     tooltip.style.left=`${Math.min(Math.max(8,xx+8),width-240)}px`;tooltip.style.top="28px";tooltip.classList.add("visible");
     capture.setAttribute("aria-label",tooltip.textContent)};
@@ -1647,7 +1659,29 @@ function populateLibraryChapters(){
   select.innerHTML='<option value="all">All topics</option>'+topics.map(topic=>`<option value="${escapeHtml(topic)}">${escapeHtml(topic)}</option>`).join("");
 }
 
+function renderTestingLedger(){
+  const ledger=data.testingLedger;
+  if(!ledger||!ledger.families)return;
+  // Plain words for the labels. "Corrected" and "not estimable" are precise but they are the
+  // report's vocabulary, and this page is read by players who did not ask for it.
+  const status={corrected:["Guarded","positive"],reported:["Stated as a size","neutral"],
+                "not estimable":["Could not be tested","neutral"]};
+  $("#ledgerIntro").textContent=`${fmt.format(ledger.n_tests_total)} hypothesis tests across `
+    +`${ledger.n_families} families. ${Math.round(ledger.share_corrected*100)}% of them sit inside `
+    +`a family that raises the bar for how many things were tried.`;
+  $("#ledgerTable").innerHTML=ledger.families.map(row=>{
+    const [label,cls]=status[row.status]||[row.status,"neutral"];
+    return `<tr>
+      <td data-label="Family of questions"><strong>${escapeHtml(row.family)}</strong><br><small class="source">${escapeHtml(row.why||"")}</small></td>
+      <td data-label="Tests">${fmt.format(row.n_tests)}</td>
+      <td data-label="Status" class="${cls}">${escapeHtml(label)}</td>
+      <td data-label="Guard applied">${escapeHtml(row.correction||"—")}</td>
+      <td data-label="Survive">${row.survivors===null||row.survivors===undefined?"—":fmt.format(row.survivors)}</td></tr>`
+  }).join("");
+}
+
 function renderLibrary(){
+  renderTestingLedger();
   const term=$("#librarySearch").value.trim().toLowerCase(),topic=$("#libraryTopic").value;
   const rows=data.figures.filter(item=>(topic==="all"||item.topic===topic)&&`${item.title} ${item.subtitle} ${item.note} ${item.topic}`.toLowerCase().includes(term));
   $("#libraryCount").textContent=`${fmt.format(rows.length)} of ${fmt.format(data.figures.length)} exhibits`;

@@ -668,6 +668,32 @@ bd["quoted_spread_pct"] = (bd.best_ask - bd.best_bid) / bd["mid"] * 100
 bd["order_count_ratio"] = bd.n_buy_orders / bd.n_sell_orders
 bd["depth_ratio"] = bd.bid_depth_tc / bd.ask_depth_tc
 bd.to_csv(P / "order_books.csv", index=False)
+
+# A second file, alongside the one above rather than instead of it. order_books.csv is the
+# current book and must keep being overwritten: the site quotes it as what is executable right
+# now, and an accumulated file could not answer that. What was missing was a place for the
+# captures to survive, so that depth acquires a history.
+#
+# It has to be collected forward, because it cannot be recovered backwards: an offer list read
+# today holds the offers that survived and none of those already taken or withdrawn, so
+# reconstructing past depth from the present list would measure survivorship.
+#
+# update_time is the moment the game reported the list, so it is the identity of a capture:
+# re-running this stage without a fresh collection rewrites the same rows instead of inventing
+# a second observation of one reading.
+HIST = P / "order_book_history.csv"
+keep = ["world", "update_time", "best_bid", "best_ask", "mid", "quoted_spread_pct",
+        "bid_depth_tc", "ask_depth_tc", "n_buy_orders", "n_sell_orders"]
+snap = bd[[c for c in keep if c in bd.columns]].copy()
+if HIST.exists():
+    snap = pd.concat([pd.read_csv(HIST), snap], ignore_index=True)
+snap = (snap.dropna(subset=["update_time"])
+            .drop_duplicates(subset=["world", "update_time"], keep="last")
+            .sort_values(["world", "update_time"]).reset_index(drop=True))
+snap["date"] = pd.to_datetime(snap.update_time, unit="s").dt.strftime("%Y-%m-%d")
+snap.to_csv(HIST, index=False)
+print(f"[BOOK HISTORY] {len(snap):,} captures, {snap.world.nunique()} worlds, "
+      f"{snap.date.min()} to {snap.date.max()}")
 R["micro"] = {
     "n_worlds": int(len(bd)),
     "quoted_spread_median_pct": float(bd.quoted_spread_pct.median()),

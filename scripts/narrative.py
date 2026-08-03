@@ -94,6 +94,11 @@ def _load() -> dict:
         "annualVolPct": res["desc"]["ret_sd_ann_pct"],
         "factorR2": irr["r2_factor_smoothed"],
         "factorR2Ahead": irr["r2_factor_forecast"],
+        # The size of the study's own multiple-testing problem, stated as a number both
+        # artifacts must agree on rather than as a claim either one can round differently.
+        "hypothesisTests": fund["testing_ledger"]["n_tests_total"],
+        "hypothesisFamilies": fund["testing_ledger"]["n_families"],
+        "hypothesisCorrectedShare": fund["testing_ledger"]["share_corrected"],
         "emissionVerdict": "no reliable signal",
         "emissionCoverage": json.loads(
             (P / "gold_emission_quality.json").read_text())["covered_deaths_pct_all"],

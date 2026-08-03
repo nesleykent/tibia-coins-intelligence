@@ -148,7 +148,11 @@ print()
 print(ledger[["family", "n_tests", "status", "survivors"]].to_string(index=False))
 
 LED = {
-    "families": ledger.to_dict("records"),
+    # A family with no survivor count carries None, not NaN. Round-tripping through a DataFrame
+    # turns that None into a float NaN, and the site's payload is serialised with allow_nan
+    # off - so the whole page fails to build over a value that is meant to be absent.
+    "families": [{k: (None if pd.isna(v) else v) for k, v in row.items()}
+                 for row in ledger.to_dict("records")],
     "n_families": int(len(ledger)),
     "n_tests_total": total,
     "n_tests_corrected": corrected,

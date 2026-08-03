@@ -37,7 +37,6 @@ pop = pd.read_csv(P / "population_daily.csv", parse_dates=["date"])
 cal = pd.read_csv(P / "event_calendar.csv", parse_dates=["date"])
 bw = pd.read_csv(P / "world_summary.csv", parse_dates=["created", "battleye_date"])
 mix = pd.read_csv(P / "kill_stats_mix.csv", parse_dates=["date"])
-obk = pd.read_csv(P / "order_books.csv")
 mreg = pd.read_csv(P / "world_merge_register.csv", parse_dates=["merge_date"])
 
 d = (px.merge(ks, on=["world", "date"], how="inner")
@@ -210,19 +209,23 @@ for r in ("Europe", "North America", "South America"):
     F[f"region_{r.split()[0].lower()}"] = (d.region == r).astype(float)
 
 
-# Order book. A single snapshot, so these cannot vary through time - they enter as what they
-# are, standing characteristics of a world's market rather than a daily signal.
-obk = obk.assign(oc_ratio=obk.order_count_ratio.replace([np.inf, -np.inf], np.nan))
-_ob = d[["world"]].merge(
-    obk[["world", "quoted_spread_pct", "depth_ratio", "oc_ratio", "bid_depth_tc",
-         "ask_depth_tc", "anon_buy", "n_buy_orders", "n_sell_orders"]],
-    on="world", how="left")
-for c in ("quoted_spread_pct", "depth_ratio", "oc_ratio", "anon_buy"):
-    F[f"ob_{c}"] = _ob[c].values
-F["ob_log_bid_depth"] = np.log(_ob.bid_depth_tc.clip(lower=1)).values
-F["ob_log_ask_depth"] = np.log(_ob.ask_depth_tc.clip(lower=1)).values
-F["ob_book_imb"] = ((_ob.n_buy_orders - _ob.n_sell_orders)
-                    / (_ob.n_buy_orders + _ob.n_sell_orders).replace(0, np.nan)).values
+# The order book is deliberately not a feature, and calling it a standing characteristic was
+# the reason it used to be one.
+#
+# There is one capture per world, taken at the end of the sample. Attaching it to every date
+# spreads a measurement from the last weeks of the panel across rows three years older. Because
+# the walk-forward split cuts by date rather than by world, a world sits in both the training
+# and the test period, so a value that is constant within a world and measured after the fact
+# can encode the path that world went on to take. That is look-ahead however static the column
+# looks.
+#
+# Their absence costs nothing measurable: summed permutation importance across the seven columns
+# was -0.2% of the total, three orders of magnitude below the leading feature, and two of the
+# seven were negative. A predictor that carries information from the future has to earn its
+# place, and these did not.
+#
+# order_book_history.csv, which 06_analysis now accumulates one capture at a time, is what could
+# supply these honestly once it spans enough dates to vary within a world.
 
 # World metadata beyond the handful already used. These are the roster and composition measures
 # Section 5.3 shows to matter cross-sectionally; they are static per world, so they can separate

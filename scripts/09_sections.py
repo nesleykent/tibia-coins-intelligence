@@ -4962,6 +4962,43 @@ para(tag("econ") + f"<b>The honest summary of the forecast is this table, not th
      f"and lands within 5% less than half the time. The drift alternative is worse at every "
      f"horizon on every measure here, which is the same answer the significance test gives and "
      f"is worth more to a reader.")
+
+_TL = FD["testing_ledger"]
+_TLF = pd.DataFrame(_TL["families"])
+h3("7.7.5 How many hypotheses this study tests, and which of them are corrected")
+para(tag("stat") + f"<b>The study runs {_TL['n_tests_total']:,} hypothesis tests across "
+     f"{_TL['n_families']} families, and {_TL['share_corrected']:.0%} of them sit inside a "
+     f"family that carries a correction.</b> That count is assembled from the result files "
+     f"rather than from the prose, so it cannot drift from what the pipeline did. A report that "
+     f"applies Benjamini-Hochberg in five places and Sidak in one, without ever saying how many "
+     f"tests it ran in total, leaves a reader unable to judge whether a survivor survived a "
+     f"serious correction or a lenient one.")
+table([["Family", "Tests", "Status", "Correction applied", "Survive"]] +
+      [[r.family, f"{int(r.n_tests):,}", r.status, r.correction,
+        "—" if pd.isna(r.survivors) else f"{int(r.survivors):,}"]
+       for _, r in _TLF.iterrows()],
+      [46 * mm, 13 * mm, 22 * mm, 56 * mm, AVAIL - 137 * mm], fs=7,
+      align=[None, "R", None, None, "C"],
+      caption="Table 7.26 - Every family of hypothesis tests the study runs, the correction each "
+              "carries, and how many results survive it. A family is a set of tests asked as "
+              "one question.")
+para(tag("judg") + f"<b>Three families are reported without a correction, and that is a choice "
+     f"rather than an omission.</b> Correcting everything against everything is as wrong as "
+     f"correcting nothing: a coefficient the report states as a magnitude, with no claim that it "
+     f"is distinguishable from zero, is not a hypothesis test and does not belong in a family. "
+     f"The gold-supply elasticities are quoted for their size and sign, the regime splits are "
+     f"descriptive contrasts between subsamples rather than a search for a significant one, and "
+     f"the entropy and BDS tests are compared against a generated null instead of an analytic "
+     f"p-value. Each is labelled in the table so the reader can disagree with the classification "
+     f"rather than having to detect it.")
+para(tag("lim") + f"<b>One family is listed as not estimable, which is neither a pass nor a "
+     f"failure.</b> The monetary production tests span "
+     f"{LHP.get('monetary_span_years', 0):.2f} years against horizons reaching "
+     f"{max(LHP.get('horizons_tested', [365]))} days, so the calendar holds no independent "
+     f"window to estimate them on. Reporting them as a corrected family with no survivors would "
+     f"read as a rejection of the monetary channel at long horizons. The channel is untested "
+     f"there, and the distinction is the difference between evidence of absence and absence of "
+     f"evidence.")
 story.append(PageBreak())
 
 h3("7.8.2 A true holdout, and the horizon at which the evidence actually runs out")
@@ -4975,7 +5012,7 @@ table([["Holding period", "Period", "Net of cost", "t (NW)", "Wins", "Independen
        for _, r in HDF.iterrows()],
       [28 * mm, 22 * mm, 26 * mm, 18 * mm, 18 * mm, AVAIL - 112 * mm], fs=7,
       align=[None, None, "R", "R", "R", "R"],
-      caption=f"Table 7.26 - Out-of-sample test. Train to {HOLD['split_date']}, score after. "
+      caption=f"Table 7.27 - Out-of-sample test. Train to {HOLD['split_date']}, score after. "
               f"Only the decile cutoff crosses the split.")
 figure("fig33_holdout.png",
        "Exhibit 7.6 - The convergence trade in and out of sample, against the number of "
@@ -5021,7 +5058,7 @@ table([["Holding period", "Dispersion when opened", "Mean gap", "Net of cost", "
        for _, r in RGD.iterrows()],
       [26 * mm, 34 * mm, 22 * mm, 24 * mm, 18 * mm, AVAIL - 124 * mm], fs=7,
       align=[None, None, "R", "R", "R", "R"],
-      caption="Table 7.27 - The pooled tercile split, by market-wide dispersion on the day the "
+      caption="Table 7.28 - The pooled tercile split, by market-wide dispersion on the day the "
               "position is opened. The pattern in this table does not survive Section 7.7.3.")
 para(tag("hyp") + "<b>Two readings follow from it, and both were tested.</b> The first: what "
      "reverts is an <i>anomalous</i> gap rather than a large one, so dividing each deviation by "
@@ -5034,7 +5071,7 @@ table([["Holding period", "Selector", "Net of cost", "t (NW)", "Wins"]] +
        for _, r in SLD.iterrows()],
       [28 * mm, 46 * mm, 26 * mm, 20 * mm, AVAIL - 120 * mm], fs=7,
       align=[None, None, "R", "R", "R"],
-      caption="Table 7.28 - First test: top decile selected by the raw gap against the gap "
+      caption="Table 7.29 - First test: top decile selected by the raw gap against the gap "
               "divided by the day's dispersion.")
 para(tag("stat") + f"<b>The first reading fails.</b> Normalising is worse at every horizon, and "
      f"at ninety-one days it takes the net from "
@@ -5051,7 +5088,7 @@ table([["Period", "Holding period", "Low", "Mid", "High", "Low minus high"]] +
        for per in ("train only", "holdout only") for h in (7, 30)],
       [30 * mm, 26 * mm, 22 * mm, 22 * mm, 22 * mm, AVAIL - 122 * mm], fs=7,
       align=[None, None, "R", "R", "R", "R"],
-      caption="Table 7.29 - Second test: the same tercile split computed inside each period "
+      caption="Table 7.30 - Second test: the same tercile split computed inside each period "
               "separately, so the comparison is about relative calm rather than the level of "
               "dispersion in that era.")
 para(tag("stat") + f"<b>The second reading fails too, and it is the one that matters.</b> "
@@ -5081,7 +5118,7 @@ table([["Holding period", "Cheap world", "Anywhere", "Rich world", "Advantage, p
        for _, r in STO.iterrows()],
       [26 * mm, 24 * mm, 22 * mm, 22 * mm, 24 * mm, 16 * mm, AVAIL - 134 * mm], fs=7,
       align=[None, "R", "R", "R", "R", "R", "R"],
-      caption="Table 7.30 - Gold return of simply holding coins, by where they were bought. The fourth column is <i>not</i> the difference of the two before it: it is a paired comparison, and the two disagree because the unconditional columns average over different sets of dates. The "
+      caption="Table 7.31 - Gold return of simply holding coins, by where they were bought. The fourth column is <i>not</i> the difference of the two before it: it is a paired comparison, and the two disagree because the unconditional columns average over different sets of dates. The "
               "advantage is a paired comparison made within each date, so the market move common "
               "to both sides cancels. Cheap and rich are defined by the estimated band.")
 para(tag("stat") + f"<b>The edge is real at a week and a month, and not established at a "
@@ -5147,7 +5184,7 @@ table([["If you are", "Do this", "Because"],
         f"Below that the round trip costs 4.00%; above it, "
         f"{pc(FE['roundtrip_largest_decile_pct'], 2)}. An eighteen-fold difference in cost"]],
       [42 * mm, 58 * mm, AVAIL - 100 * mm], fs=6.8,
-      caption="Table 7.31 - The week-ahead decision, by holder type.")
+      caption="Table 7.32 - The week-ahead decision, by holder type.")
 
 h3("7.9.2 Next month")
 para(tag("fc") + f"The one-month 80% band is {gp(38465)} to {gp(41604)} GP/TC around a median "
@@ -5173,7 +5210,7 @@ table([["Decision", "Instruction"],
         f"{[r for r in FD['volatility_targets'] if r['target'] == 'y_hivol7'][0]['auc']:.2f}; "
         f"transact out of those weeks"]],
       [40 * mm, AVAIL - 40 * mm], fs=6.9,
-      caption="Table 7.32 - The month-ahead decision.")
+      caption="Table 7.33 - The month-ahead decision.")
 
 h3("7.9.3 Next quarter")
 para(tag("fc") + f"<b>The single most likely outcome is {SCNS.iloc[0].range}, at "
@@ -5193,7 +5230,7 @@ table([["Level", "If the price gets here", "Do"],
        [f"Below {gp(LV['p10_3m'])}", "Reached in 10% of simulated paths",
         "Buy the full planned quantity. Historically the better entries came from here"]],
       [30 * mm, 46 * mm, AVAIL - 76 * mm], fs=6.9,
-      caption="Table 7.33 - The quarter-ahead decision, keyed to levels rather than to dates.")
+      caption="Table 7.34 - The quarter-ahead decision, keyed to levels rather than to dates.")
 para(tag("judg") + f"<b>And the instruction that carries the most value, because it is the one "
      f"most often got wrong:</b> if you are going to need coins this quarter, buy them at your "
      f"convenience rather than at a moment you have chosen. The expected cost of buying today "
@@ -5320,7 +5357,7 @@ table([["Component", "Assessment", "Weight on confidence"],
        ["No causal event identification", "Global events are collinear with dates", "Lowers"],
        ["Policy risk", "Rule changes could void any relationship without warning", "Lowers"]],
       [42 * mm, 74 * mm, AVAIL - 116 * mm],
-      caption="Table 7.34 - Basis for the confidence score.")
+      caption="Table 7.35 - Basis for the confidence score.")
 para(tag("judg") + "The score reflects high confidence in the structural findings - the "
      "arbitrage band, the non-stationarity, the provenance result and the world-type effects are "
      "each replicated across measures and sub-samples - combined with low confidence in any "
