@@ -69,6 +69,11 @@ CONFIDENCE = 78
 STO = pd.DataFrame(STA["long_only"])
 STOV = pd.DataFrame(STA["overlap"])
 STD = pd.DataFrame(STA["delayed_entry"])
+SEAS = FD["stability_seasonality"]
+SEM = pd.DataFrame(SEAS["month_effects"])
+SEST = SEAS["stability"]
+SERG = pd.DataFrame(SEAS["regime_splits"])
+SEER = pd.DataFrame(SEAS["error_magnitude"])
 BTS = FD["scenario_backtest"]
 BTC = pd.DataFrame(BTS["coverage"])
 LPRED = pd.read_csv(P / "latest_predictions.csv")
@@ -4694,7 +4699,7 @@ table([["Holding period", "Mean gap", "Gross", "Net of cost", "Wins", "t (Newey-
 figure("fig32_strategy_horizon.png",
        "Exhibit 7.5 - The convergence trade against its cost, by holding period. Sources: "
        "price archive, item_id 22118; fee schedule from the Market documentation.")
-h3("7.7.1 Three attacks on the result, and what survived")
+h3("7.8.1 Three attacks on the result, and what survived")
 para(tag("judg") + "A result this strong in a report that has found nothing tradable for a "
      "hundred pages deserves to be attacked before it is believed. Three things could "
      "manufacture it, and each was tested.")
@@ -4763,7 +4768,102 @@ para(tag("judg") + "<b>That is the honest size of the opportunity, and it is the
      "is not the signal, it is the volume on the other side of it.")
 
 story.append(CondPageBreak(150))
-h3("7.7.2 A true holdout, and the horizon at which the evidence actually runs out")
+h2sec('7.7', 'Seasonality, stability and stress',
+      'Three questions the study had assumed away, and the answers change one conclusion')
+bottomline("The reversion this report trades is not one coefficient. It is four times stronger "
+           "when volatility is in its top decile than when it is calm, it varies fourfold "
+           "across rolling windows by more than sampling noise explains, and the market has a "
+           "genuine month-of-year pattern that survives a year fixed effect. None of that "
+           "overturns the mechanism; all of it qualifies how a single pooled number should be "
+           "read.")
+
+h3("7.7.1 Seasonality is real, and the earlier test could not have found it")
+para(tag("judg") + "<b>A month dummy on a multi-year panel is not a seasonality test.</b> It "
+     "mixes the recurring pattern with whatever the level happened to do in those particular "
+     "months. Adding a year fixed effect leaves only what recurs, which is what the word means.")
+table([["Specification", "Observations", "Joint chi-squared", "df", "p", "Largest month"]] +
+      [[r.specification.capitalize(), gp(r.n), f"{r.joint_chi2:.0f}", f"{int(r.df)}",
+        pval(r.joint_p), pc(r.largest_month_pct, 2) + " / day"]
+       for _, r in SEM.iterrows()],
+      [50 * mm, 24 * mm, 28 * mm, 12 * mm, 20 * mm, AVAIL - 134 * mm], fs=7,
+      align=[None, "R", "R", "R", "R", "R"],
+      caption="Table 7.23 - Month-of-year effects on the daily return, before and after "
+              "absorbing the year.")
+para(tag("stat") + f"<b>The pattern survives, and it strengthens.</b> With the year absorbed the "
+     f"joint statistic rises to {SEM.iloc[1].joint_chi2:.0f} on {int(SEM.iloc[1].df)} degrees "
+     f"of freedom, and the largest monthly effect is "
+     f"{pc(SEM.iloc[1].largest_month_pct, 2)} a day. Day of week is also jointly significant "
+     f"at p = {SEAS['day_of_week']['joint_p']:.0e}. The recurring in-game events - double "
+     f"experience, rapid respawn, exaltation, double rewards - are jointly significant at "
+     f"p = {SEAS['events']['joint_p']:.3f} across "
+     f"{SEAS['events']['n_events_tested']} of the five flags; the fifth, a loot weekend, never "
+     f"fires inside this window and is dropped rather than estimated as a constant.")
+para(tag("judg") + "<b>What this does not license.</b> A significant calendar pattern in daily "
+     "returns is not a trading rule: the effects are hundredths of a percent a day against a "
+     "spread of 0.84%, so they are visible to a regression and invisible to a trader. They "
+     "matter because a model that ignores them attributes seasonal movement to whatever "
+     "variable happens to correlate with the calendar.")
+
+h3("7.7.2 The central coefficient is not constant")
+para(tag("stat") + f"<b>Re-estimated in {SEST['n_windows']} rolling "
+     f"{SEST['window_days']}-day windows, the reversion coefficient runs from "
+     f"{SEST['rolling_min']:+.3f} to {SEST['rolling_max']:+.3f} against a full-sample "
+     f"{SEST['full_sample_coef']:+.3f}.</b> The spread is not sampling noise: the variance of "
+     f"the estimates is {SEST['variance_ratio']:.1f} times the variance the standard errors "
+     f"imply, so the parameter genuinely moves. What does hold is the sign - negative in every "
+     f"window - and the significance, at t above two in "
+     f"{SEST['share_significant']:.0%} of them.")
+para(tag("judg") + "<b>So the mechanism is stable and the magnitude is not.</b> Gaps always "
+     "close; how fast they close is a property of the period, not a constant of the market. "
+     "Every half-life quoted in this report is an average over a range that varies by a factor "
+     "of four, and the trading rules in Section 7.8 are stated as thresholds rather than as "
+     "expected speeds for exactly that reason.")
+
+h3("7.7.3 Stress changes the speed, not the direction")
+table([["Regime", "Observations", "Coefficient", "t", "Half-life"]] +
+      [[r.regime.capitalize(), gp(r.n), f"{r.coef:+.4f}", f"{r.t:.1f}",
+        f"{r.half_life_days:.1f} days" if r.half_life_days == r.half_life_days else "-"]
+       for _, r in SERG.iterrows()],
+      [54 * mm, 26 * mm, 26 * mm, 16 * mm, AVAIL - 122 * mm], fs=7,
+      align=[None, "R", "R", "R", "R"],
+      caption="Table 7.24 - The reversion coefficient re-estimated within each regime, world "
+              "fixed effects and errors clustered by world.")
+para(tag("stat") + f"<b>The split that matters is volatility, not launch and not drawdown.</b> "
+     f"In the top decile of trailing volatility the coefficient is "
+     f"{float(SERG[SERG.regime == 'top-decile volatility'].coef.iloc[0]):+.3f} against "
+     f"{float(SERG[SERG.regime == 'calm volatility'].coef.iloc[0]):+.3f} when calm - a half-life "
+     f"of {float(SERG[SERG.regime == 'top-decile volatility'].half_life_days.iloc[0]):.0f} days "
+     f"against {float(SERG[SERG.regime == 'calm volatility'].half_life_days.iloc[0]):.0f}. "
+     f"Launch-phase and mature worlds are within a hair of each other, and so are drawdown and "
+     f"non-drawdown periods. The pooled figure is an average of a fast regime and a slow one.")
+
+h3("7.7.4 What the forecast error actually costs")
+para(tag("judg") + "<b>A Diebold-Mariano test says which model is more accurate. It does not "
+     "say whether the difference is worth anything.</b> Both belong in a report that asks a "
+     "reader to act, so the errors are also reported in the units the reader holds.")
+table([["Horizon", "Model", "Mean absolute error", "In GP per coin", "Within 2%", "Within 5%"]] +
+      [[f"{int(r.horizon)} days", r.model.capitalize(), pc(r.mae_pct_of_level, 2),
+        gp(r.mae_gp), f"{r.share_within_2pct:.0%}", f"{r.share_within_5pct:.0%}"]
+       for _, r in SEER.iterrows()],
+      [24 * mm, 30 * mm, 34 * mm, 28 * mm, 20 * mm, AVAIL - 136 * mm], fs=7,
+      align=[None, None, "R", "R", "R", "R"],
+      caption="Table 7.25 - Forecast error in economic terms. The random walk is the report's "
+              "central forecast; the shrunk drift is the only alternative it entertains.")
+para(tag("econ") + f"<b>The honest summary of the forecast is this table, not the test.</b> At "
+     f"seven days a reader who assumes no change is wrong by "
+     f"{pc(float(SEER[(SEER.horizon == 7) & (SEER.model == 'random walk')].mae_pct_of_level.iloc[0]), 1)} "
+     f"on average - about "
+     f"{gp(float(SEER[(SEER.horizon == 7) & (SEER.model == 'random walk')].mae_gp.iloc[0]))} GP "
+     f"a coin - and lands within 2% "
+     f"{float(SEER[(SEER.horizon == 7) & (SEER.model == 'random walk')].share_within_2pct.iloc[0]):.0%} "
+     f"of the time. At ninety-one days the same assumption is wrong by "
+     f"{pc(float(SEER[(SEER.horizon == 91) & (SEER.model == 'random walk')].mae_pct_of_level.iloc[0]), 1)} "
+     f"and lands within 5% less than half the time. The drift alternative is worse at every "
+     f"horizon on every measure here, which is the same answer the significance test gives and "
+     f"is worth more to a reader.")
+story.append(PageBreak())
+
+h3("7.8.2 A true holdout, and the horizon at which the evidence actually runs out")
 para(tag("judg") + "<b>Everything above characterises the full history, including the decile "
      "cutoff itself.</b> That is an in-sample description, and this report has criticised "
      "weaker claims made the same way. So the history is split once, the cutoff is taken from "
@@ -4774,7 +4874,7 @@ table([["Holding period", "Period", "Net of cost", "t (NW)", "Wins", "Independen
        for _, r in HDF.iterrows()],
       [28 * mm, 22 * mm, 26 * mm, 18 * mm, 18 * mm, AVAIL - 112 * mm], fs=7,
       align=[None, None, "R", "R", "R", "R"],
-      caption=f"Table 7.23 - Out-of-sample test. Train to {HOLD['split_date']}, score after. "
+      caption=f"Table 7.26 - Out-of-sample test. Train to {HOLD['split_date']}, score after. "
               f"Only the decile cutoff crosses the split.")
 figure("fig33_holdout.png",
        "Exhibit 7.6 - The convergence trade in and out of sample, against the number of "
@@ -4806,7 +4906,7 @@ para(tag("judg") + f"<b>So the headline number moves.</b> The {pc(float(STG[(STG
      f"shape of the cost amortisation, not because they are tradable evidence.")
 story.append(PageBreak())
 
-h3("7.7.3 A pattern that looked like a regime effect, and two tests that took it apart")
+h3("7.8.3 A pattern that looked like a regime effect, and two tests that took it apart")
 para(tag("judg") + f"<b>The holdout paying more than the training period needs an explanation, "
      f"and the obvious one is wrong.</b> The natural guess is that gaps were wider in the "
      f"holdout, since the trade is paid out of dispersion. They were not: cross-world dispersion "
@@ -4820,7 +4920,7 @@ table([["Holding period", "Dispersion when opened", "Mean gap", "Net of cost", "
        for _, r in RGD.iterrows()],
       [26 * mm, 34 * mm, 22 * mm, 24 * mm, 18 * mm, AVAIL - 124 * mm], fs=7,
       align=[None, None, "R", "R", "R", "R"],
-      caption="Table 7.24 - The pooled tercile split, by market-wide dispersion on the day the "
+      caption="Table 7.27 - The pooled tercile split, by market-wide dispersion on the day the "
               "position is opened. The pattern in this table does not survive Section 7.7.3.")
 para(tag("hyp") + "<b>Two readings follow from it, and both were tested.</b> The first: what "
      "reverts is an <i>anomalous</i> gap rather than a large one, so dividing each deviation by "
@@ -4833,7 +4933,7 @@ table([["Holding period", "Selector", "Net of cost", "t (NW)", "Wins"]] +
        for _, r in SLD.iterrows()],
       [28 * mm, 46 * mm, 26 * mm, 20 * mm, AVAIL - 120 * mm], fs=7,
       align=[None, None, "R", "R", "R"],
-      caption="Table 7.25 - First test: top decile selected by the raw gap against the gap "
+      caption="Table 7.28 - First test: top decile selected by the raw gap against the gap "
               "divided by the day's dispersion.")
 para(tag("stat") + f"<b>The first reading fails.</b> Normalising is worse at every horizon, and "
      f"at ninety-one days it takes the net from "
@@ -4850,7 +4950,7 @@ table([["Period", "Holding period", "Low", "Mid", "High", "Low minus high"]] +
        for per in ("train only", "holdout only") for h in (7, 30)],
       [30 * mm, 26 * mm, 22 * mm, 22 * mm, 22 * mm, AVAIL - 122 * mm], fs=7,
       align=[None, None, "R", "R", "R", "R"],
-      caption="Table 7.26 - Second test: the same tercile split computed inside each period "
+      caption="Table 7.29 - Second test: the same tercile split computed inside each period "
               "separately, so the comparison is about relative calm rather than the level of "
               "dispersion in that era.")
 para(tag("stat") + f"<b>The second reading fails too, and it is the one that matters.</b> "
@@ -4867,7 +4967,7 @@ para(tag("judg") + "<b>So nothing here is offered as a filter.</b> A plausible c
      "pattern deserves to see it taken apart rather than quietly omitted.")
 story.append(PageBreak())
 
-h3("7.7.4 The long-only version, which is what a player can actually do")
+h3("7.8.4 The long-only version, which is what a player can actually do")
 para(tag("econ") + f"<b>Strip out the short leg and the signal still pays, because it tells you "
      f"<i>where</i> to transact.</b> A player about to buy coins is going to buy them somewhere. "
      f"Buying on a world trading below the cross-world mean, rather than on an arbitrary world, "
@@ -4880,7 +4980,7 @@ table([["Holding period", "Cheap world", "Anywhere", "Rich world", "Advantage, p
        for _, r in STO.iterrows()],
       [26 * mm, 24 * mm, 22 * mm, 22 * mm, 24 * mm, 16 * mm, AVAIL - 134 * mm], fs=7,
       align=[None, "R", "R", "R", "R", "R", "R"],
-      caption="Table 7.27 - Gold return of simply holding coins, by where they were bought. The fourth column is <i>not</i> the difference of the two before it: it is a paired comparison, and the two disagree because the unconditional columns average over different sets of dates. The "
+      caption="Table 7.30 - Gold return of simply holding coins, by where they were bought. The fourth column is <i>not</i> the difference of the two before it: it is a paired comparison, and the two disagree because the unconditional columns average over different sets of dates. The "
               "advantage is a paired comparison made within each date, so the market move common "
               "to both sides cancels. Cheap and rich are defined by the estimated band.")
 para(tag("stat") + f"<b>The edge is real at a week and a month, and not established at a "
@@ -4912,7 +5012,7 @@ para(tag("fc") + f"<b>Stated as a position.</b> Buy on any world whose price sit
      f"risk is unchanged and unhedgeable; this is a claim about relative position only.")
 story.append(PageBreak())
 
-h2sec('7.8', 'What to do',
+h2sec('7.9', 'What to do',
       'Next week, next month, next quarter - stated as instructions, not as findings')
 bottomline("A unit root is not a reason to do nothing. It says the expected price in three "
            "months is the price today, which is itself a specific instruction: stop waiting "
@@ -4923,7 +5023,7 @@ para(tag("judg") + "<b>The most common misreading of this report would be that i
      "statement below follows from the evidence in the preceding chapters and is stated as an "
      "instruction, with the number that drives it.")
 
-h3("7.8.1 Next week")
+h3("7.9.1 Next week")
 table([["If you are", "Do this", "Because"],
        ["<b>Buying coins for premium or Store goods</b>",
         "Buy now, at the going price. Do not wait for a dip and do not post a low bid and hope",
@@ -4946,9 +5046,9 @@ table([["If you are", "Do this", "Because"],
         f"Below that the round trip costs 4.00%; above it, "
         f"{pc(FE['roundtrip_largest_decile_pct'], 2)}. An eighteen-fold difference in cost"]],
       [42 * mm, 58 * mm, AVAIL - 100 * mm], fs=6.8,
-      caption="Table 7.28 - The week-ahead decision, by holder type.")
+      caption="Table 7.31 - The week-ahead decision, by holder type.")
 
-h3("7.8.2 Next month")
+h3("7.9.2 Next month")
 para(tag("fc") + f"The one-month 80% band is {gp(38465)} to {gp(41604)} GP/TC around a median "
      f"of {gp(SCN['level'])}. That is a range of about ±4%, and it is the planning number: a "
      f"holder of a million coins should expect the gold value of that position to move by four "
@@ -4972,9 +5072,9 @@ table([["Decision", "Instruction"],
         f"{[r for r in FD['volatility_targets'] if r['target'] == 'y_hivol7'][0]['auc']:.2f}; "
         f"transact out of those weeks"]],
       [40 * mm, AVAIL - 40 * mm], fs=6.9,
-      caption="Table 7.29 - The month-ahead decision.")
+      caption="Table 7.32 - The month-ahead decision.")
 
-h3("7.8.3 Next quarter")
+h3("7.9.3 Next quarter")
 para(tag("fc") + f"<b>The single most likely outcome is {SCNS.iloc[0].range}, at "
      f"{SCNS.iloc[0].probability:.0%}.</b> Above {gp(LV['p75_3m'])} the price sits in the top "
      f"quartile of its own distribution and is expensive relative to its uncertainty; below "
@@ -4992,7 +5092,7 @@ table([["Level", "If the price gets here", "Do"],
        [f"Below {gp(LV['p10_3m'])}", "Reached in 10% of simulated paths",
         "Buy the full planned quantity. Historically the better entries came from here"]],
       [30 * mm, 46 * mm, AVAIL - 76 * mm], fs=6.9,
-      caption="Table 7.30 - The quarter-ahead decision, keyed to levels rather than to dates.")
+      caption="Table 7.33 - The quarter-ahead decision, keyed to levels rather than to dates.")
 para(tag("judg") + f"<b>And the instruction that carries the most value, because it is the one "
      f"most often got wrong:</b> if you are going to need coins this quarter, buy them at your "
      f"convenience rather than at a moment you have chosen. The expected cost of buying today "
@@ -5001,7 +5101,7 @@ para(tag("judg") + f"<b>And the instruction that carries the most value, because
      f"Timing this market is not merely difficult - the evidence says the attempt has negative "
      f"expected value once the {pc(FN['roll']['median_roll_spread_pct'])} spread is paid.")
 
-h3("7.8.4 What would make this report say something different")
+h3("7.9.4 What would make this report say something different")
 para(tag("judg") + "The position above is Neutral on the level and directive on everything "
      "else. It is not a hedge, and three specific observations would change it - each stated "
      "so that a reader can check them without re-running the study.")
@@ -5025,9 +5125,9 @@ para(tag("judg") + "Absent those, the answer to what to do next week, next month
      "and a half years of data say is a random walk.")
 story.append(PageBreak())
 
-h2sec('7.9', 'Conclusion',
+h2sec('7.10', 'Conclusion',
       'A currency priced against a fixed anchor, bounded by fees, cleared thin - and what that costs the holder')
-h3("7.9.1 What this study establishes")
+h3("7.10.1 What this study establishes")
 bullets([
     tag("stat") + f"Worlds are partially integrated markets bounded by a transaction-cost "
     f"band, with the friction point estimated at "
@@ -5048,7 +5148,7 @@ bullets([
     tag("lim") + "Event effects are measurable as associations but not identifiable as causes.",
 ])
 
-h3("7.9.2 What drives the level, and what remains genuinely open")
+h3("7.10.2 What drives the level, and what remains genuinely open")
 para(tag("econ") + f"<b>The level is set on the gold side, by demand, and it is behavioural.</b> "
      f"That is a positive claim and the evidence carries it: the coin side cannot move the "
      f"price because supply at the posted money price is unlimited, and the gold side is not "
@@ -5070,7 +5170,7 @@ para(tag("lim") + "<b>One thing is genuinely open, and it is narrower than it ha
      "those shares by order size, which is a hypothesis about motive rather than a measurement "
      "of it. That is the one place where the mechanism is described but not identified.")
 
-h3("7.9.3 Rating and confidence")
+h3("7.10.3 Rating and confidence")
 para(tag("judg") + f"<b>Verdict: {VERDICT}.</b>")
 para("The verdict deliberately does not rest on the technical indicators of Section 5.7, which "
      "currently read firm across almost every world. Three considerations override them on the "
@@ -5119,7 +5219,7 @@ table([["Component", "Assessment", "Weight on confidence"],
        ["No causal event identification", "Global events are collinear with dates", "Lowers"],
        ["Policy risk", "Rule changes could void any relationship without warning", "Lowers"]],
       [42 * mm, 74 * mm, AVAIL - 116 * mm],
-      caption="Table 7.31 - Basis for the confidence score.")
+      caption="Table 7.34 - Basis for the confidence score.")
 para(tag("judg") + "The score reflects high confidence in the structural findings - the "
      "arbitrage band, the non-stationarity, the provenance result and the world-type effects are "
      "each replicated across measures and sub-samples - combined with low confidence in any "
@@ -5332,7 +5432,7 @@ h3("8.3.10 Reproducibility")
 # The table claims to run in pipeline order, so it is generated from run_all.py's own stage
 # lists rather than maintained by hand. A hand-kept ordering drifted: 08_figures.py sat ahead
 # of every analysis stage whose output it draws.
-_PURPOSE = {'01_collect.py': 'Per-world GuildStats and order-book collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the order-book size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement'}
+_PURPOSE = {'01_collect.py': 'Per-world GuildStats and order-book collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the order-book size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement', '48_stability_and_seasonality.py': 'Within-year seasonality, rolling parameter stability, forecast error in economic units, and regime splits'}
 _runall = (ROOT / "scripts" / "run_all.py").read_text()
 _stage_order, _seen = [], set()
 for _name in re.findall(r'"([0-9a-z_]+\.py)"', _runall):

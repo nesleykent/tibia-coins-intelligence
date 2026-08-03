@@ -6171,5 +6171,222 @@
    "latest_predictions": "data/processed/latest_launch_predictions.csv",
    "artifact": "models/launch_phase_models.pkl.gz"
   }
+ },
+ "stability_seasonality": {
+  "month_effects": [
+   {
+    "specification": "month only, world FE",
+    "n": 30053,
+    "r2_within": 0.006392428294857533,
+    "joint_chi2": 598.2272414856591,
+    "df": 11,
+    "joint_p": 0.0,
+    "max_abs_t": 14.09476222082962,
+    "largest_month_pct": 0.21143407735608766
+   },
+   {
+    "specification": "month, world and year FE",
+    "n": 30053,
+    "r2_within": 0.006629615771529429,
+    "joint_chi2": 703.5907154148748,
+    "df": 11,
+    "joint_p": 0.0,
+    "max_abs_t": 15.799816177211596,
+    "largest_month_pct": 0.24356062750531354
+   }
+  ],
+  "day_of_week": {
+   "joint_chi2": 31.540959900025424,
+   "df": 6,
+   "joint_p": 1.997882733384415e-05,
+   "max_abs_t": 4.081323103325537,
+   "r2_within": 0.0024962982245940735
+  },
+  "events": {
+   "n": 14266,
+   "n_events_tested": 4,
+   "events_never_observed": [
+    "ev_loot"
+   ],
+   "joint_chi2": 10.582387865633313,
+   "df": 4,
+   "joint_p": 0.03168084416784889,
+   "per_event": [
+    {
+     "event": "ev_xp_skill",
+     "coef_pct": -0.06085769962361628,
+     "t": -2.1237876989700686,
+     "p": 0.03368790006783029
+    },
+    {
+     "event": "ev_rapid_respawn",
+     "coef_pct": -0.08973875236650725,
+     "t": -2.321600203985988,
+     "p": 0.020254472907238696
+    },
+    {
+     "event": "ev_exaltation",
+     "coef_pct": 0.00036964196275231605,
+     "t": 0.009362804248130328,
+     "p": 0.992529672188865
+    },
+    {
+     "event": "ev_double_reward",
+     "coef_pct": -0.0093646558990886,
+     "t": -0.8258320083924833,
+     "p": 0.40889939411727716
+    }
+   ]
+  },
+  "stability": {
+   "window_days": 180,
+   "step_days": 30,
+   "n_windows": 22,
+   "full_sample_coef": -0.11235990994858962,
+   "full_sample_se": 0.00936491604879362,
+   "rolling_min": -0.34149159169889653,
+   "rolling_median": -0.17474110494949094,
+   "rolling_max": -0.08528529640686952,
+   "observed_variance": 0.003929439596921299,
+   "sampling_variance": 0.0005516559558670981,
+   "variance_ratio": 7.122989528400845,
+   "sign_stable": true,
+   "share_significant": 1.0
+  },
+  "error_magnitude": [
+   {
+    "horizon": 7,
+    "model": "random walk",
+    "rmse_log": 0.01448237063452768,
+    "mae_log": 0.010710705918680818,
+    "median_abs_log": 0.008356494350576504,
+    "mae_gp": 428.2874742210876,
+    "mae_pct_of_level": 1.0710705918680818,
+    "share_within_2pct": 0.8711217183770883,
+    "share_within_5pct": 0.9904534606205251
+   },
+   {
+    "horizon": 7,
+    "model": "shrunk drift",
+    "rmse_log": 0.01484446849995277,
+    "mae_log": 0.011065174137054542,
+    "median_abs_log": 0.008566071501070346,
+    "mae_gp": 442.4615444543248,
+    "mae_pct_of_level": 1.106517413705454,
+    "share_within_2pct": 0.8591885441527446,
+    "share_within_5pct": 0.9904534606205251
+   },
+   {
+    "horizon": 30,
+    "model": "random walk",
+    "rmse_log": 0.04120008084130602,
+    "mae_log": 0.0314270254472019,
+    "median_abs_log": 0.022882262610870896,
+    "mae_gp": 1256.6679967926634,
+    "mae_pct_of_level": 3.1427025447201897,
+    "share_within_2pct": 0.44785276073619634,
+    "share_within_5pct": 0.7705521472392638
+   },
+   {
+    "horizon": 30,
+    "model": "shrunk drift",
+    "rmse_log": 0.045570699800568236,
+    "mae_log": 0.03422499389377658,
+    "median_abs_log": 0.025131946729456168,
+    "mae_gp": 1368.5499631198059,
+    "mae_pct_of_level": 3.4224993893776583,
+    "share_within_2pct": 0.4208588957055215,
+    "share_within_5pct": 0.7533742331288343
+   },
+   {
+    "horizon": 91,
+    "model": "random walk",
+    "rmse_log": 0.08674592810228479,
+    "mae_log": 0.07005091780812782,
+    "median_abs_log": 0.057819278295141885,
+    "mae_gp": 2801.11608727721,
+    "mae_pct_of_level": 7.005091780812782,
+    "share_within_2pct": 0.14323607427055704,
+    "share_within_5pct": 0.4336870026525199
+   },
+   {
+    "horizon": 91,
+    "model": "shrunk drift",
+    "rmse_log": 0.11867754945805656,
+    "mae_log": 0.09142468661867266,
+    "median_abs_log": 0.07566535220940118,
+    "mae_gp": 3655.7859407821766,
+    "mae_pct_of_level": 9.142468661867266,
+    "share_within_2pct": 0.09946949602122016,
+    "share_within_5pct": 0.32625994694960214
+   }
+  ],
+  "regime_splits": [
+   {
+    "regime": "all observations",
+    "n": 30053,
+    "coef": -0.11235990994858962,
+    "se": 0.00936491604879362,
+    "t": -11.997962326962208,
+    "half_life_days": 5.815533592312884
+   },
+   {
+    "regime": "launch phase",
+    "n": 4347,
+    "coef": -0.10990816770476605,
+    "se": 0.02011053785964669,
+    "t": -5.46520279426763,
+    "half_life_days": 5.953305634802043
+   },
+   {
+    "regime": "mature worlds",
+    "n": 25706,
+    "coef": -0.11694679051553776,
+    "se": 0.011073153159581992,
+    "t": -10.561290793159449,
+    "half_life_days": 5.573274761330493
+   },
+   {
+    "regime": "top-decile volatility",
+    "n": 2884,
+    "coef": -0.2929047359540951,
+    "se": 0.03455227284755321,
+    "t": -8.477148153072568,
+    "half_life_days": 1.9999060109358568
+   },
+   {
+    "regime": "calm volatility",
+    "n": 25949,
+    "coef": -0.0864696675885894,
+    "se": 0.005521903143166054,
+    "t": -15.659395926856279,
+    "half_life_days": 7.664276326598751
+   },
+   {
+    "regime": "index in drawdown",
+    "n": 22206,
+    "coef": -0.11757659440454775,
+    "se": 0.01124892676971727,
+    "t": -10.452249962287105,
+    "half_life_days": 5.541485198652214
+   },
+   {
+    "regime": "index at or near a high",
+    "n": 7847,
+    "coef": -0.14089973342492138,
+    "se": 0.018205099613461062,
+    "t": -7.739574977153021,
+    "half_life_days": 4.564093158648488
+   }
+  ],
+  "stress_summary": {
+   "pooled_coef": -0.11235990994858962,
+   "range": [
+    -0.2929047359540951,
+    -0.0864696675885894
+   ],
+   "sign_stable": true,
+   "widest_gap_vs_pooled": 0.18054482600550548
+  }
  }
 }

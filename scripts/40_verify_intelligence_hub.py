@@ -146,22 +146,77 @@ def main() -> None:
     assert "function columnIsNumeric(table,column){" in html
     assert "function sortRows(tableKey, rows)" in html
     assert 'href="tibia_coin_market_report.pdf"' in html
-    assert 'data-mode="mid">Average</button>' in html
-    assert 'data-mode="buy">Buy TC</button>' in html
-    assert 'data-mode="sell">Sell TC</button>' in html
-    assert 'data-mode="return">Change</button>' in html
+    assert 'data-mode="mid" title="Mid — the average of the buy and sell sides">Mid</button>' in html
+    assert 'data-mode="buy" title="What players paid to buy TC">Buy TC</button>' in html
+    assert 'data-mode="sell" title="What players received for selling TC">Sell TC</button>' in html
+    assert (
+        'data-mode="return" title="Return — price change since the first day in '
+        'the period">Return (%)</button>'
+    ) in html
     assert 'id="worldStart" type="date"' in html
     assert 'id="worldEnd" type="date"' in html
     assert '$("#worldStart").value=$("#overviewStart").value' in html
     assert '$("#overviewStart").value=$("#worldStart").value' in html
     assert 'const start=$("#worldStart").value,end=$("#worldEnd").value' in html
-    assert "What players paid, on average, to buy one TC each day." in html
-    assert "You pay to buy TC now" in html
-    assert "You receive selling TC now" in html
-    assert "Difference between buy and sell" in html
-    assert "TC wanted / TC for sale" in html
-    assert "Offer list updated" in html
+    assert "Buy TC — what players paid, on average, to buy one TC each day." in html
     assert "How these numbers are calculated" in html
+    # The product's canonical Market terms stay on the labels, each paired with
+    # a visible plain explanation rather than replaced by one.
+    assert "Executable prices now" in html
+    for term, explanation in (
+        ("Buy TC", "What you pay for 1 TC"),
+        ("Sell TC", "What you receive for 1 TC"),
+        ("Mid", "Halfway point, not executable"),
+        ("Spread", "Gap between the two prices"),
+        ("Demand depth", "TC players want to buy"),
+        ("Supply depth", "TC offered for sale"),
+    ):
+        assert f"<th>{term}<span class=\"term-help\">{explanation}</span></th>" in html
+    for term, explanation in (
+        ("Buy TC now", "the cheapest sell offer open right now"),
+        ("Sell TC now", "the highest buy offer open right now"),
+        ("Reference mid", "halfway between the two; may not be executable"),
+        ("Quoted spread", "gap between buying and selling, before the Market fee"),
+        ("Demand / supply depth", "TC players want to buy / TC offered for sale"),
+        ("Book snapshot", "when this offer list was read"),
+        (
+            "Latest executed midpoint",
+            "average of what players paid and received that day",
+        ),
+        ("Latest executed buy / sell", "what players actually paid / received that day"),
+        ("Total return", "price change across all available history"),
+        ("7-day prediction", "model estimate of the change versus other worlds"),
+    ):
+        assert f"<b>{term}</b><small>{explanation}</small>" in html
+    for removed in (
+        "You pay to buy TC now",
+        "You receive selling TC now",
+        "Difference between buy and sell",
+        "TC wanted / TC for sale",
+        "Offer list updated",
+        "<th>Middle price</th>",
+    ):
+        assert removed not in html, f"canonical term replaced by paraphrase: {removed}"
+    # Bid/ask vocabulary is a data definition, never a visible Worlds label.
+    worlds_view = html[html.index('<section id="view-worlds"'):html.index(
+        "</section>", html.index('<section id="view-worlds"')
+    )]
+    for internal in ("best ask", "best bid", "bid depth", "ask depth", "order book"):
+        assert internal not in worlds_view.lower(), (
+            f"data-dictionary term used on a visible label: {internal}"
+        )
+    # Game mechanics translated for analysts and finance professionals.
+    assert "New to Tibia? What these markets are" in html
+    for game_context in (
+        "separate servers called <strong>worlds</strong>",
+        "paid character world transfer",
+        "<strong>Gold pieces (GP)</strong>",
+        "<strong>Tibia Coins (TC)</strong>",
+        "primary supply is issued by the developer, CipSoft",
+        "an order-driven venue with resting buy and sell offers",
+        "PvP type, BattlEye protection cohort and geographic region",
+    ):
+        assert game_context in html, f"missing game context: {game_context}"
     assert "comparisonDates=[...new Set(data.worldSeries.map(row=>row.date))].sort()" in html
     assert "Days without data stay empty" in html
     assert "const linePath=key=>" in html
