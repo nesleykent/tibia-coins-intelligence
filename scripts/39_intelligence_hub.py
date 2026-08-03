@@ -349,6 +349,10 @@ HTML = r"""<!doctype html>
     .panel-heading{display:flex;align-items:start;justify-content:space-between;gap:16px;
       padding:15px 16px 10px}
     .panel-heading p{margin:4px 0 0;color:var(--muted);font-size:12px}
+    .terminology-key{margin:0;padding:0 16px 12px;color:var(--muted);font-size:11px;
+      line-height:1.5}
+    .terminology-key strong{color:#34405a}
+    .terminology-key span+span::before{content:" · ";color:#a0a9b8}
     .chart-panel{padding-bottom:10px}
     .legend{display:flex;flex-wrap:wrap;gap:9px 18px;color:#3d4961;font-size:11px}
     .legend-item{display:inline-flex;align-items:center;gap:7px}
@@ -599,8 +603,7 @@ HTML = r"""<!doctype html>
           <div class="chart-wrap"><svg id="overviewChart" class="chart" role="img" aria-labelledby="overviewChartTitle"></svg><div id="overviewTooltip" class="chart-tooltip"></div></div>
         </article>
         <article class="panel thesis">
-          <div class="panel-heading"><div><h2>What the data says</h2><p>Start with the simple
-            explanation. The numbers and units stay visible so you can check the evidence immediately.</p></div></div>
+          <div class="panel-heading"><div><h2>What the data says</h2></div></div>
           <p class="thesis-verdict"><strong id="verdictLine">—</strong>
             <span class="thesis-confidence" id="verdictConfidence">—</span></p>
           <div id="claimList" class="claim-list"></div>
@@ -608,8 +611,9 @@ HTML = r"""<!doctype html>
         </article>
         <div class="split">
           <article class="panel">
-            <div class="panel-heading"><div><h2>Compare worlds</h2><p><span id="overviewTableCount"></span> · <strong>Convergent</strong> means the absolute deviation is expected to shrink. <strong>Divergent</strong> means it is expected to grow. <strong>Inside band</strong> means the gap is too small for that classification.</p><details class="claim-details"><summary>Method and limitations</summary><p><strong>Deviation</strong> uses the cross-world reference. <strong>Predicted 7d</strong> estimates the change in that deviation, not the future TC price. <strong>Signal</strong> compares the current absolute deviation with its model-implied value after seven days. These figures do not show whether enough TC is available to execute a trade.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>Signal<span class="term-help">How to read the result</span></th></tr></thead><tbody id="overviewTable"></tbody></table></div>
+            <div class="panel-heading"><div><h2>Compare worlds</h2><p id="overviewTableCount"></p><details class="claim-details"><summary>Method and limitations</summary><p>Signal compares the absolute Deviation now with its model-implied value after seven days. Predicted 7d is a change in Deviation, not a forecast of the TC price. Liquidity is not included.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
+            <p class="terminology-key"><span><strong>Deviation</strong>: price vs other worlds</span><span><strong>Predicted 7d</strong>: expected change in Deviation</span><span><strong>Signal</strong>: Convergent shrinks, Divergent grows, Inside band is too small to classify</span></p>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
           </article>
           <aside class="panel signal">
             <div class="signal-block"><h2>Signal</h2><p class="signal-note">How to read the model result, after costs and evidence checks.</p><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
@@ -638,7 +642,7 @@ HTML = r"""<!doctype html>
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="forecastChartTitle">Forecast fan</h2><p>Median and 80% simulated range. A wide band is uncertainty, not opportunity.</p></div></div><div class="chart-wrap"><svg id="forecastChart" class="chart" role="img" aria-labelledby="forecastChartTitle"></svg><div id="forecastTooltip" class="chart-tooltip"></div></div></article>
           <aside id="forecastSummary" class="panel forecast-summary"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day predicted change in each world's position versus the cross-world mean. <strong>Convergent</strong> means the deviation may shrink; <strong>Divergent</strong> means it may grow.</p></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation<span class="term-help">Price vs other worlds</span></th><th>Predicted 7d<span class="term-help">Expected change in deviation</span></th><th>Signal<span class="term-help">Convergent, divergent or inside band</span></th><th>80% interval<span class="term-help">Likely range, not a guarantee</span></th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day model output for each world's position versus the cross-world mean.</p></div></div><p class="terminology-key"><span><strong>Deviation</strong>: price vs other worlds</span><span><strong>Predicted 7d</strong>: expected change in Deviation</span><span><strong>Signal</strong>: Convergent shrinks, Divergent grows, Inside band is too small to classify</span><span><strong>80% interval</strong>: likely range, not a guarantee</span></p><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th><th>80% interval</th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
       </section>
 
       <section id="view-models" class="view" hidden>
@@ -1139,13 +1143,13 @@ function signalOf(row){
   const prediction=row?.prediction||row;
   if(!prediction||prediction.deviation_pct===undefined||prediction.predicted_change_pct===undefined)
     return{label:"Not enough data",className:"neutral"};
-  if(!bool(prediction.outside_band))return{label:"Inside band — gap too small",className:"neutral"};
+  if(!bool(prediction.outside_band))return{label:"Inside band",className:"neutral"};
   const current=Math.abs(num(prediction.deviation_pct));
   const next=Math.abs(num(prediction.deviation_pct)+num(prediction.predicted_change_pct));
-  if(Math.abs(next-current)<0.005)return{label:"Flat — little change expected",className:"neutral"};
+  if(Math.abs(next-current)<0.005)return{label:"Flat",className:"neutral"};
   return next<current
-    ?{label:"Convergent — deviation may shrink",className:"positive"}
-    :{label:"Divergent — deviation may grow",className:"negative"};
+    ?{label:"Convergent",className:"positive"}
+    :{label:"Divergent",className:"negative"};
 }
 
 function renderOverviewTable(){

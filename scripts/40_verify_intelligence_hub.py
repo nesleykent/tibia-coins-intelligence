@@ -160,14 +160,14 @@ def main() -> None:
     assert "GP means gold pieces; Tibia Coins are labeled TC throughout." in html
     assert "What the data says" in html
     assert "Deviation" in html
-    assert "Price vs other worlds" in html
+    assert "price vs other worlds" in html
     assert "Predicted 7d" in html
-    assert "Expected change in deviation" in html
+    assert "expected change in Deviation" in html
     assert "Signal" in html
-    assert "How to read the result" in html
-    assert "Convergent — deviation may shrink" in html
-    assert "Divergent — deviation may grow" in html
-    assert "Inside band — gap too small" in html
+    assert "Convergent shrinks, Divergent grows, Inside band is too small to classify" in html
+    assert 'label:"Convergent"' in html
+    assert 'label:"Divergent"' in html
+    assert 'label:"Inside band"' in html
     assert "May move closer" not in html
     assert "May move farther" not in html
     assert "Close to other worlds" not in html
@@ -177,7 +177,7 @@ def main() -> None:
     assert "Minimum unusual price difference" in html
     assert (
         "<th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th>"
-        not in html
+        in html
     )
     assert "Dispersion" in html
     assert "How different world prices are" in html

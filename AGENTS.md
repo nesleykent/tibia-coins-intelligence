@@ -97,6 +97,9 @@ Write the visible player layer as a guildmate would explain it in chat:
   analysts and finance professionals can scan the interface accurately;
 - pair that term with an immediately visible plain-language explanation for
   players; never make the explanation or the term replace the other;
+- explain a repeated table term once in a compact visible key; do not repeat
+  the same definition in the introduction, header, every row and technical
+  detail;
 - place only formulas, estimator details and diagnostics under “How this is
   calculated” or another optional detail;
 - do not solve complexity by replacing a technical term with a different

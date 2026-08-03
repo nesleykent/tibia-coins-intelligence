@@ -50,6 +50,11 @@ available here. Sample size, uncertainty and the principal limitation remain
 visible with the result; deeper breakdowns may also appear here. Experts must
 not lose information merely because the default language is simpler.
 
+Define each repeated technical term once per table or decision surface. Do not
+repeat the same definition in the panel introduction, column header, every data
+row and technical disclosure. Rows should carry the value or canonical
+classification; one compact visible key should carry the shared definitions.
+
 ## Canonical terminology
 
 | Technical or financial term | Combined visible label | Plain explanation |
