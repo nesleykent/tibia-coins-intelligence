@@ -65,6 +65,13 @@ holdout (−0.17pp at 30 days): dispersion fell across the sample, so *low dispe
 the sample* were confounded. No dispersion filter is offered. Pick the world on the raw gap. Capacity is the binding constraint: about 344M GP a month can be
 deployed into the trade — the market is too thin to take size.
 
+**What the repository tracks, and what it does not.** The rule is cost of regeneration rather
+than size. `kill_stats_daily.csv` and `kill_stats_mix.csv` stay tracked because rebuilding them
+needs a 17 GB download; `fundamentals_panel.csv` and `model_predictions.csv` are ignored because
+`scripts/17_features.py` and `scripts/18_predict.py` rebuild them in seconds from tracked inputs.
+Neither is read by the report renderer, so a fresh clone can still build the PDF and the site
+without running the analysis chain.
+
 **Two artifacts, one source of content.** The claims the report and the site both make are
 defined once in `scripts/narrative.py`, with their numbers read from `data/processed`. The PDF
 renders each as a labelled paragraph (§7.6.4); the site renders it as a card with fact tiles

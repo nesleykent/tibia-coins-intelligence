@@ -321,7 +321,8 @@ worst = max(((c, abs(chk[c].corr(chk.y_ret1))) for c in FEAT.columns
 print(f"strongest |corr(feature, next-day return)|: {worst[0]} = {worst[1]:.3f}")
 assert worst[1] < 0.25, f"{worst[0]} looks like a leak at r={worst[1]:.3f}"
 
-out.to_csv(P / "fundamentals_panel.csv", index=False)
+out.to_csv(P / "fundamentals_panel.csv", index=False,
+          float_format="%.7g")   # float32 precision; halves the file
 meta = {"n_rows": int(len(out)), "n_worlds": int(out.world.nunique()),
         "start": str(out.date.min().date()), "end": str(out.date.max().date()),
         "n_features": len(FEAT.columns), "features": sorted(FEAT.columns),

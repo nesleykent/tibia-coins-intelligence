@@ -17,3 +17,9 @@ Thumbs.db
 .env
 .env.*
 *.log
+
+# Large intermediates that any clone can rebuild in one command from tracked inputs. The rule
+# is cost of regeneration, not size: kill_stats_daily and kill_stats_mix stay tracked because
+# rebuilding them needs a 17 GB download, while these come from them in seconds.
+data/processed/fundamentals_panel.csv     # scripts/17_features.py
+data/processed/model_predictions.csv      # scripts/18_predict.py
