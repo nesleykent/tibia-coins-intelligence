@@ -1,0 +1,195 @@
+unit,ref,title,destination,status,reason,detail
+chapter,1,Executive summary,overview,covered,,"front matter, no chapter() call"
+chapter,2,Market overview,overview + worlds,covered,,chapter() opener
+chapter,3,Data and measurement,worlds + emission + creatures,covered,,chapter() opener
+chapter,4,Price dynamics,worlds + forecasts + library,covered,,chapter() opener
+chapter,5,"Market structure, arbitrage and liquidity",worlds + strategy + library,covered,,chapter() opener
+chapter,6,"Valuation, models and forecasts",forecasts + models + library,covered,,chapter() opener
+chapter,7,"Risk, robustness and implications",models + strategy + library,covered,,chapter() opener
+chapter,8,Reference,library,covered,,chapter() opener
+section,2.1,Scope,overview + worlds,covered,,inherits chapter 2
+section,2.2,Game-economy context,overview + worlds,covered,,inherits chapter 2
+section,2.3,Theoretical framework,overview + worlds,covered,,inherits chapter 2
+section,3.1,Data sources,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.2,Data inventory,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.3,Validation and cleaning,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.4,Field definitions,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.5,Price construction,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.6,World metadata,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.7,Population and activity,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.9,Kill statistics,worlds + emission + creatures,covered,,inherits chapter 3
+section,3.8,Event calendar,worlds + emission + creatures,covered,,inherits chapter 3
+section,4.1,Descriptive statistics,worlds + forecasts + library,covered,,inherits chapter 4
+section,4.2,Market indices,worlds + forecasts + library,covered,,inherits chapter 4
+section,4.3,Trend,worlds + forecasts + library,covered,,inherits chapter 4
+section,4.4,Time-series properties,worlds + forecasts + library,covered,,inherits chapter 4
+section,4.5,Seasonality,worlds + forecasts + library,covered,,inherits chapter 4
+section,4.6,Event studies,worlds + forecasts + library,covered,,inherits chapter 4
+section,5.1,Cross-world integration,worlds + strategy + library,covered,,inherits chapter 5
+section,5.2,Arbitrage,worlds + strategy + library,covered,,inherits chapter 5
+section,5.3,World type and region,worlds + strategy + library,covered,,inherits chapter 5
+section,5.4,Young worlds,worlds + strategy + library,covered,,inherits chapter 5
+section,5.5,Merges and transfers,worlds + strategy + library,covered,,inherits chapter 5
+section,5.6,Liquidity and microstructure,worlds + strategy + library,covered,,inherits chapter 5
+section,5.7,Technical indicators,worlds + strategy + library,covered,,inherits chapter 5
+section,5.8,Venue structure,worlds + strategy + library,covered,,inherits chapter 5
+section,6.1,Valuation,forecasts + models + library,covered,,inherits chapter 6
+section,6.2,Econometric models,forecasts + models + library,covered,,inherits chapter 6
+section,6.3,Formal models,forecasts + models + library,covered,,inherits chapter 6
+section,6.4,Forecasts,forecasts + models + library,covered,,inherits chapter 6
+section,6.5,Scenarios,forecasts + models + library,covered,,inherits chapter 6
+section,6.6,Fundamentals and predictability,forecasts + models + library,covered,,inherits chapter 6
+section,7.1,Risk,models + strategy + library,covered,,inherits chapter 7
+section,7.2,Robustness,models + strategy + library,covered,,inherits chapter 7
+section,7.3,Limitations,models + strategy + library,covered,,inherits chapter 7
+section,7.4,Welfare and market design,models + strategy + library,covered,,inherits chapter 7
+section,7.5,Positioning,models + strategy + library,covered,,inherits chapter 7
+section,7.6,The mechanism,models + strategy + library,covered,,inherits chapter 7
+section,7.7,The trade,models + strategy + library,covered,,inherits chapter 7
+section,7.7,"Seasonality, stability and stress",models + strategy + library,covered,,inherits chapter 7
+section,7.9,What to do,models + strategy + library,covered,,inherits chapter 7
+section,7.10,Conclusion,models + strategy + library,covered,,inherits chapter 7
+section,8.1,Data dictionary,library,covered,,inherits chapter 8
+section,8.2,Source inventory,library,covered,,inherits chapter 8
+section,8.3,Methodological appendix,library,covered,,inherits chapter 8
+exhibit,3.1,fig05b_region_bias,library,covered,,paired by document order
+exhibit,3.2,fig05_diurnal_bias,library,covered,,paired by document order
+exhibit,3.3,fig16_population_history,library,covered,,paired by document order
+exhibit,4.1,fig00_price_distribution,library,covered,,paired by document order
+exhibit,4.2,fig15_volatility,library,covered,,paired by document order
+exhibit,4.3,fig01_index,library,covered,,paired by document order
+exhibit,4.4,fig14_drawdown,library,covered,,paired by document order
+exhibit,4.5,fig04_halflife,library,covered,,paired by document order
+exhibit,4.6,fig22_variance_ratio,library,covered,,paired by document order
+exhibit,4.7,fig10_seasonality,library,covered,,paired by document order
+exhibit,4.8,fig06_events,library,covered,,paired by document order
+exhibit,5.1,fig02_dispersion,library,covered,,paired by document order
+exhibit,5.2,fig03_arbitrage_band,library,covered,,paired by document order
+exhibit,5.3,fig19b_band_stability,library,covered,,paired by document order
+exhibit,5.4,fig23_quantile,library,covered,,paired by document order
+exhibit,5.5,fig17_fee_schedule,library,covered,,paired by document order
+exhibit,5.6,fig13_population,library,covered,,paired by document order
+exhibit,5.7,fig08_worldtype,library,covered,,paired by document order
+exhibit,5.8,fig07_young_worlds,library,covered,,paired by document order
+exhibit,5.9,fig09_orderbook,library,covered,,paired by document order
+exhibit,5.10,fig20_spread_decomposition,library,covered,,paired by document order
+exhibit,5.11,fig26_venue_map,library,covered,,paired by document order
+exhibit,6.1,fig11_clustering,library,covered,,paired by document order
+exhibit,6.2,fig18_tar_profile,library,covered,,paired by document order
+exhibit,6.3,fig19_tar_regimes,library,covered,,paired by document order
+exhibit,6.4,fig12_forecast_fan,library,covered,,paired by document order
+exhibit,6.5,fig27_fundamentals_skill,library,covered,,paired by document order
+exhibit,6.6,fig31_stability,library,covered,,paired by document order
+exhibit,7.1,fig21_variance_decomposition,library,covered,,paired by document order
+exhibit,7.2,fig30_participants,library,covered,,paired by document order
+exhibit,7.3,fig28_scenarios,library,covered,,paired by document order
+exhibit,7.4,fig29_live_predictions,library,covered,,paired by document order
+exhibit,7.5,fig32_strategy_horizon,library,covered,,paired by document order
+exhibit,7.6,fig33_holdout,library,covered,,paired by document order
+table,0.1,,,explained,front matter: index of the report's questions and where each is settled,"navigational apparatus, not a published series"
+table,1.1,,overview,covered,,tabulation of a series the view publishes interactively
+table,2.1,,overview + worlds,covered,,tabulation of a series the view publishes interactively
+table,2.2,,overview + worlds,covered,,tabulation of a series the view publishes interactively
+table,3.1,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.2,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.3,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.4,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.5,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.6,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.7,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.8,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.9,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.10,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.11,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.12,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,3.13,,worlds + emission + creatures,covered,,tabulation of a series the view publishes interactively
+table,4.1,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,4.2,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,4.3,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,4.4,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,4.5,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,4.6,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,4.7,,worlds + forecasts + library,covered,,tabulation of a series the view publishes interactively
+table,5.1,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.2,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.3,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.4,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.5,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.6,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.7,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.8,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.9,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.10,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.11,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.12,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.13,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.14,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.15,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.16,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,5.17,,worlds + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,6.1,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.2,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.3,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.4,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.5,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.6,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.7,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.8,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.9,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.10,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.11,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.12,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.13,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.14,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.15,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.16,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.17,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.18,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.19,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.20,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.21,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.22,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.23,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.24,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.25,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,6.26,,forecasts + models + library,covered,,tabulation of a series the view publishes interactively
+table,7.1,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.2,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.3,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.4,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.5,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.6,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.7,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.8,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.9,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.10,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.11,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.12,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.13,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.14,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.15,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.16,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.17,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.18,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.19,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.20,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.21,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.22,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.23,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.24,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.25,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.26,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.27,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.28,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.29,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.30,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.31,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.32,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.33,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.34,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,7.35,,models + strategy + library,covered,,tabulation of a series the view publishes interactively
+table,8.1,,library,covered,,tabulation of a series the view publishes interactively
+table,8.2,,library,covered,,tabulation of a series the view publishes interactively
+table,8.3,,library,covered,,tabulation of a series the view publishes interactively
+table,8.4,,library,covered,,tabulation of a series the view publishes interactively
+table,8.5,,library,covered,,tabulation of a series the view publishes interactively

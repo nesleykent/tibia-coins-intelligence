@@ -47,7 +47,7 @@ RENDER = ["12_art.py", "13_icons.py", "08_figures.py", "09_report.py",
           "15_verify.py", "36_gold_emission_report.py", "51_render_gold_emission_report.py",
           "38_gold_emission_dashboard.py", "37_verify_gold_emission.py",
           "39_intelligence_hub.py", "40_verify_intelligence_hub.py",
-          "46_verify_artifacts.py"]
+          "52_coverage_manifest.py", "46_verify_artifacts.py"]
 
 # Every top-level block the report expects to find when it renders.
 REQUIRED = ["window", "desc", "index", "stationarity", "seasonality", "events", "arbitrage",
