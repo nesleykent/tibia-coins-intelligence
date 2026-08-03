@@ -277,6 +277,77 @@ if len(hc):
     RES["honest_inference"] = hc.to_dict("records")
     RES["n_survive_honest"] = int(len(_surv))
 
+# ============================================================ 4b. the monetary series, long
+# The activity test above uses kill counts, which now span the joint sample. Emission in GP is
+# the variable the economic question is actually about, and once its history is reconstructed
+# the same four families run on it. Where the emission series is shorter than the count series
+# the horizons it can support are fewer, and the table says which.
+print("\n" + "=" * 78)
+mon = []
+try:
+    em = pd.read_csv(P / "gold_emission_daily.csv", parse_dates=["date"], low_memory=False)
+    SERIES = [c for c in ("direct_coin_gp", "potential_total_gp_max",
+                          "realized_estimate_gp_50") if c in em.columns]
+    md = (em[["world", "date"] + SERIES]
+          .merge(pan[["world", "date", "price_gp"]], on=["world", "date"])
+          .dropna(subset=["price_gp"]).sort_values(["world", "date"]).reset_index(drop=True))
+    md["logp"] = np.log(md.price_gp)
+    mg = md.groupby("world", observed=True)
+    span_years = (md.date.max() - md.date.min()).days / 365.25
+    print(f"[MONETARY] {len(md):,} world-days, {md.world.nunique()} worlds, "
+          f"{md.date.min():%Y-%m-%d} to {md.date.max():%Y-%m-%d} ({span_years:.1f} years)")
+    for h in HORIZONS:
+        md[f"fwd{h}"] = mg.logp.shift(-h) - md.logp
+    for col in SERIES:
+        md[f"log_{col}"] = np.log(md[col].clip(lower=1))
+        for w in WINDOWS:
+            md[f"cum_{col}_{w}"] = np.log(
+                mg[col].rolling(w, min_periods=w // 2).sum()
+                .reset_index(level=0, drop=True).clip(lower=1))
+    for col in SERIES:
+        for w in WINDOWS:
+            for h in HORIZONS:
+                if h < w // 2:
+                    continue
+                x = md.groupby("world", observed=True)[f"cum_{col}_{w}"].shift(1)
+                r = fe_ols(md.assign(x=x), f"fwd{h}", ["x"])
+                if not r:
+                    continue
+                cell = {"series": col, "window": w, "horizon": h,
+                        "coef": float(r["coef"][0]), "t_pooled": float(r["t"][0]),
+                        "p_pooled": float(r["p"][0]), "n": r["n"]}
+                if r["p"][0] < 0.05:
+                    hh = honest(md.assign(xx=x), "xx", h)
+                    if hh:
+                        cell.update(t_honest=hh["t_newey_west"],
+                                    independent_windows=hh["independent_windows"],
+                                    mean_slope=hh["mean_slope"])
+                mon.append(cell)
+    if mon:
+        mdf = pd.DataFrame(mon)
+        mdf.to_csv(P / "production_monetary_long.csv", index=False)
+        cols = [c for c in ["series", "window", "horizon", "coef", "t_pooled",
+                            "t_honest", "independent_windows"] if c in mdf.columns]
+        print("[MONETARY] strongest five cells, pooled against per-date inference")
+        print(mdf.reindex(mdf.t_pooled.abs().sort_values(ascending=False).index)
+              .head(5)[cols].round(5).to_string(index=False))
+        if "t_honest" in mdf.columns:
+            _ms = mdf.dropna(subset=["t_honest"])
+            _surv = _ms[_ms.t_honest.abs() > 2]
+            RES["monetary_n_significant_pooled"] = int((mdf.p_pooled < 0.05).sum())
+            RES["monetary_n_survive_honest"] = int(len(_surv))
+            RES["monetary_max_abs_elasticity"] = float(mdf.coef.abs().max())
+            print(f"[MONETARY] {int((mdf.p_pooled < 0.05).sum())} of {len(mdf)} cells "
+                  f"significant pooled; {len(_surv)} survive the per-date test")
+            print(f"[MONETARY] largest absolute elasticity anywhere: "
+                  f"{mdf.coef.abs().max():.5f} - a one percent rise in cumulative emission "
+                  f"moves the price by {mdf.coef.abs().max():.3f} percent")
+        RES["monetary_long"] = mdf.to_dict("records")
+        RES["monetary_span_years"] = float(span_years)
+        RES["monetary_n"] = int(len(md))
+except FileNotFoundError:
+    print("[MONETARY] emission series unavailable")
+
 # Sign consistency is the other test, and it needs no statistics. One economic channel should
 # not change direction when the same variable is measured over a different window.
 sign = (cum[cum.specification.str.startswith("acceleration")]

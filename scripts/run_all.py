@@ -25,7 +25,7 @@ FUND = ["16_killstats.py", "16b_killstats_history.py", "17_features.py", "18_pre
         "20_hierarchy.py", "21_models_extra.py",
         "22_discovery.py", "23_timeseries.py", "24_deep.py",
         "25_arbitrage.py", "26_maximise.py", "27_irreducible.py", "28_supply_demand.py",
-        "34_gold_emission.py", "35_gold_emission_models.py", "36_gold_emission_report.py",
+        "34_gold_emission.py", "34b_emission_history.py", "35_gold_emission_models.py", "36_gold_emission_report.py",
         "29_scenarios.py", "30_model_artifact.py", "41_group_models.py",
         "42_verify_group_models.py", "44_launch_phase_models.py",
         "45_verify_launch_models.py", "43_build_group_model_notebook.py",

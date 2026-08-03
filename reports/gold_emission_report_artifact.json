@@ -147,7 +147,7 @@
    {
     "id": "summary",
     "type": "markdown",
-    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 96.2% of non-boss deaths across 21,412 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.17% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
+    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 96.2% of non-boss deaths across 90,422 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.17% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
     "sourceId": "src_models"
    },
    {
@@ -461,13 +461,21 @@
     {
      "coverage": 0.9615539344352185,
      "coverage_threshold": 0.8,
-     "world_days": 21412,
-     "low_quality_days": 1,
-     "median_realized_gp": 403346244.86615676,
+     "world_days": 90422,
+     "low_quality_days": 69010,
+     "median_realized_gp": 0.0,
      "best_oos": 0.0016599125675098
     }
    ],
    "daily_trend": [
+    {
+     "date": "2025-12-03",
+     "worlds": 1,
+     "coverage": 0.9855263578,
+     "online": 12.0,
+     "series": "Direct GP",
+     "gp_per_average_online_player": 565148.7624053188
+    },
     {
      "date": "2025-12-05",
      "worlds": 87,
@@ -2373,6 +2381,14 @@
      "gp_per_average_online_player": 1389279.5872876006
     },
     {
+     "date": "2025-12-03",
+     "worlds": 1,
+     "coverage": 0.9855263578,
+     "online": 12.0,
+     "series": "Realized GP estimate (50%)",
+     "gp_per_average_online_player": 2900213.761838821
+    },
+    {
      "date": "2025-12-05",
      "worlds": 87,
      "coverage": 0.9692691779,
@@ -2658,7 +2674,7 @@
      "coverage": 0.9634374898,
      "online": 12786.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 2623833.4233053816
+     "gp_per_average_online_player": 2623833.423305382
     },
     {
      "date": "2026-01-10",
@@ -2722,7 +2738,7 @@
      "coverage": 0.9640912862,
      "online": 12855.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 2771294.9535609134
+     "gp_per_average_online_player": 2771294.953560914
     },
     {
      "date": "2026-01-18",
@@ -2738,7 +2754,7 @@
      "coverage": 0.9599937645,
      "online": 14208.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 2232325.409289815
+     "gp_per_average_online_player": 2232325.4092898155
     },
     {
      "date": "2026-01-20",
@@ -2802,7 +2818,7 @@
      "coverage": 0.9607929635,
      "online": 13526.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 2413303.5082385326
+     "gp_per_average_online_player": 2413303.508238532
     },
     {
      "date": "2026-01-28",
@@ -3018,7 +3034,7 @@
      "coverage": 0.9630696833,
      "online": 15320.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 2299969.2616748214
+     "gp_per_average_online_player": 2299969.261674821
     },
     {
      "date": "2026-02-24",
@@ -3050,7 +3066,7 @@
      "coverage": 0.9660487451,
      "online": 13737.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 2733864.5711443266
+     "gp_per_average_online_player": 2733864.571144326
     },
     {
      "date": "2026-02-28",
@@ -3138,7 +3154,7 @@
      "coverage": 0.9600879178,
      "online": 17683.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 1767716.739569294
+     "gp_per_average_online_player": 1767716.7395692938
     },
     {
      "date": "2026-03-11",
@@ -4266,7 +4282,7 @@
      "coverage": 0.9624898117,
      "online": 13024.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 3541132.446140859
+     "gp_per_average_online_player": 3541132.4461408583
     },
     {
      "date": "2026-07-30",
