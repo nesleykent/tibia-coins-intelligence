@@ -23,6 +23,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "data" / "processed" / "gold_emission_daily.csv.gz"
 PRICE_SOURCE = ROOT / "data" / "processed" / "panel_daily.csv"
+INDEX_SOURCE = ROOT / "data" / "processed" / "market_index.csv"
 CREATURE_VALUE_SOURCE = ROOT / "data" / "processed" / "creature_gold_value.csv"
 
 FIELDS = (
@@ -110,6 +111,30 @@ def build_payload(*, include_prices: bool = True) -> dict[str, object]:
                 if row.get("world") and row.get("date") and row.get("price_gp")
             ]
 
+    # The all-worlds price line used to be a plain median over whichever worlds reported that
+    # day. Coverage runs from 1 world in 2023 to 60 in 2026, so that line moved when the
+    # composition changed and not only when prices did: the naive basket gains 44% over the
+    # archive, most of it worlds entering rather than TC getting dearer. 06_analysis already
+    # builds the answer - a chain-linked index that compounds the median change among worlds
+    # present on both days, so entries and exits never shift the level - and it is the
+    # repository's canonical cross-world price. Use it rather than defining a second one here.
+    index_rows: list[list[object]] = []
+    if include_prices and INDEX_SOURCE.exists():
+        with INDEX_SOURCE.open(newline="", encoding="utf-8") as handle:
+            reader = csv.DictReader(handle)
+            required = {"date", "ew_price", "n_worlds", "index_valid"}
+            missing = sorted(required - set(reader.fieldnames or ()))
+            if missing:
+                raise ValueError(f"Missing market-index fields: {', '.join(missing)}")
+            for row in reader:
+                if not row.get("date") or not row.get("ew_price"):
+                    continue
+                if str(row.get("index_valid", "")).strip().lower() not in {"true", "1"}:
+                    continue
+                index_rows.append(
+                    [row["date"], round(float(row["ew_price"]), 3), int(float(row["n_worlds"]))]
+                )
+
     with CREATURE_VALUE_SOURCE.open(newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         missing = sorted(set(CREATURE_FIELDS) - set(reader.fieldnames or ()))
@@ -136,6 +161,8 @@ def build_payload(*, include_prices: bool = True) -> dict[str, object]:
     if include_prices:
         payload["priceSchema"] = ["world", "date", "price_gp"]
         payload["priceRows"] = price_rows
+        payload["indexSchema"] = ["date", "ew_price", "n_worlds"]
+        payload["indexRows"] = index_rows
     return payload
 
 
@@ -620,6 +647,8 @@ SCRIPT = r"""
   let priceByWorldDate = new Map();
   let priceByDateMedian = new Map();
   let priceWorldsByDate = new Map();
+  let embeddedIndexRows = [];
+  let indexByDate = new Map();
   // Below this many worlds an all-worlds median describes a handful of markets, not the market.
   const PRICE_MIN_WORLDS = 10;
   let creatureValueMap = new Map();
@@ -703,6 +732,9 @@ SCRIPT = r"""
     );
     embeddedPriceRows = options.data.priceRows
       ? decodeRows(options.data.priceSchema, options.data.priceRows)
+      : [];
+    embeddedIndexRows = options.data.indexRows
+      ? decodeRows(options.data.indexSchema, options.data.indexRows)
       : [];
     sourceMeta = { ...options.data.meta };
     rebuildCreatureIndexes();
@@ -880,6 +912,13 @@ SCRIPT = r"""
     // changes meaning across the panel: the same line is 3 worlds on the left and 93 on the
     // right. Keep the count so the chart can say which, instead of drawing both alike.
     priceWorldsByDate = new Map([...valuesByDate].map(([date, values]) => [date, values.length]));
+    // The canonical cross-world price: chain-linked, so a world entering the panel cannot move
+    // the level. Only dates the index itself declares valid (10+ worlds) are carried.
+    indexByDate = new Map();
+    for (const row of embeddedIndexRows || []) {
+      const value = numeric(row.ew_price);
+      if (value > 0 && row.date) indexByDate.set(isoDate(row.date), { price: value, worlds: numeric(row.n_worlds) });
+    }
     if (ready) render();
   }
 
@@ -947,9 +986,11 @@ SCRIPT = r"""
       potential: row.direct + row.npc,
       coverage: row.nonboss > 0 ? row.modeled / row.nonboss : 0,
       tcPrice: world === "all"
-        ? numeric(priceByDateMedian.get(row.date))
+        ? numeric((indexByDate.get(row.date) || {}).price)
         : numeric(priceByWorldDate.get(`${world}|${row.date}`)),
-      tcPriceWorlds: world === "all" ? (priceWorldsByDate.get(row.date) || 0) : (priceByWorldDate.has(`${world}|${row.date}`) ? 1 : 0)
+      tcPriceWorlds: world === "all"
+        ? numeric((indexByDate.get(row.date) || {}).worlds)
+        : (priceByWorldDate.has(`${world}|${row.date}`) ? 1 : 0)
     }));
   }
 
@@ -1017,7 +1058,7 @@ SCRIPT = r"""
       `<span class="em-legend-item"><i class="em-legend-line ${key}" style="border-color:${SERIES[key].color}"></i>${SERIES[key].label}</span>`
     ).join("");
     const priceLegend = $("#emTcPriceToggle").checked
-      ? `<span class="em-legend-item"><i class="em-legend-line" style="border-color:${COLORS.tcPrice}"></i>TC price (GP/TC) · right axis</span>`
+      ? `<span class="em-legend-item"><i class="em-legend-line" style="border-color:${COLORS.tcPrice}"></i>Cross-world TC price index (GP/TC) · right axis</span>`
       : "";
     $("#emChartLegend").innerHTML = emissionLegend + priceLegend;
     renderPriceCoverage();
@@ -1045,11 +1086,8 @@ SCRIPT = r"""
       ? ` Emission is drawn from ${isoDate(rows[0].date)}, the price line only from ${isoDate(first)}.`
       : "";
     if (world === "all") {
-      const thin = priced.filter(row => row.tcPriceWorlds < PRICE_MIN_WORLDS);
       const worldsNow = priced[priced.length - 1].tcPriceWorlds;
-      node.textContent = thin.length
-        ? `TC price is the median across worlds reporting each day: ${worldsNow} worlds at the end of the range, but fewer than ${PRICE_MIN_WORLDS} on ${thin.length} of ${priced.length} days, ending ${isoDate(thin[thin.length - 1].date)}. Treat that early stretch as a few markets, not the market.${gap}`
-        : `TC price is the median across the ${worldsNow} worlds reporting each day.${gap}`;
+      node.textContent = `TC price is the cross-world index: the median day-on-day change among worlds priced on both days, compounded, so a world joining the panel moves the index only through its own price change. It covers ${worldsNow} worlds on the last day and starts when at least ${PRICE_MIN_WORLDS} worlds report, which is why it begins after the emission bars.${gap}`;
     } else {
       node.textContent = `TC price for ${world}, ${priced.length} days with a price out of ${rows.length} shown.${gap}`;
     }
