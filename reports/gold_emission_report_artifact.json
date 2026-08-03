@@ -463,7 +463,7 @@
      "coverage_threshold": 0.8,
      "world_days": 21412,
      "low_quality_days": 69010,
-     "median_realized_gp": 403346244.86615676,
+     "median_realized_gp": 397915066.96091163,
      "best_oos": 0.0016599125675098
     }
    ],

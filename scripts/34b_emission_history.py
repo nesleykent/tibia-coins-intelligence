@@ -35,6 +35,8 @@ WORK = pathlib.Path("/tmp/tibia-ks-hist-sparse")
 REPO = "https://github.com/tibiamaps/tibia-kill-stats-from-2022-08-23-to-2025-12-04.git"
 KEEP = "--keep" in sys.argv
 LIMIT = None
+# Recent data matches at 95%. Half of that is generous and still catches a broken join.
+MIN_COVERAGE = 0.50
 if "--worlds" in sys.argv:
     LIMIT = int(sys.argv[sys.argv.index("--worlds") + 1])
 
@@ -62,6 +64,7 @@ def _load_catalogue() -> None:
     items, loot_creatures, models, cache = _ge.parse_loot_cache()
     _ge.MODELS = models
     _ge.ALIASES = _ge.aliases()
+    _ge.PLURALS = _ge.plural_aliases(models)
     _ge.CLASSIFICATIONS = _ge.creature_classifications()
     boss_names = json.loads((ROOT / "data" / "raw" / "boss_names.json").read_text())
     _ge.BOSSES = {_ge.norm(_ge.ALIASES.get(_ge.norm(n), n)) for n in boss_names}
@@ -72,7 +75,6 @@ def _load_catalogue() -> None:
           f"{len(_ge.BOSSES):,} bosses")
 
 
-_load_catalogue()
 
 # Worlds that carry a price. A world with no price cannot enter a test that joins emission to
 # a return, so fetching it would be pure cost.
@@ -100,6 +102,17 @@ if not (WORK / ".git").exists():
     sh("git", "clone", "--depth", "1", "--filter=blob:none", "--sparse", REPO, str(WORK))
     sh("git", "sparse-checkout", "set", "--no-cone", cwd=WORK)
 
+# The catalogue is loaded only now, because the archive ships the name normaliser that makes it
+# usable. ALIAS_SOURCE defaults to a clone path this script never creates, so aliases() was
+# reading an absent file and returning nothing: every race resolved to itself, and the archive
+# writes them in the plural while the catalogue is keyed singular.
+_ge.ALIAS_SOURCE = WORK / "normalize-names.mjs"
+if not _ge.ALIAS_SOURCE.exists():
+    sh("git", "sparse-checkout", "add", "--no-cone", "/normalize-names.mjs", cwd=WORK)
+print(f"[SPARSE] name normaliser: "
+      f"{'present' if _ge.ALIAS_SOURCE.exists() else 'ABSENT - falling back to plural rules'}")
+_load_catalogue()
+
 targets = priced[:LIMIT] if LIMIT else priced
 rows, done, skipped = [], 0, 0
 for w in targets:
@@ -112,9 +125,14 @@ for w in targets:
         daily, _totals = _ge.scan_world(wdir)
         # A world that reports kills but no modelled kills means the catalogue did not load.
         # Failing here is better than writing a structurally empty series that looks fine.
-        if daily and sum(r.get("total_kills", 0) for r in daily) > 0 \
-                and sum(r.get("modeled_kills_all", 0) for r in daily) == 0:
-            raise SystemExit(f"{w}: kills present but nothing modelled - catalogue not loaded")
+        tot = sum(r.get("total_kills", 0) for r in daily) if daily else 0
+        mod = sum(r.get("modeled_kills_all", 0) for r in daily) if daily else 0
+        if tot > 0 and mod / tot < MIN_COVERAGE:
+            raise SystemExit(
+                f"{w}: only {mod / tot:.1%} of {tot:,} kills matched the catalogue, against "
+                f"the {MIN_COVERAGE:.0%} floor. A name join has broken - the archive writes "
+                f"races in the plural and the catalogue is keyed singular, so this is what a "
+                f"missing plural map looks like. Testing for zero would not have caught it.")
         fresh = [r for r in daily
                  if (r.get("world"), str(r.get("date"))[:10]) not in have]
         rows.extend(fresh)

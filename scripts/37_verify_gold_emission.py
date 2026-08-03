@@ -62,8 +62,16 @@ def main() -> None:
 
     assert creatures.creature_id.is_unique
     assert not daily.duplicated(["world", "date"]).any()
-    assert daily.world.nunique() == quality["worlds"]
-    assert len(daily) == quality["world_days"]
+    # Named rather than bare. These two fire whenever the daily table is rebuilt without the
+    # quality file being rebuilt alongside it, which is the ordinary consequence of re-running
+    # part of the emission chain - and a bare AssertionError sends the reader to the line number
+    # instead of to the stage they need to re-run.
+    assert daily.world.nunique() == quality["worlds"], (
+        f"daily table holds {daily.world.nunique()} worlds, gold_emission_quality.json records "
+        f"{quality['worlds']}; re-run 34_gold_emission.py so both are written together")
+    assert len(daily) == quality["world_days"], (
+        f"daily table holds {len(daily):,} world-days, gold_emission_quality.json records "
+        f"{quality['world_days']:,}; re-run 34_gold_emission.py so both are written together")
     assert items.drop_probability.between(0, 1).all()
     assert (items.expected_quantity_per_kill >= 0).all()
     assert (items.npc_sell_value_max_gp >= 0).all()

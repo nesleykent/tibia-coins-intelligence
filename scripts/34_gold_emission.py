@@ -349,6 +349,54 @@ def aliases() -> dict[str, str]:
     return result
 
 
+def plural_aliases(models: dict) -> dict[str, str]:
+    """Map plural race names back to the singular keys the loot catalogue is built on.
+
+    The archive of historical kill statistics writes races in the plural - werehyaenas, glooth
+    blobs, medusae - while the live source writes them singular, and the catalogue follows the
+    live source. Left alone this matches 1% of historical kills against 95% of recent ones,
+    which is not a coverage gap but a broken join wearing one.
+
+    The direction matters. Rather than stripping suffixes off whatever the archive says, which
+    invents singulars for creatures that do not exist, this generates the plurals of names the
+    catalogue already contains and maps those back. Every key produced is therefore a creature
+    with a loot model behind it, and a name that resolves to nothing keeps resolving to nothing.
+    """
+    def forms(name: str) -> set[str]:
+        # Tibia names pluralise on their head noun, which is the last word except when the name
+        # is a phrase - "adept of the cult" becomes "adepts of the cult", not "adept of the cults".
+        head, sep, tail = name.partition(" of ")
+        if sep:
+            return {f"{p} of {tail}" for p in forms(head)}
+        prefix, _, last = name.rpartition(" ")
+        pre = f"{prefix} " if prefix else ""
+        out = {pre + last + "s"}
+        if last.endswith("man"):
+            out.add(pre + last[:-3] + "men")
+        if last.endswith("mouse"):
+            out.add(pre + last[:-5] + "mice")
+        if last.endswith(("s", "x", "z", "ch", "sh")):
+            out.add(pre + last + "es")
+        if last.endswith("a"):                       # medusa -> medusae
+            out.add(pre + last + "e")
+        if last.endswith("ops"):                     # cyclops -> cyclopes
+            out.add(pre + last[:-3] + "opes")
+        if last.endswith("y") and len(last) > 1 and last[-2] not in "aeiou":
+            out.add(pre + last[:-1] + "ies")
+        if last.endswith("fe"):
+            out.add(pre + last[:-2] + "ves")
+        elif last.endswith("f"):
+            out.add(pre + last[:-1] + "ves")
+        return out
+
+    extra: dict[str, str] = {}
+    for key in models:
+        for form in forms(key):
+            if form not in models:
+                extra.setdefault(form, key)
+    return extra
+
+
 def creature_classifications() -> dict[str, dict]:
     if not CREATURE_CACHE.exists():
         return {}
@@ -396,6 +444,7 @@ MODELS: dict[str, dict] = {}
 ALIASES: dict[str, str] = {}
 BOSSES: set[str] = set()
 CLASSIFICATIONS: dict[str, dict] = {}
+PLURALS: dict[str, str] = {}
 
 
 def scan_world(world_dir: pathlib.Path) -> tuple[list[dict], dict[str, dict]]:
@@ -437,6 +486,8 @@ def scan_world(world_dir: pathlib.Path) -> tuple[list[dict], dict[str, dict]]:
                 continue
             canonical = ALIASES.get(norm(raw_name), raw_name)
             key = norm(canonical)
+            # The archive writes races in the plural; the catalogue is keyed singular.
+            key = PLURALS.get(key, key)
             model = MODELS.get(key)
             classification = CLASSIFICATIONS.get(key, {})
             is_boss = key in BOSSES or classification.get("is_boss", False)
@@ -669,9 +720,10 @@ def main() -> None:
             raise SystemExit(f"required source cache missing: {required.relative_to(ROOT)}")
 
     items, loot_creatures, models, cache = parse_loot_cache()
-    global MODELS, ALIASES, BOSSES, CLASSIFICATIONS
+    global MODELS, ALIASES, BOSSES, CLASSIFICATIONS, PLURALS
     MODELS = models
     ALIASES = aliases()
+    PLURALS = plural_aliases(models)
     CLASSIFICATIONS = creature_classifications()
     boss_names = json.loads((RAW / "boss_names.json").read_text())
     BOSSES = {norm(ALIASES.get(norm(name), name)) for name in boss_names}
