@@ -104,16 +104,21 @@ Write the visible player layer as a guildmate would explain it in chat:
   calculated” or another optional detail;
 - do not solve complexity by replacing a technical term with a different
   unexplained term;
-- do not delete a canonical financial, statistical or microstructure term and
-  leave only a paraphrase in its place. `Best ask`, `Best bid`, `Mid`,
-  `Quoted spread`, `Bid depth`, `Ask depth`, `Total return`, `Deviation`,
+- do not delete a canonical financial, statistical or market term and leave only
+  a paraphrase in its place. `Buy TC`, `Sell TC`, `Mid`, `Spread`,
+  `Demand depth`, `Supply depth`, `Book snapshot`, `Total return`, `Deviation`,
   `Predicted 7d`, `Signal`, `Dispersion`, `RMSE` and `Holdout` stay on their
-  labels; the plain explanation goes beside them, not instead of them.
+  labels; the plain explanation goes beside them, not instead of them;
+- do not rename a visible label into different market vocabulary either. The
+  interface speaks the in-game Market's language — buy offer, sell offer,
+  demand depth, supply depth. `bid`, `ask`, `best bid`, `best ask` and
+  `order book` are data definitions in this file and belong in the data
+  dictionary and methodology, never on a visible label.
 
 Translate in both directions. Players need the financial and statistical terms
 explained; analysts and finance professionals need the Tibia mechanics
 explained. Keep the original term on both sides: write “world (a separate local
-market)” and “Best ask — what you pay for 1 TC”, never only the paraphrase.
+market)” and “Buy TC — what you pay for 1 TC”, never only the paraphrase.
 Every view must let a reader who has never played Tibia understand what a
 world, GP, TC, the Market, a world transfer and gold emission are.
 

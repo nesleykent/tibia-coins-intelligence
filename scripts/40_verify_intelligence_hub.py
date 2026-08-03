@@ -143,28 +143,32 @@ def main() -> None:
     assert 'const start=$("#worldStart").value,end=$("#worldEnd").value' in html
     assert "Buy TC — what players paid, on average, to buy one TC each day." in html
     assert "How these numbers are calculated" in html
-    # Canonical microstructure terms stay on the labels, each paired with a
-    # visible plain explanation rather than replaced by one.
+    # The product's canonical Market terms stay on the labels, each paired with
+    # a visible plain explanation rather than replaced by one.
     assert "Executable prices now" in html
     for term, explanation in (
-        ("Best ask", "What you pay for 1 TC"),
-        ("Best bid", "What you receive for 1 TC"),
+        ("Buy TC", "What you pay for 1 TC"),
+        ("Sell TC", "What you receive for 1 TC"),
         ("Mid", "Halfway point, not executable"),
-        ("Quoted spread", "Gap between the two prices"),
-        ("Bid depth", "TC buyers want"),
-        ("Ask depth", "TC offered for sale"),
+        ("Spread", "Gap between the two prices"),
+        ("Demand depth", "TC players want to buy"),
+        ("Supply depth", "TC offered for sale"),
     ):
         assert f"<th>{term}<span class=\"term-help\">{explanation}</span></th>" in html
     for term, explanation in (
-        ("Best ask", "what you pay to buy 1 TC now"),
-        ("Best bid", "what you receive for selling 1 TC now"),
-        ("Mid", "halfway between the two; a reference, not executable"),
+        ("Buy TC now", "the cheapest sell offer open right now"),
+        ("Sell TC now", "the highest buy offer open right now"),
+        ("Reference mid", "halfway between the two; may not be executable"),
         ("Quoted spread", "gap between buying and selling, before the Market fee"),
-        ("Bid / ask depth", "TC buyers want / TC offered for sale"),
-        ("Order book snapshot", "when this offer list was read"),
-        ("Latest executed mid", "average of what players paid and received that day"),
+        ("Demand / supply depth", "TC players want to buy / TC offered for sale"),
+        ("Book snapshot", "when this offer list was read"),
+        (
+            "Latest executed midpoint",
+            "average of what players paid and received that day",
+        ),
+        ("Latest executed buy / sell", "what players actually paid / received that day"),
         ("Total return", "price change across all available history"),
-        ("Predicted 7d", "model estimate of the change versus other worlds"),
+        ("7-day prediction", "model estimate of the change versus other worlds"),
     ):
         assert f"<b>{term}</b><small>{explanation}</small>" in html
     for removed in (
@@ -176,6 +180,14 @@ def main() -> None:
         "<th>Middle price</th>",
     ):
         assert removed not in html, f"canonical term replaced by paraphrase: {removed}"
+    # Bid/ask vocabulary is a data definition, never a visible Worlds label.
+    worlds_view = html[html.index('<section id="view-worlds"'):html.index(
+        "</section>", html.index('<section id="view-worlds"')
+    )]
+    for internal in ("best ask", "best bid", "bid depth", "ask depth", "order book"):
+        assert internal not in worlds_view.lower(), (
+            f"data-dictionary term used on a visible label: {internal}"
+        )
     # Game mechanics translated for analysts and finance professionals.
     assert "New to Tibia? What these markets are" in html
     for game_context in (
