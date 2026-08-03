@@ -29,7 +29,7 @@ FUND = ["16_killstats.py", "16b_killstats_history.py", "17_features.py", "18_pre
         "29_scenarios.py", "30_model_artifact.py", "41_group_models.py",
         "42_verify_group_models.py", "44_launch_phase_models.py",
         "45_verify_launch_models.py", "43_build_group_model_notebook.py",
-        "31_participants.py",
+        "31_participants.py", "53_decision_policy.py",
         "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py",
         "49_long_horizon_production.py", "50_testing_ledger.py"]
 # Order matters from here: 06 recreates results.json, the rest extend it.
@@ -70,7 +70,7 @@ REQUIRED_FUND = {
     "gold_emission": "35_gold_emission_models.py",
     "group_specific_models": "41_group_models.py",
     "launch_phase_models": "44_launch_phase_models.py",
-    "participants": "31_participants.py",
+    "participants": "31_participants.py", "53_decision_policy.py",
 }
 
 

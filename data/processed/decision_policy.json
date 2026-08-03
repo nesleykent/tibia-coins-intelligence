@@ -1,0 +1,68 @@
+{
+ "version": "1.0.0",
+ "generated_utc": "2026-08-03T21:31:14.877069+00:00",
+ "rules": {
+  "band_threshold_pct": 1.7878999999999998,
+  "action_threshold_pct": 4.0,
+  "fee_rate_pct": 2.0,
+  "min_holdout_t": 2.0,
+  "min_holdout_n_effective": 10,
+  "min_depth_tc": 25,
+  "max_staleness_days": 7
+ },
+ "horizons": {
+  "7": {
+   "eligible": true,
+   "net_pct": 1.7277041832419615,
+   "t_newey_west": 4.577265099203781,
+   "n_effective": 33,
+   "share_profitable": 0.7463768115942029,
+   "cutoff_pct": 9.89089922844638,
+   "reason": ""
+  },
+  "30": {
+   "eligible": false,
+   "net_pct": 5.136261361169385,
+   "t_newey_west": 5.7691843069456095,
+   "n_effective": 7,
+   "share_profitable": 0.9202127659574468,
+   "cutoff_pct": 10.024472787800498,
+   "reason": "holdout rests on 7 effective episode(s), below the 10 required"
+  },
+  "91": {
+   "eligible": false,
+   "net_pct": 6.765993385116391,
+   "t_newey_west": 5.4365768795086264,
+   "n_effective": 1,
+   "share_profitable": 0.908256880733945,
+   "cutoff_pct": 10.415036587930828,
+   "reason": "holdout rests on 1 effective episode(s), below the 10 required"
+  }
+ },
+ "horizon_used_days": 7,
+ "actions": [
+  "Buy TC",
+  "Sell TC",
+  "Hold",
+  "Avoid",
+  "Investigate",
+  "Abstain"
+ ],
+ "signal_admitted": "cross-world relative deviation",
+ "signals_refused": {
+  "absolute price forecast": "loses to a random walk at every tested horizon; carried as an uncertainty range only, never as a direction",
+  "gold emission": "no reliable association with forward returns at any tested lag, in or out of sample, on the 3.5-year panel"
+ },
+ "forecast_beats_random_walk": false,
+ "counts": {
+  "Hold": 56,
+  "Abstain": 4,
+  "Buy TC": 1
+ },
+ "limitations": [
+  "Deviation is measured against a cross-world index, so a call is relative: every world can be fairly priced against the others while all of them move together.",
+  "Holdout episodes overlap in calendar time; n_effective already discounts this, and horizons resting on too few episodes are refused rather than reported.",
+  "Order-book depth is a single snapshot, so capacity is indicative and a large order will reach worse prices than the quoted side implies.",
+  "Costs cover the Market fee only. Transfer restrictions, cancellation loss and partial fills are not deducted."
+ ]
+}

@@ -1,0 +1,62 @@
+world,as_of,price_gp,deviation_pct,predicted_change_pct,low80_pct,high80_pct,horizon_days,action,confidence,reason,policy_version
+Havera,2026-07-21,39096.5,-0.606,-0.431,-2.377,1.515,7,Abstain,none,price is 9 days old; no current price to act on,1.0.0
+Lutabra,2026-07-12,38006.0,-1.185,-0.8,-2.747,1.146,7,Abstain,none,price is 18 days old; no current price to act on,1.0.0
+Retalia,2026-07-22,36875.0,-4.463,-0.303,-2.249,1.644,7,Abstain,none,price is 8 days old; no current price to act on,1.0.0
+Monstera,2026-07-22,36667.5,-6.252,0.65,-1.296,2.597,7,Abstain,none,price is 8 days old; no current price to act on,1.0.0
+Tempestera,2026-07-24,36871.5,-10.389,1.406,-0.54,3.352,7,Buy TC,low,"deviation -10.39% clears the 9.89% cutoff the holdout was validated at (+1.73% net over 33 effective episodes, t=4.6); 80% range spans zero, so the size of the move is not established",1.0.0
+Kalibra,2026-07-29,43513.0,7.834,-0.678,-2.625,1.268,7,Hold,medium,deviation +7.83% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Celebra,2026-07-27,43811.5,7.509,-0.694,-2.641,1.252,7,Hold,medium,deviation +7.51% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Menera,2026-07-28,43492.0,7.171,-0.887,-2.833,1.059,7,Hold,medium,deviation +7.17% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Refugia,2026-07-29,43080.0,6.777,-0.681,-2.627,1.265,7,Hold,medium,deviation +6.78% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Pacera,2026-07-28,43248.5,6.606,-0.345,-2.291,1.601,7,Hold,medium,deviation +6.61% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Gladera,2026-07-24,42558.0,6.554,-0.144,-2.091,1.802,7,Hold,medium,deviation +6.55% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Secura,2026-07-29,43343.0,6.547,-0.136,-2.082,1.81,7,Hold,medium,deviation +6.55% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Celesta,2026-07-29,43167.5,6.399,-0.737,-2.684,1.209,7,Hold,medium,deviation +6.40% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Yonabra,2026-07-29,43225.5,6.085,-0.277,-2.223,1.669,7,Hold,medium,deviation +6.08% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Monza,2026-07-26,42392.5,5.98,-0.302,-2.249,1.644,7,Hold,medium,deviation +5.98% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Gentebra,2026-07-27,42954.5,5.972,-0.196,-2.142,1.75,7,Hold,medium,deviation +5.97% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Sombra,2026-07-23,41976.5,5.544,-1.115,-3.061,0.832,7,Hold,medium,deviation +5.54% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Nefera,2026-07-30,43395.0,5.502,-0.737,-2.683,1.209,7,Hold,medium,deviation +5.50% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Luminera,2026-07-30,43400.5,5.146,-0.81,-2.756,1.136,7,Hold,medium,deviation +5.15% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Belobra,2026-07-29,42843.5,4.946,0.372,-1.574,2.318,7,Hold,medium,deviation +4.95% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Calmera,2026-07-27,42013.5,4.31,0.333,-1.613,2.28,7,Hold,medium,deviation +4.31% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Astera,2026-07-30,43406.5,4.201,0.181,-1.765,2.127,7,Hold,medium,deviation +4.20% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Harmonia,2026-07-30,43883.5,4.072,-0.174,-2.12,1.772,7,Hold,medium,deviation +4.07% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Bona,2026-07-28,42475.5,3.808,0.486,-1.46,2.432,7,Hold,medium,deviation +3.81% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Xymera,2026-07-29,40431.0,0.021,-0.462,-2.408,1.484,7,Hold,high,"deviation +0.02% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Eclipta,2026-07-23,38202.5,-0.537,-0.831,-2.777,1.115,7,Hold,high,"deviation -0.54% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Epoca,2026-07-23,39284.0,-0.831,-0.831,-2.777,1.115,7,Hold,high,"deviation -0.83% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Rasteibra,2026-07-29,40048.0,-1.306,-0.377,-2.324,1.569,7,Hold,high,"deviation -1.31% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Collabra,2026-07-26,40040.0,-1.419,-0.492,-2.439,1.454,7,Hold,high,"deviation -1.42% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Quelibra,2026-07-29,40004.5,-1.47,-0.45,-2.396,1.496,7,Hold,high,"deviation -1.47% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Issobra,2026-07-25,39182.0,-1.751,-0.378,-2.324,1.568,7,Hold,high,"deviation -1.75% sits inside the 1.79% band, where gaps widen rather than close",1.0.0
+Honbra,2026-07-29,39958.0,-1.903,-0.411,-2.358,1.535,7,Hold,medium,deviation -1.90% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Ustebra,2026-07-24,38822.0,-2.363,-0.197,-2.143,1.75,7,Hold,medium,deviation -2.36% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Jadebra,2026-07-28,39545.5,-2.475,-0.128,-2.074,1.819,7,Hold,medium,deviation -2.48% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Descubra,2026-07-30,40221.5,-2.614,-0.205,-2.151,1.742,7,Hold,medium,deviation -2.61% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Quintera,2026-07-30,39699.0,-3.21,0.182,-1.764,2.128,7,Hold,medium,deviation -3.21% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Lobera,2026-07-28,39114.5,-3.338,-0.068,-2.014,1.878,7,Hold,medium,deviation -3.34% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Ombra,2026-07-27,39259.0,-3.401,0.674,-1.272,2.62,7,Hold,medium,deviation -3.40% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Nevia,2026-07-28,39021.0,-3.456,-0.172,-2.118,1.774,7,Hold,medium,deviation -3.46% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Ferobra,2026-07-28,39365.5,-3.567,0.468,-1.478,2.415,7,Hold,medium,deviation -3.57% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Serdebra,2026-07-29,39380.0,-3.594,0.39,-1.556,2.336,7,Hold,medium,deviation -3.59% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Vunira,2026-07-27,38889.0,-3.686,-0.064,-2.01,1.882,7,Hold,medium,deviation -3.69% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Ourobra,2026-07-29,39606.5,-3.692,0.357,-1.589,2.303,7,Hold,medium,deviation -3.69% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Firmera,2026-07-24,38347.5,-3.735,-0.049,-1.995,1.898,7,Hold,medium,deviation -3.74% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Xyla,2026-07-29,39092.0,-3.741,0.304,-1.642,2.25,7,Hold,medium,deviation -3.74% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Inabra,2026-07-30,39690.5,-3.752,0.009,-1.937,1.956,7,Hold,medium,deviation -3.75% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Yovera,2026-07-28,39311.5,-3.764,0.409,-1.537,2.355,7,Hold,medium,deviation -3.76% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Venebra,2026-07-27,38730.0,-3.826,0.225,-1.721,2.171,7,Hold,medium,deviation -3.83% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Thyria,2026-07-27,39195.5,-4.097,0.307,-1.639,2.253,7,Hold,medium,deviation -4.10% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Solidera,2026-07-30,40784.0,-4.248,0.004,-1.942,1.95,7,Hold,medium,deviation -4.25% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Karmeya,2026-07-25,38353.0,-4.294,0.327,-1.619,2.274,7,Hold,medium,deviation -4.29% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Quidera,2026-07-28,38838.0,-4.358,0.408,-1.538,2.354,7,Hold,medium,deviation -4.36% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Antica,2026-07-30,39158.0,-4.373,0.125,-1.821,2.072,7,Hold,medium,deviation -4.37% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Wintera,2026-07-30,39171.0,-4.982,0.203,-1.743,2.149,7,Hold,medium,deviation -4.98% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Talera,2026-07-28,38791.5,-4.991,0.586,-1.36,2.532,7,Hold,medium,deviation -4.99% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Blumera,2026-07-30,38985.0,-5.48,0.314,-1.632,2.26,7,Hold,medium,deviation -5.48% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Citra,2026-07-23,37526.0,-5.701,0.927,-1.019,2.874,7,Hold,medium,deviation -5.70% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Peloria,2026-07-28,38073.5,-6.192,0.825,-1.121,2.772,7,Hold,medium,deviation -6.19% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Terribra,2026-07-27,37459.0,-7.657,1.191,-0.755,3.137,7,Hold,medium,deviation -7.66% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Kalanta,2026-07-28,37135.0,-8.569,1.621,-0.326,3.567,7,Hold,medium,deviation -8.57% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
+Gladibra,2026-07-26,36948.5,-8.96,0.769,-1.177,2.716,7,Hold,medium,deviation -8.96% clears the 1.79% band but not the 9.89% cutoff the holdout was validated at,1.0.0
