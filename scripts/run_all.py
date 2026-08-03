@@ -30,7 +30,7 @@ FUND = ["16_killstats.py", "16b_killstats_history.py", "17_features.py", "18_pre
         "42_verify_group_models.py", "44_launch_phase_models.py",
         "45_verify_launch_models.py", "43_build_group_model_notebook.py",
         "31_participants.py",
-        "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py", "49_long_horizon_production.py",
+        "32_scenario_backtest.py", "33_strategy.py", "48_stability_and_seasonality.py", "49_long_horizon_production.py", "50_testing_ledger.py",
         "38_gold_emission_dashboard.py",
         "37_verify_gold_emission.py"]
 # Order matters from here: 06 recreates results.json, the rest extend it.

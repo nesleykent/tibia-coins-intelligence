@@ -50,6 +50,30 @@ try:
 except SystemExit:
     pass
 
+
+def _load_catalogue() -> None:
+    """Populate the module globals scan_world reads.
+
+    scan_world resolves every creature through MODELS, ALIASES, BOSSES and CLASSIFICATIONS,
+    and only main() sets them. Calling it on a freshly imported module leaves all four empty,
+    every creature misses the catalogue, and the scan returns rows whose emission is zero -
+    silently, because a zero is a valid number. That is what happened on the first run.
+    """
+    items, loot_creatures, models, cache = _ge.parse_loot_cache()
+    _ge.MODELS = models
+    _ge.ALIASES = _ge.aliases()
+    _ge.CLASSIFICATIONS = _ge.creature_classifications()
+    boss_names = json.loads((ROOT / "data" / "raw" / "boss_names.json").read_text())
+    _ge.BOSSES = {_ge.norm(_ge.ALIASES.get(_ge.norm(n), n)) for n in boss_names}
+    _ge.BOSSES.update(k for k, v in _ge.CLASSIFICATIONS.items() if v.get("is_boss", False))
+    if not _ge.MODELS:
+        raise SystemExit("creature catalogue is empty; the scan would emit zeros")
+    print(f"[SPARSE] catalogue loaded: {len(_ge.MODELS):,} loot models, "
+          f"{len(_ge.BOSSES):,} bosses")
+
+
+_load_catalogue()
+
 # Worlds that carry a price. A world with no price cannot enter a test that joins emission to
 # a return, so fetching it would be pure cost.
 pan = pd.read_csv(P / "panel_daily.csv", usecols=["world", "date"], parse_dates=["date"])
@@ -86,6 +110,11 @@ for w in targets:
             skipped += 1
             continue
         daily, _totals = _ge.scan_world(wdir)
+        # A world that reports kills but no modelled kills means the catalogue did not load.
+        # Failing here is better than writing a structurally empty series that looks fine.
+        if daily and sum(r.get("total_kills", 0) for r in daily) > 0 \
+                and sum(r.get("modeled_kills_all", 0) for r in daily) == 0:
+            raise SystemExit(f"{w}: kills present but nothing modelled - catalogue not loaded")
         fresh = [r for r in daily
                  if (r.get("world"), str(r.get("date"))[:10]) not in have]
         rows.extend(fresh)

@@ -20,7 +20,7 @@ extreme_expected_value,Megasylvan Yselda,22292.857142857145,GP per kill,boss_sep
 extreme_expected_value,The Source of Corruption,22244.238095238103,GP per kill,boss_separate; 105 source samples; low confidence
 extreme_expected_value,Scarlett Etzel,21294.573643410848,GP per kill,boss_separate; 258 source samples; low confidence
 top_emission_creature_share,world-day distribution,0.19414519971238722,99th percentile share,median=0.0419
-top_kill_creature_share,world-day distribution,0.11027722749890828,99th percentile share,median=0.0218
+top_kill_creature_share,world-day distribution,0.10976773495730976,99th percentile share,median=0.0190
 world_emission_per_activity,Yonabra,5914384.53113409,estimated GP per average online player-day,mean online=162.2; mean coverage=95.9%
 world_emission_per_activity,Terribra,5113131.940275679,estimated GP per average online player-day,mean online=81.5; mean coverage=96.3%
 world_emission_per_activity,Gentebra,4753642.330393453,estimated GP per average online player-day,mean online=218.8; mean coverage=96.6%

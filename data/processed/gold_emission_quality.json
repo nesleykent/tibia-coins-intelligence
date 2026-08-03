@@ -4,9 +4,9 @@
  "loot_source": "TibiaWiki / Fandom, Category:Loot Statistics",
  "loot_collection_utc": "2026-08-02T17:23:20.466395+00:00",
  "npc_price_source": "data/raw/tm_item_metadata.json (player-to-NPC offers)",
- "world_days": 90422,
+ "world_days": 21412,
  "worlds": 93,
- "date_start": "2022-08-22",
+ "date_start": "2025-12-03",
  "date_end": "2026-07-30",
  "canonical_creatures": 1619,
  "loot_statistics_pages": 1427,
@@ -34,5 +34,5 @@
  "summon_training_rule": "no special creature is assigned a zero value without source evidence; unmatched summons/training creatures remain explicitly uncovered",
  "history_source": "2022-08-23 to 2025-12-04 from tibia-kill-stats-from-2022-08-23-to-2025-12-04, fetched per world by sparse checkout and deleted after aggregation; 2025-12-05 onward from tibia-kill-stats",
  "coverage_scope_note": "coverage percentages describe the creature catalogue and the loot-model matching, not the date range, and are unchanged by the history extension",
- "cosmetic_labels_missing": "top_emission_creature_name and top_kill_creature_name are empty for the whole series; they label the largest emitter for display and enter no calculation"
+ "history_extension_status": "withdrawn: the 2022-2025 rows were reconstructed without the creature catalogue and came back at zero emission; they are removed and the extension is pending a corrected rerun"
 }

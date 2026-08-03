@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-02T20:27:06.692199</dc:date>
+    <dc:date>2026-08-03T05:57:44.516015</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -1859,12 +1859,12 @@ L 455.884355 189.11345
 L 456.202608 196.607375 
 L 456.520862 188.794742 
 L 456.520862 188.794742 
-" clip-path="url(#p498c63b251)" style="fill: none; stroke: #b07aa1; stroke-width: 1.1; stroke-linecap: round"/>
+" clip-path="url(#p10d3d069d8)" style="fill: none; stroke: #b07aa1; stroke-width: 1.1; stroke-linecap: round"/>
    </g>
    <g id="line2d_9">
     <path d="M 44.064 204.137988 
 L 510.624 204.137988 
-" clip-path="url(#p498c63b251)" style="fill: none; stroke-dasharray: 4.07,1.76; stroke-dashoffset: 0; stroke: #e15759; stroke-width: 1.1"/>
+" clip-path="url(#p10d3d069d8)" style="fill: none; stroke-dasharray: 4.07,1.76; stroke-dashoffset: 0; stroke: #e15759; stroke-width: 1.1"/>
    </g>
    <g id="text_10">
     <!-- 4% round-trip fee  -->
@@ -2275,7 +2275,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p498c63b251">
+  <clipPath id="p10d3d069d8">
    <rect x="44.064" y="15.84" width="466.56" height="230.4"/>
   </clipPath>
  </defs>

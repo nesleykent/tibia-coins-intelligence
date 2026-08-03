@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-02T20:27:09.144164</dc:date>
+    <dc:date>2026-08-03T05:57:49.464973</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -32,27 +32,27 @@ z
    <g id="line2d_1">
     <path d="M 277.344 53.64 
 L 277.344 68.76 
-" clip-path="url(#p4a5c44f527)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
    </g>
    <g id="line2d_2">
     <path d="M 123.3792 68.76 
 L 431.3088 68.76 
-" clip-path="url(#p4a5c44f527)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
    </g>
    <g id="line2d_3">
     <path d="M 123.3792 68.76 
 L 123.3792 83.88 
-" clip-path="url(#p4a5c44f527)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
    </g>
    <g id="line2d_4">
     <path d="M 277.344 68.76 
 L 277.344 83.88 
-" clip-path="url(#p4a5c44f527)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
    </g>
    <g id="line2d_5">
     <path d="M 431.3088 68.76 
 L 431.3088 83.88 
-" clip-path="url(#p4a5c44f527)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: none; stroke: #d9d9d9; stroke-linecap: round"/>
    </g>
    <g id="patch_2">
     <path d="M 58.0608 114.12 
@@ -60,7 +60,7 @@ L 188.6976 114.12
 L 188.6976 83.88 
 L 58.0608 83.88 
 z
-" clip-path="url(#p4a5c44f527)" style="fill: #4e79a7"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: #4e79a7"/>
    </g>
    <g id="patch_3">
     <path d="M 212.0256 114.12 
@@ -68,7 +68,7 @@ L 342.6624 114.12
 L 342.6624 83.88 
 L 212.0256 83.88 
 z
-" clip-path="url(#p4a5c44f527)" style="fill: #ededed"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: #ededed"/>
    </g>
    <g id="patch_4">
     <path d="M 365.9904 114.12 
@@ -76,7 +76,7 @@ L 496.6272 114.12
 L 496.6272 83.88 
 L 365.9904 83.88 
 z
-" clip-path="url(#p4a5c44f527)" style="fill: #ededed"/>
+" clip-path="url(#p6b09c4daa0)" style="fill: #ededed"/>
    </g>
    <g id="text_1">
     <!-- TIBIA COIN -->
@@ -2950,7 +2950,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="p4a5c44f527">
+  <clipPath id="p6b09c4daa0">
    <rect x="44.064" y="15.84" width="466.56" height="252"/>
   </clipPath>
  </defs>

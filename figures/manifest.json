@@ -165,7 +165,7 @@
   "title": "Fundamentals do not make the level predictable, and barely move the relative price",
   "subtitle": "Out-of-sample R\u00b2 against a random walk; above zero beats the benchmark",
   "source": "Sources: price archive item_id 22118; tibiamaps/tibia-kill-stats; GuildStats.eu /online-counter. Expanding-origin walk-forward, 6 folds, horizon purged.",
-  "note": "Bars below the line are models that lose to predicting no change. On the level, every model loses at every horizon. On the relative price the picture is better but small: of 42 model-horizon comparisons, 4 survive a Benjamini-Hochberg correction at 5% - the starred bars, all of them on the relative price. The strongest at seven days is a random forest with an out-of-sample R\u00b2 of 0.050, which beat the random walk in 5 of 6 folds. 61 converged worlds, 2025-12-05 to 2026-07-30."
+  "note": "Bars below the line are models that lose to predicting no change. On the level, every model loses at every horizon. On the relative price the picture is better but small: of 42 model-horizon comparisons, 14 survive a Benjamini-Hochberg correction at 5% - the starred bars, all of them on the relative price. The strongest at seven days is a random forest with an out-of-sample R\u00b2 of 0.056, which beat the random walk in 6 of 6 folds. 61 converged worlds, 2025-12-05 to 2026-07-30."
  },
  "fig28_scenarios": {
   "title": "Three months out, the most likely outcome is the price it is at now",
@@ -189,7 +189,7 @@
   "title": "The edge is real early and absent late, which the average hides",
   "subtitle": "Out-of-sample skill fold by fold, and the market states the model was trading through",
   "source": "Source: tibia-warzones-schedule market archive, a deduplicated third-party mirror of the TibiaMarket.top MarketValues model, item_id 22118. Window: 11 Jan 2023 to 30 Jul 2026.",
-  "note": "Left: the random forest on the cross-world relative return. At seven days it runs +0.060 in the first fold and -0.004 in the last; at thirty the average of +0.079 falls to +0.022 once the first fold is removed. The rank correlation between fold order and skill is negative at every horizon. With five or six folds that trend is not itself significant, so decay and a favourable early sample cannot be separated - which is the reason Section 6.6.3 warns against reading the averages as what the next quarter would deliver. Right: the 4 states a Gaussian hidden Markov model selects by BIC, with mean persistence 0.92."
+  "note": "Left: the random forest on the cross-world relative return. At seven days it runs +0.028 in the first fold and +0.071 in the last; at thirty the average of +0.063 falls to +0.066 once the first fold is removed. The rank correlation between fold order and skill is negative at every horizon. With five or six folds that trend is not itself significant, so decay and a favourable early sample cannot be separated - which is the reason Section 6.6.3 warns against reading the averages as what the next quarter would deliver. Right: the 4 states a Gaussian hidden Markov model selects by BIC, with mean persistence 0.94."
  },
  "fig32_strategy_horizon": {
   "title": "The cost is paid once, so the trade becomes profitable by being held",

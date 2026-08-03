@@ -1,0 +1,10 @@
+family,n_tests,status,correction,survivors,why
+"Leading indicators, Granger",66,corrected,"Sidak over the lag grid, then Benjamini-Hochberg across series",0.0,"the smallest p across six lags is not a p-value, so two searches are paid for"
+Model comparison against a random walk,48,corrected,Benjamini-Hochberg at 5% across every model-horizon cell,4.0,one family: every model tried on every horizon and target
+"Production, long horizon and cumulative",39,corrected,"Benjamini-Hochberg, then a per-date re-test of every survivor",6.0,four families of specification searched jointly over horizons and windows
+"Production, monetary series",33,corrected,per-date Newey-West on every cell significant pooled,6.0,the same search on GP emission rather than on kill counts
+Strategy grid,120,corrected,per-date Newey-West and a calendar-span window count,12.0,"strength by holding period and signal decile, tested as one grid"
+Gold-supply elasticity,6,reported,none,,"reported as magnitudes; the conclusion rests on the size and sign, not on any cell clearing a threshold"
+Seasonality,4,corrected,joint chi-squared rather than per-coefficient tests,4.0,"eleven month dummies asked as one question, which is what a joint test is for"
+Regime splits,7,reported,none,,"descriptive contrasts between subsamples, not a search for a significant one"
+Entropy and BDS against surrogates,3,reported,surrogate distribution rather than an analytic p-value,,"the null is generated, so the comparison is to a simulated distribution"

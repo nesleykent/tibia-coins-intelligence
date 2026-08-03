@@ -147,7 +147,7 @@
    {
     "id": "summary",
     "type": "markdown",
-    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 96.2% of non-boss deaths across 90,422 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.17% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
+    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 96.2% of non-boss deaths across 21,412 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.17% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
     "sourceId": "src_models"
    },
    {
@@ -461,9 +461,9 @@
     {
      "coverage": 0.9615539344352185,
      "coverage_threshold": 0.8,
-     "world_days": 90422,
+     "world_days": 21412,
      "low_quality_days": 69010,
-     "median_realized_gp": 0.0,
+     "median_realized_gp": 403346244.86615676,
      "best_oos": 0.0016599125675098
     }
    ],

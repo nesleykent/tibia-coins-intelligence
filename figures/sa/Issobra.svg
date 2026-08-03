@@ -6,7 +6,7 @@
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:date>2026-08-02T20:27:10.492546</dc:date>
+    <dc:date>2026-08-03T05:57:52.086028</dc:date>
     <dc:format>image/svg+xml</dc:format>
     <dc:creator>
      <cc:Agent>
@@ -409,11 +409,11 @@ z
    <g id="line2d_7">
     <path d="M 43.524 57.63673 
 L 279.396 57.63673 
-" clip-path="url(#pebe3ecba40)" style="fill: none; stroke-dasharray: 0.7,1.155; stroke-dashoffset: 0; stroke: #d9d9d9; stroke-width: 0.7"/>
+" clip-path="url(#pa1dfd9c526)" style="fill: none; stroke-dasharray: 0.7,1.155; stroke-dashoffset: 0; stroke: #d9d9d9; stroke-width: 0.7"/>
    </g>
    <g id="FillBetweenPolyCollection_1">
     <defs>
-     <path id="med651ffe2f" d="M 236.588015 -45.039157 
+     <path id="mdb348d070c" d="M 236.588015 -45.039157 
 L 236.588015 -45.039157 
 L 239.584574 -41.754475 
 L 243.009212 -40.585238 
@@ -428,8 +428,8 @@ L 236.588015 -45.039157
 z
 "/>
     </defs>
-    <g clip-path="url(#pebe3ecba40)">
-     <use xlink:href="#med651ffe2f" x="0" y="104.4" style="fill: #f28e2b; fill-opacity: 0.22"/>
+    <g clip-path="url(#pa1dfd9c526)">
+     <use xlink:href="#mdb348d070c" x="0" y="104.4" style="fill: #f28e2b; fill-opacity: 0.22"/>
     </g>
    </g>
    <g id="line2d_8">
@@ -703,7 +703,7 @@ L 234.875695 60.095595
 L 235.303775 59.195899 
 L 235.517815 59.360843 
 L 235.517815 59.360843 
-" clip-path="url(#pebe3ecba40)" style="fill: none; stroke: #4e79a7; stroke-width: 0.9; stroke-linecap: round"/>
+" clip-path="url(#pa1dfd9c526)" style="fill: none; stroke: #4e79a7; stroke-width: 0.9; stroke-linecap: round"/>
    </g>
    <g id="line2d_9">
     <path d="M 236.588015 59.360843 
@@ -711,7 +711,7 @@ L 239.584574 59.453218
 L 243.009212 59.555218 
 L 256.065648 59.719251 
 L 275.543281 59.701916 
-" clip-path="url(#pebe3ecba40)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #f28e2b"/>
+" clip-path="url(#pa1dfd9c526)" style="fill: none; stroke-dasharray: 3.7,1.6; stroke-dashoffset: 0; stroke: #f28e2b"/>
    </g>
   </g>
   <g id="text_7">
@@ -941,7 +941,7 @@ z
   </g>
  </g>
  <defs>
-  <clipPath id="pebe3ecba40">
+  <clipPath id="pa1dfd9c526">
    <rect x="43.524" y="16.182" width="235.872" height="72.036"/>
   </clipPath>
  </defs>

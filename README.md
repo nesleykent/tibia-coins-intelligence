@@ -87,15 +87,6 @@ converted at the lot. The order book is the opposite case — minimum 25, every 
 lot, quoted against a per-coin price — so those are already coins and are left alone. Two
 verifier checks now re-derive both classifications from the data on every build.
 
-**The monetary series now spans four years too, and the answer does not change.** Reconstructing
-GP emission across the extended archive gives 90,422 world-days from 2022-08-22, so the
-cumulative specifications run on gold rather than on a proxy for it. Six of 33 cells are
-significant — and the largest elasticity anywhere is **0.002**: doubling a world's cumulative
-emission would move its coin price by 0.21%, against an effective spread of 0.84% and annual
-volatility of 24%. The sign splits 16 negative to 17 positive, which is what an absent
-relationship looks like rather than a weak one. The archive is fetched per world by sparse
-checkout and deleted after aggregation, so the download happens once and never again.
-
 **Three and a half years of kill statistics, and the long-horizon test still finds nothing.**
 The 2022-2025 archive was never used; folded in, the joint panel reaches 40,631 world-days over
 3.5 years and makes 90-, 180- and 365-day horizons estimable for the first time, along with
