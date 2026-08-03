@@ -284,8 +284,9 @@ rather than displayed as an unexplained blank.
   Never expand GP as “gold price.” GP names the in-game currency; price is a
   relationship between units.
   Never shorten gold-piece output to “coins,” because readers may interpret it
-  as Tibia Coins. Use labels such as “Direct GP drops,” “Potential GP maximum,”
-  and “Realized GP estimate.”
+  as Tibia Coins. Use labels such as “Direct GP drops” and “Potential GP.”
+  Realization percentages are technical sensitivity scenarios, not observed
+  quantities; do not present “Realized GP estimate” as a primary site metric.
 - Unit definitions, scope warnings, and interpretive disclaimers established in
   the canonical report must accompany the same analysis on the site. Moving an
   exhibit to the site without its governing caveat is a coverage defect.
@@ -297,6 +298,13 @@ rather than displayed as an unexplained blank.
 - Empty, partial, loading, stale, and error states must be explicit.
 - Make methodology and limitations accessible without overwhelming the primary
   decision view.
+- Never append drill-down content below the table, chart, or control that opened
+  it. A drill-down must use a dedicated routed view or page with a clear Back
+  action and shareable state. Do not use a modal unless the user explicitly
+  requests one.
+- Every reader-facing data table must support sorting by its meaningful columns.
+  Sorting controls must be visible in the column headers, keyboard accessible,
+  and expose ascending or descending state.
 
 Recommended report flow:
 

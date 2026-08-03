@@ -269,10 +269,25 @@ HTML = r"""<!doctype html>
     }
     .creature-detail { margin-top: 16px; overflow: hidden; }
     .creature-detail[hidden] { display: none; }
+    body.day-detail-mode .filters,
+    body.day-detail-mode .metrics,
+    body.day-detail-mode .world-breakdown,
+    body.day-detail-mode .main-grid,
+    body.day-detail-mode .quality,
+    body.day-detail-mode .table-panel,
+    body.day-detail-mode .footnote { display: none !important; }
+    body.day-detail-mode .creature-detail { margin-top: 20px; }
     .creature-detail .table-head { align-items: start; }
     .creature-detail table { min-width: 1120px; }
     .detail-message { padding: 24px 16px; color: var(--muted); line-height: 1.5; }
     .detail-summary { color: var(--muted); font-size: 12px; margin-top: 5px; }
+    .sort-button {
+      width: 100%; min-height: 32px; border: 0; background: transparent; color: inherit;
+      padding: 0; font: inherit; font-weight: inherit; text-align: inherit; cursor: pointer;
+    }
+    .sort-button::after { content: " ↕"; color: #8792a6; font-size: 10px; }
+    th[aria-sort="ascending"] .sort-button::after { content: " ↑"; color: var(--focus); }
+    th[aria-sort="descending"] .sort-button::after { content: " ↓"; color: var(--focus); }
     .empty { padding: 72px 20px; text-align: center; color: var(--muted); }
     .error {
       margin: 0 0 16px; border-left: 4px solid var(--danger); background: #fff6f6;
@@ -473,7 +488,7 @@ HTML = r"""<!doctype html>
           <h2 id="creatureDetailTitle">Creature detail</h2>
           <p id="creatureDetailSummary" class="detail-summary"></p>
         </div>
-        <button id="closeCreatureDetail" class="button text" type="button">Close</button>
+        <button id="closeCreatureDetail" class="button text" type="button">← Back to Gold Emission</button>
       </div>
       <div id="creatureDetailContent" aria-live="polite"></div>
     </section>
@@ -517,6 +532,7 @@ HTML = r"""<!doctype html>
   let sourceMeta = EMBEDDED.meta;
   let filtered = [];
   let showAllRows = false;
+  let detailOpenedWithPush = false;
 
   function decodeRows(schema, rows) {
     return rows.map(values => Object.fromEntries(schema.map((name, index) => [name, values[index]])));
@@ -580,6 +596,14 @@ HTML = r"""<!doctype html>
     bindEvents();
     updateStatus();
     render();
+    enhanceSortableTables();
+    const detailWorld = params.get("detailWorld");
+    const detailDate = params.get("detailDate");
+    if (detailWorld && detailDate && [...$("#worldSelect").options].some(option => option.value === detailWorld)) {
+      $("#worldSelect").value = detailWorld;
+      render();
+      void openCreatureDetail(detailDate, null, false);
+    }
   }
 
   function populateWorlds(preserve = "all") {
@@ -614,6 +638,10 @@ HTML = r"""<!doctype html>
     $("#tableToggle").addEventListener("click", toggleTable);
     $("#tableToggleBottom").addEventListener("click", toggleTable);
     $("#closeCreatureDetail").addEventListener("click", closeCreatureDetail);
+    window.addEventListener("popstate", () => {
+      const params = new URLSearchParams(location.search);
+      if (!params.get("detailDate")) exitCreatureDetail();
+    });
     $("#chartInspector").addEventListener("input", event => showTooltipAt(Number(event.target.value), true));
     window.addEventListener("resize", debounce(() => renderChart(filtered), 100));
   }
@@ -1015,8 +1043,9 @@ HTML = r"""<!doctype html>
       </tr>`;
     }).join("");
     $$("[data-detail-date]").forEach(button => button.addEventListener("click", () => {
-      openCreatureDetail(button.dataset.detailDate);
+      openCreatureDetail(button.dataset.detailDate, button, true);
     }));
+    enhanceSortableTables($("#detailBody").closest("table"));
     $("#tableCount").textContent = `${number.format(rows.length)} observed days`;
     const toggleLabel = showAllRows ? "Show latest 30" : `View all ${number.format(rows.length)}`;
     $("#tableToggle").textContent = $("#tableToggleBottom").textContent = toggleLabel;
@@ -1028,26 +1057,47 @@ HTML = r"""<!doctype html>
     renderTable(filtered);
   }
 
-  function closeCreatureDetail() {
+  function exitCreatureDetail() {
     const host = $("#creatureDetail");
+    document.body.classList.remove("day-detail-mode");
     host.hidden = true;
     $("#creatureDetailContent").innerHTML = "";
   }
 
-  async function openCreatureDetail(date) {
+  function closeCreatureDetail() {
+    if (detailOpenedWithPush) {
+      detailOpenedWithPush = false;
+      history.back();
+      return;
+    }
+    const params = new URLSearchParams(location.search);
+    params.delete("detailWorld");
+    params.delete("detailDate");
+    history.replaceState(null, "", `${location.pathname}${params.toString() ? `?${params}` : ""}${location.hash}`);
+    exitCreatureDetail();
+  }
+
+  async function openCreatureDetail(date, trigger = null, pushRoute = true) {
     const world = $("#worldSelect").value;
     const host = $("#creatureDetail");
+    document.body.classList.add("day-detail-mode");
     host.hidden = false;
+    window.scrollTo({ top: 0, behavior: "auto" });
+    if (pushRoute) {
+      const params = new URLSearchParams(location.search);
+      params.set("detailWorld", world);
+      params.set("detailDate", date);
+      history.pushState(null, "", `${location.pathname}?${params}${location.hash}`);
+      detailOpenedWithPush = true;
+    }
     $("#creatureDetailTitle").textContent = `Creature detail · ${date}`;
     if (world === "all") {
       $("#creatureDetailSummary").textContent = "Choose one world first; the daily row currently combines all worlds.";
       $("#creatureDetailContent").innerHTML = `<div class="detail-message">Select a specific server in the World filter, then click the date again to see every creature killed there.</div>`;
-      host.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
       return;
     }
     $("#creatureDetailSummary").textContent = `${world} · ${date} · loading source kill statistics…`;
     $("#creatureDetailContent").innerHTML = `<div class="detail-message">Loading every creature killed on this day…</div>`;
-    host.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     const sourceUrl = `https://raw.githubusercontent.com/tibiamaps/tibia-kill-stats/main/data/${encodeURIComponent(world.toLocaleLowerCase("en-US"))}/${date}.json`;
     try {
       const response = await fetch(sourceUrl, { cache: "force-cache" });
@@ -1109,6 +1159,50 @@ HTML = r"""<!doctype html>
       </tr>`).join("")}</tbody>
     </table></div>
     <div class="detail-message">GP values use the same creature loot model as the daily total. Bosses and other excluded categories remain visible here but are marked outside the main series. <a href="${sourceUrl}" target="_blank" rel="noopener">Open source kill statistics</a>.</div>`;
+    enhanceSortableTables($("#creatureDetailContent"));
+  }
+
+  function sortableValue(cell) {
+    const text = cell.textContent.trim();
+    if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return { type: "date", value: text };
+    const cleaned = text.replace(/[,+%×]/g, "").replace(/[—–]/g, "").trim();
+    if (cleaned && /^[-+]?\d+(?:\.\d+)?(?:[KMBT])?$/i.test(cleaned)) {
+      const suffix = cleaned.slice(-1).toUpperCase();
+      const scale = { K: 1e3, M: 1e6, B: 1e9, T: 1e12 }[suffix] || 1;
+      return { type: "number", value: Number.parseFloat(scale === 1 ? cleaned : cleaned.slice(0, -1)) * scale };
+    }
+    return { type: "text", value: text.toLocaleLowerCase("en-US") };
+  }
+
+  function enhanceSortableTables(root = document) {
+    const tables = root.matches?.("table") ? [root] : [...root.querySelectorAll("table")];
+    for (const table of tables) {
+      if (table.dataset.sortableReady === "true") continue;
+      table.dataset.sortableReady = "true";
+      [...table.querySelectorAll("thead th")].forEach((th, column) => {
+        const label = th.textContent.trim();
+        if (!label) return;
+        th.innerHTML = `<button class="sort-button" type="button" aria-label="Sort by ${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+        th.setAttribute("aria-sort", "none");
+        th.querySelector("button").addEventListener("click", () => {
+          const direction = th.getAttribute("aria-sort") === "ascending" ? "descending" : "ascending";
+          table.querySelectorAll("thead th").forEach(header => header.setAttribute("aria-sort", "none"));
+          th.setAttribute("aria-sort", direction);
+          const body = table.tBodies[0];
+          if (!body) return;
+          const rows = [...body.rows];
+          rows.sort((left, right) => {
+            const a = sortableValue(left.cells[column]);
+            const b = sortableValue(right.cells[column]);
+            const compared = a.type === "number" && b.type === "number"
+              ? a.value - b.value
+              : String(a.value).localeCompare(String(b.value), "en", { numeric: true });
+            return direction === "ascending" ? compared : -compared;
+          });
+          rows.forEach(row => body.appendChild(row));
+        });
+      });
+    }
   }
 
   async function loadCSV(event) {
@@ -1252,10 +1346,13 @@ HTML = r"""<!doctype html>
 
   function updateURL() {
     const params = new URLSearchParams();
+    const current = new URLSearchParams(location.search);
     if ($("#worldSelect").value !== "all") params.set("world", $("#worldSelect").value);
     if ($("#dateStart").value !== $("#dateStart").min) params.set("start", $("#dateStart").value);
     if ($("#dateEnd").value !== $("#dateEnd").max) params.set("end", $("#dateEnd").value);
     if ($("#tcPriceToggle").checked) params.set("tcPrice", "1");
+    if (current.get("detailWorld")) params.set("detailWorld", current.get("detailWorld"));
+    if (current.get("detailDate")) params.set("detailDate", current.get("detailDate"));
     const series = selectedSeries();
     if (series.length !== 2) params.set("series", series.join(","));
     const query = params.toString();

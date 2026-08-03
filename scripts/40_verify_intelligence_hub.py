@@ -152,6 +152,8 @@ def main() -> None:
     assert "Interactive rebased world comparison" not in html
     assert "function isoDate(value)" in html
     assert "function isoTimestamp(value)" in html
+    assert "function enhanceSortableTables(root=document)" in html
+    assert 'button.className="sort-button"' in html
     assert 'Intl.DateTimeFormat("en-US"' not in html
     assert 'toLocaleString("en-US")' not in html
     assert "direct GP drops" in html

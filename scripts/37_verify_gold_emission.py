@@ -153,10 +153,14 @@ def main() -> None:
     assert "creatureValueSchema" in dashboard and "creatureValues" in dashboard
     assert 'params.set("tcPrice", "1")' in dashboard
     assert 'id="creatureDetail"' in dashboard
+    assert "day-detail-mode" in dashboard
+    assert "← Back to Gold Emission" in dashboard
     assert 'data-detail-date=' in dashboard
-    assert "async function openCreatureDetail(date)" in dashboard
+    assert "async function openCreatureDetail(date, trigger = null, pushRoute = true)" in dashboard
     assert "function renderCreatureDetail(world, date, rows, sourceUrl)" in dashboard
     assert "tibiamaps/tibia-kill-stats/main/data/" in dashboard
+    assert "function enhanceSortableTables(root = document)" in dashboard
+    assert 'class="sort-button"' in dashboard
     assert 'id="fileInput"' in dashboard
     assert "<script src=" not in dashboard, "dashboard must remain self-contained"
     assert "async function refreshProjectCSV()" in dashboard

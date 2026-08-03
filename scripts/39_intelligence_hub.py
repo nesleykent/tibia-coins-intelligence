@@ -371,6 +371,11 @@ HTML = r"""<!doctype html>
     th .term-help{display:block;color:var(--muted);font-size:10px;font-weight:500;
       line-height:1.3;margin-top:3px;white-space:normal}
     th:first-child,td:first-child{text-align:left}
+    .sort-button{width:100%;min-height:28px;border:0;background:transparent;color:inherit;
+      padding:0;font:inherit;font-weight:inherit;text-align:inherit;cursor:pointer}
+    .sort-button::after{content:" ↕";color:#8792a6;font-size:9px}
+    th[aria-sort="ascending"] .sort-button::after{content:" ↑";color:var(--blue)}
+    th[aria-sort="descending"] .sort-button::after{content:" ↓";color:var(--blue)}
     tbody tr{cursor:pointer}
     tbody tr:hover{background:#f8faff}
     tbody tr.selected{background:var(--gold-soft);box-shadow:inset 3px 0 var(--gold)}
@@ -844,9 +849,51 @@ function initialize(){
   showView(["overview","worlds","forecasts","models","strategy","emission","library"].includes(params.get("view"))?params.get("view"):"overview",false);
   updateStatus();
   renderAll();
+  enhanceSortableTables();
   if(params.get("exhibit")&&data.figures.some(item=>item.id===params.get("exhibit"))){
     showView("library",false);
     openExhibit(params.get("exhibit"));
+  }
+}
+
+function sortableCellValue(cell){
+  const text=(cell?.textContent||"").trim();
+  if(/^\d{4}-\d{2}-\d{2}$/.test(text))return{type:"date",value:text};
+  const cleaned=text.replace(/[,+%×]/g,"").replace(/[—–]/g,"").trim();
+  if(cleaned&&/^[-+]?\d+(?:\.\d+)?(?:[KMBT])?$/i.test(cleaned)){
+    const suffix=cleaned.slice(-1).toUpperCase(),scale={K:1e3,M:1e6,B:1e9,T:1e12}[suffix]||1;
+    return{type:"number",value:Number.parseFloat(scale===1?cleaned:cleaned.slice(0,-1))*scale};
+  }
+  return{type:"text",value:text.toLocaleLowerCase("en-US")};
+}
+
+function enhanceSortableTables(root=document){
+  const tables=root.matches?.("table")?[root]:[...root.querySelectorAll("table")];
+  for(const table of tables){
+    if(table.dataset.sortableReady==="true")continue;
+    table.dataset.sortableReady="true";
+    [...table.querySelectorAll("thead th")].forEach((th,column)=>{
+      const label=th.textContent.trim();
+      if(!label)return;
+      const button=document.createElement("button");
+      button.className="sort-button";button.type="button";button.setAttribute("aria-label",`Sort by ${label}`);
+      while(th.firstChild)button.appendChild(th.firstChild);
+      th.appendChild(button);th.setAttribute("aria-sort","none");
+      button.addEventListener("click",()=>{
+        const direction=th.getAttribute("aria-sort")==="ascending"?"descending":"ascending";
+        table.querySelectorAll("thead th").forEach(header=>header.setAttribute("aria-sort","none"));
+        th.setAttribute("aria-sort",direction);
+        const body=table.tBodies[0];if(!body)return;
+        const rows=[...body.rows];
+        rows.sort((left,right)=>{
+          const a=sortableCellValue(left.cells[column]),b=sortableCellValue(right.cells[column]);
+          const compared=a.type==="number"&&b.type==="number"
+            ?a.value-b.value:String(a.value).localeCompare(String(b.value),"en",{numeric:true});
+          return direction==="ascending"?compared:-compared;
+        });
+        rows.forEach(row=>body.appendChild(row));
+      });
+    });
   }
 }
 
