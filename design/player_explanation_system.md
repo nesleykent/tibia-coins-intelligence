@@ -63,6 +63,15 @@ classification; one compact visible key should carry the shared definitions.
 | TC | Tibia Coins | The premium currency sold by CipSoft |
 | GP/TC | Price of one TC in GP | How many gold pieces are needed to buy 1 TC |
 | Market index | Typical price across worlds | A combined line showing the general TC price across the tracked worlds |
+| Best ask | Best ask — what you pay for 1 TC | The cheapest sell offer currently resting in that world's Market |
+| Best bid | Best bid — what you receive for 1 TC | The highest buy offer currently resting in that world's Market |
+| Mid | Mid — halfway between the two prices | A reference price between best bid and best ask; nobody is obliged to trade there |
+| Executed mid | Executed mid — daily average price | The average of what players actually paid and received that day |
+| Quoted spread | Quoted spread — gap between buying and selling | How much is lost buying and selling immediately, before the Market fee |
+| Bid depth | Bid depth — TC buyers want | How much TC the resting buy offers would absorb |
+| Ask depth | Ask depth — TC offered for sale | How much TC the resting sell offers would supply |
+| Order book | Order book — the current offer list | The resting buy and sell offers in one world's Market |
+| Total return | Total return — price change over the period | How much the price rose or fell since the first available day |
 | Cross-world dispersion | Dispersion — difference between world prices | Whether worlds are selling TC at similar or very different prices |
 | Relative deviation | Deviation — price versus other worlds | How expensive or cheap this world is compared with the market |
 | Predicted 7d | Predicted 7d — expected change over the next 7 days | The model's estimate of how the world's deviation may change; it is not a guaranteed TC price |
@@ -117,6 +126,35 @@ Never leave these unexpanded in the default player layer:
 - volatility.
 
 The technical term may appear in parentheses after the plain label.
+
+Explaining is not the same as substituting. The canonical term stays on the
+label; the plain sentence sits next to it. Never delete `Best ask`, `Best bid`,
+`Mid`, `Quoted spread`, `Bid depth`, `Ask depth`, `Deviation`, `Predicted 7d`,
+`Signal`, `Convergent`, `Divergent`, `Inside band`, `Dispersion`, `RMSE`,
+`Holdout` or `Total return` and leave only a paraphrase in its place. A reader
+who knows finance must still be able to scan the interface, and a reader who
+does not must still be able to read it.
+
+## Game context for analysts and finance professionals
+
+The reverse translation is a requirement, not a courtesy. A quantitative
+researcher or investment professional arrives knowing markets and not knowing
+Tibia, so every surface that uses a game concept must make that concept legible
+without sending the reader to a wiki:
+
+| Tibia concept | What it is | Market translation |
+|---|---|---|
+| World | One game server holding its own characters, gold and offers | A separate local market |
+| Character world transfer | A paid service to move a character between worlds | Costly, restricted capital mobility; the reason world prices can diverge |
+| GP (gold pieces) | Currency produced by players hunting monsters and selling loot to NPCs | Endogenously issued domestic currency |
+| TC (Tibia Coins) | Premium currency bought from CipSoft for real money and resold to players | Premium currency with developer-controlled primary supply and a player secondary market |
+| Market | The in-game venue holding resting buy and sell offers, charging a fee on completed trades | Order-driven exchange with visible depth and explicit transaction costs |
+| Gold emission | GP created through hunting, including modeled NPC-sale value of loot | Money-supply creation inside each local market |
+| PvP type, BattlEye cohort, region | Permanent world attributes set at creation | Segmentation dimensions used for grouped models and fixed effects |
+| World age / launch phase | Time since the world was created | Immature market with little accumulated currency stock |
+
+Keep the Tibia term visible when translating it. Write “world (a separate
+local market)”, never only “local market”.
 
 ## Per-view reading path
 
@@ -191,6 +229,10 @@ Before marking a view complete, verify:
 - Model quality is translated into an intuitive error or comparison.
 - The main limitation is visible before the technical appendix.
 - The full statistical evidence remains accessible to expert readers.
+- No canonical financial or statistical term was deleted and replaced by a
+  paraphrase; each one still appears on its label with its plain meaning.
+- Every Tibia concept on the view is legible to a reader who has never played,
+  with the game term kept and the market translation next to it.
 
 ## QA method
 
