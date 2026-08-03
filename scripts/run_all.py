@@ -44,7 +44,7 @@ ANALYSE = ["06_analysis.py", "07_forecast.py", "10_advanced.py", "11_finance.py"
 # 46 runs last on purpose: it compares the finished artifacts against each other, so all of
 # them must already be rebuilt for its answer to mean anything.
 RENDER = ["12_art.py", "13_icons.py", "08_figures.py", "09_report.py",
-          "15_verify.py", "36_gold_emission_report.py",
+          "15_verify.py", "36_gold_emission_report.py", "51_render_gold_emission_report.py",
           "38_gold_emission_dashboard.py", "37_verify_gold_emission.py",
           "39_intelligence_hub.py", "40_verify_intelligence_hub.py",
           "46_verify_artifacts.py"]

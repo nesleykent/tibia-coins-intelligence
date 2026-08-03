@@ -37,6 +37,8 @@ FIELDS = (
     "direct_coin_gp",
     "npc_potential_gp_max",
     "potential_total_gp_max",
+    "potential_total_gp_conservative",
+    "realized_estimate_gp_category",
     "low_quality_flag",
     "partial_date_flag",
     "ev_any",
@@ -50,6 +52,8 @@ NUMERIC_FIELDS = {
     "direct_coin_gp",
     "npc_potential_gp_max",
     "potential_total_gp_max",
+    "potential_total_gp_conservative",
+    "realized_estimate_gp_category",
 }
 
 BOOLEAN_FIELDS = {"low_quality_flag", "partial_date_flag", "ev_any"}
@@ -414,6 +418,8 @@ MARKUP = r"""
       <div class="em-series-control" role="group" aria-label="Visible chart series">
         <label class="em-check"><input type="checkbox" data-em-series="direct" checked> Direct GP</label>
         <label class="em-check"><input type="checkbox" data-em-series="potential" checked> Potential GP</label>
+        <label class="em-check"><input type="checkbox" data-em-series="conservative"> Potential GP, open-access NPCs</label>
+        <label class="em-check"><input type="checkbox" data-em-series="category"> Scenario: NPC sales by item category</label>
         <label class="em-check"><input id="emTcPriceToggle" type="checkbox"> TC price (GP/TC)</label>
       </div>
     </div>
@@ -550,6 +556,15 @@ MARKUP = r"""
   <p class="em-footnote">
     Source: reconstructed creature loot values joined to Tibia world kill statistics. Player-market values are zero.
     “Potential GP maximum” assumes all modeled NPC-sellable loot is collected and sold.
+    “Potential GP, open-access NPCs” prices the same loot only at buyers a character reaches
+    without a quest or a store purchase — it excludes Rashid, who trades after the Travelling
+    Trader Quest, and Hirelings, bought with Tibia Coins — so the gap between the two lines is
+    what the estimate owes to assuming the hunter reaches the best buyer in the game.
+    “Scenario: NPC sales by item category” applies a per-category pickup-and-sale rate to the
+    NPC-sale part only; direct coins are always created on the drop. Those rates are declared
+    assumptions, not measurements: loot pickup is not observed anywhere in the data, and item
+    weight is absent from the item source, so value density and how each category is handled on
+    a hunt stand in for carry cost. Read it as a scenario, never as observed sales.
     GP means Tibia gold pieces. TC means Tibia Coins; no TC are counted as generated gold.
     Boss emissions remain excluded from the primary series.
   </p>
@@ -618,16 +633,18 @@ SCRIPT = r"""
   "use strict";
 
   const NS = "http://www.w3.org/2000/svg";
-  const COLORS = { direct: "#4E79A7", potential: "#F28E2B", tcPrice: "#59A14F" };
+  const COLORS = { direct: "#4E79A7", potential: "#F28E2B", tcPrice: "#59A14F", conservative: "#B07AA1", category: "#E15759" };
   const SERIES = {
     direct: { label: "Direct GP", color: COLORS.direct, dash: "" },
-    potential: { label: "Potential GP", color: COLORS.potential, dash: "8 6" }
+    potential: { label: "Potential GP", color: COLORS.potential, dash: "8 6" },
+    conservative: { label: "Potential GP, open-access NPCs", color: COLORS.conservative, dash: "2 4" },
+    category: { label: "Scenario: NPC sales by item category", color: COLORS.category, dash: "10 4 2 4" }
   };
   const REQUIRED_CSV = [
     "world", "date", "top_emission_creature_name", "top_emission_creature_gp",
     "total_kills", "nonboss_kills", "modeled_kills_nonboss", "direct_coin_gp",
-    "npc_potential_gp_max", "potential_total_gp_max", "low_quality_flag",
-    "partial_date_flag", "ev_any"
+    "npc_potential_gp_max", "potential_total_gp_max", "potential_total_gp_conservative",
+    "realized_estimate_gp_category", "low_quality_flag", "partial_date_flag", "ev_any"
   ];
   const KILL_STATS_BASE = "https://raw.githubusercontent.com/tibiamaps/tibia-kill-stats/main/data/";
   const WORLD_CONCURRENCY = 6;
@@ -879,7 +896,12 @@ SCRIPT = r"""
     $("#emWorldSelect").value = "all";
     $("#emDateStart").value = $("#emDateStart").min;
     $("#emDateEnd").value = $("#emDateEnd").max;
-    $$("[data-em-series]").forEach(input => { input.checked = true; });
+    // Restore the default pair rather than every series: the conservative and category lines
+    // are scenarios that answer a narrower question, and switching them all on by default would
+    // present four lines of unequal standing as if they were alternatives of the same kind.
+    $$("[data-em-series]").forEach(input => {
+      input.checked = ["direct", "potential"].includes(input.dataset.emSeries);
+    });
     $("#emTcPriceToggle").checked = false;
     showAllRows = false;
     exitDayDetail();
@@ -961,7 +983,8 @@ SCRIPT = r"""
     for (const row of selected) {
       const current = byDate.get(row.date) || {
         date: row.date, kills: 0, nonboss: 0, modeled: 0, direct: 0, npc: 0,
-        potential: 0, low: false, partial: false, event: false, worlds: 0,
+        potential: 0, conservative: 0, category: 0,
+        low: false, partial: false, event: false, worlds: 0,
         topName: "", topWorld: "", topGp: -1
       };
       current.kills += numeric(row.total_kills);
@@ -970,6 +993,8 @@ SCRIPT = r"""
       current.direct += numeric(row.direct_coin_gp);
       current.npc += numeric(row.npc_potential_gp_max);
       current.potential += numeric(row.potential_total_gp_max);
+      current.conservative += numeric(row.potential_total_gp_conservative);
+      current.category += numeric(row.realized_estimate_gp_category);
       current.low ||= bool(row.low_quality_flag);
       current.partial ||= bool(row.partial_date_flag);
       current.event ||= bool(row.ev_any);
@@ -984,6 +1009,8 @@ SCRIPT = r"""
     return [...byDate.values()].sort((a, b) => a.date.localeCompare(b.date)).map(row => ({
       ...row,
       potential: row.direct + row.npc,
+      conservative: row.conservative,
+      category: row.category,
       coverage: row.nonboss > 0 ? row.modeled / row.nonboss : 0,
       tcPrice: world === "all"
         ? numeric((indexByDate.get(row.date) || {}).price)

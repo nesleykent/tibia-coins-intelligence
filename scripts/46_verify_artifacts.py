@@ -193,8 +193,14 @@ for fact in FACTS:
     stated: dict[str, list] = {}
     if fact.get("meta") and fact["meta"] in HUB_META:
         stated["hub"] = [HUB_META[fact["meta"]]]
+    # Only artifacts inside the fact's declared scope. The scope was already written on every
+    # fact but was consulted only for the coverage check, so a page that never claims a quantity
+    # could still be failed for "disagreeing" about it: the standalone report tripped
+    # band_threshold_pct, a transaction-cost figure it does not discuss, because a coverage tile
+    # reading "80.00%" contains "0.00%" and the pattern accepts a single leading digit.
+    fact_scope = fact.get("scope") or tuple(ARTIFACTS)
     for name, text in ARTIFACTS.items():
-        if not text:
+        if not text or name not in fact_scope:
             continue
         if fact["kind"] == "number":
             got = find_numbers(text, fact["pattern"])
@@ -230,8 +236,7 @@ for fact in FACTS:
         else:
             notes.append(f"{fact['key']} present in {', '.join(sorted(stated))}")
 
-    scope = fact.get("scope") or tuple(ARTIFACTS)
-    missing = [n for n in scope if ARTIFACTS.get(n) and n not in stated]
+    missing = [n for n in fact_scope if ARTIFACTS.get(n) and n not in stated]
     if missing and "pdf" in stated:
         gaps.append(f"{fact['key']}: in the PDF, absent from {', '.join(sorted(missing))} "
                     f"({fact['why']})")
