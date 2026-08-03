@@ -20,7 +20,7 @@ CREATURE_PAGE = ROOT / "reports" / "creature_gp_per_kill.html"
 REQUIRED = [
     "creature_loot_items.csv",
     "creature_gold_value.csv",
-    "gold_emission_daily.csv",
+    "gold_emission_daily.csv.gz",
     "gold_emission_quality.csv",
     "gold_emission_quality.json",
     "gold_emission_model_comparison.csv",
@@ -32,6 +32,23 @@ REQUIRED = [
 ]
 
 
+# GitHub warns above 50 MB and refuses above 100. The daily table gains roughly 23 MB a year
+# uncompressed, so it crossed the warning as soon as the panel reached 3.5 years and would have
+# hit the hard limit unattended. Fail the build well before that, and fail it if the table is
+# ever written uncompressed again, rather than discovering it in a push that a collaborator
+# cannot repeat.
+MAX_TRACKED_MB = 45
+
+
+def check_size(path) -> None:
+    size_mb = path.stat().st_size / 1e6
+    if size_mb > MAX_TRACKED_MB:
+        raise SystemExit(
+            f"{path.name} is {size_mb:.1f} MB, over the {MAX_TRACKED_MB} MB tracked ceiling; "
+            "compress it further or move it out of git rather than pushing past GitHub's limits"
+        )
+
+
 def close(left, right, tolerance=1e-8) -> bool:
     return bool(np.allclose(left, right, rtol=tolerance, atol=tolerance, equal_nan=True))
 
@@ -39,13 +56,20 @@ def close(left, right, tolerance=1e-8) -> bool:
 def main() -> None:
     missing = [name for name in REQUIRED if not (P / name).exists()]
     assert not missing, f"missing outputs: {missing}"
+    for name in REQUIRED:
+        check_size(P / name)
+    stale = P / "gold_emission_daily.csv"
+    assert not stale.exists(), (
+        "gold_emission_daily.csv exists alongside the gzipped table; two copies of the same "
+        "series will drift, and the uncompressed one is what broke the size limit"
+    )
     assert REPORT.exists(), "missing report artifact"
     assert DASHBOARD.exists(), "missing interactive dashboard"
     assert CREATURE_PAGE.exists(), "missing creature GP reference page"
 
     items = pd.read_csv(P / "creature_loot_items.csv")
     creatures = pd.read_csv(P / "creature_gold_value.csv")
-    daily = pd.read_csv(P / "gold_emission_daily.csv", parse_dates=["date"])
+    daily = pd.read_csv(P / "gold_emission_daily.csv.gz", parse_dates=["date"])
     models = pd.read_csv(P / "gold_emission_model_comparison.csv")
     oos = pd.read_csv(P / "gold_emission_oos.csv")
     sensitivity = pd.read_csv(P / "gold_emission_sensitivity.csv")
@@ -214,7 +238,7 @@ def main() -> None:
     assert 'id="emFileInput"' in dashboard
     assert "<script src=" not in dashboard, "dashboard must remain self-contained"
     assert "async function refreshProjectCSV()" in dashboard
-    assert 'fetch("../data/processed/gold_emission_daily.csv", { cache: "no-store" })' in dashboard
+    assert 'fetch("../data/processed/gold_emission_daily.csv.gz", { cache: "no-store" })' in dashboard
     assert 'if (!["http:", "https:"].includes(location.protocol)) return;' in dashboard
     assert 'sourceMeta = { ...sourceMeta, mode: "fallback" };' in dashboard
     assert "void refreshProjectCSV();" in dashboard

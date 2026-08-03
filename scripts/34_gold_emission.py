@@ -1203,7 +1203,11 @@ def main() -> None:
     P.mkdir(parents=True, exist_ok=True)
     items.to_csv(P / "creature_loot_items.csv", index=False)
     coverage.to_csv(P / "creature_gold_value.csv", index=False)
-    daily.to_csv(P / "gold_emission_daily.csv", index=False)
+    # Gzipped because the panel reached 3.5 years and the plain CSV hit 82.6 MB, past GitHub's
+    # 50 MB warning and heading for the 100 MB hard limit at roughly 23 MB a year. Every row and
+    # column is kept; only the encoding changes. pandas reads .csv.gz by extension, and the
+    # dashboard decompresses in the browser, which also cuts what that page downloads by 2.4x.
+    daily.to_csv(P / "gold_emission_daily.csv.gz", index=False, compression="gzip")
     pd.DataFrame(
         [
             {"metric": key, "value": json.dumps(value) if isinstance(value, (list, dict)) else value}

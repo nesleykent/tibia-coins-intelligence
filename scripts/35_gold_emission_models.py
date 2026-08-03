@@ -137,7 +137,7 @@ def fe_model(frame: pd.DataFrame, y: str, x: str, controls: list[str]) -> dict |
 
 
 def prepare() -> pd.DataFrame:
-    emissions = pd.read_csv(P / "gold_emission_daily.csv", parse_dates=["date"])
+    emissions = pd.read_csv(P / "gold_emission_daily.csv.gz", parse_dates=["date"])
     prices = pd.read_csv(P / "panel_daily.csv", parse_dates=["date"])[
         ["world", "date", "price_gp", "converged"]
     ].rename(columns={"converged": "price_converged"})
@@ -401,7 +401,7 @@ def sensitivity_models(data: pd.DataFrame) -> pd.DataFrame:
 
 def validation_tables(data: pd.DataFrame) -> pd.DataFrame:
     creatures = pd.read_csv(P / "creature_gold_value.csv")
-    emissions = pd.read_csv(P / "gold_emission_daily.csv")
+    emissions = pd.read_csv(P / "gold_emission_daily.csv.gz")
     rows = []
     for _, row in creatures.nlargest(
         20, "expected_total_potential_gp_per_kill"

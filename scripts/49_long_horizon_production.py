@@ -285,7 +285,7 @@ if len(hc):
 print("\n" + "=" * 78)
 mon = []
 try:
-    em = pd.read_csv(P / "gold_emission_daily.csv", parse_dates=["date"], low_memory=False)
+    em = pd.read_csv(P / "gold_emission_daily.csv.gz", parse_dates=["date"], low_memory=False)
     SERIES = [c for c in ("direct_coin_gp", "potential_total_gp_max",
                           "realized_estimate_gp_50") if c in em.columns]
     md = (em[["world", "date"] + SERIES]

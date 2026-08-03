@@ -10,7 +10,7 @@
    {
     "id": "src_daily",
     "label": "Daily world emission series",
-    "path": "data/processed/gold_emission_daily.csv"
+    "path": "data/processed/gold_emission_daily.csv.gz"
    },
    {
     "id": "src_creatures",
@@ -43,7 +43,7 @@
    {
     "id": "src_daily_chart",
     "label": "Daily normalized emission query",
-    "path": "data/processed/gold_emission_daily.csv",
+    "path": "data/processed/gold_emission_daily.csv.gz",
     "query": {
      "description": "Aggregate direct and 50%-realization GP per average online player by date.",
      "engine": "SQLite",
@@ -4221,7 +4221,7 @@
   {
    "id": "src_daily",
    "label": "Daily world emission series",
-   "path": "data/processed/gold_emission_daily.csv"
+   "path": "data/processed/gold_emission_daily.csv.gz"
   },
   {
    "id": "src_creatures",
@@ -4254,7 +4254,7 @@
   {
    "id": "src_daily_chart",
    "label": "Daily normalized emission query",
-   "path": "data/processed/gold_emission_daily.csv",
+   "path": "data/processed/gold_emission_daily.csv.gz",
    "query": {
     "description": "Aggregate direct and 50%-realization GP per average online player by date.",
     "engine": "SQLite",

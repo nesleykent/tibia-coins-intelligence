@@ -14,13 +14,14 @@ without colliding with it.
 from __future__ import annotations
 
 import csv
+import gzip
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "data" / "processed" / "gold_emission_daily.csv"
+SOURCE = ROOT / "data" / "processed" / "gold_emission_daily.csv.gz"
 PRICE_SOURCE = ROOT / "data" / "processed" / "panel_daily.csv"
 CREATURE_VALUE_SOURCE = ROOT / "data" / "processed" / "creature_gold_value.csv"
 
@@ -85,7 +86,10 @@ def build_payload(*, include_prices: bool = True) -> dict[str, object]:
     ``include_prices`` is off for the hub, which already embeds the same daily
     prices for its other views and hands them to the component at mount time.
     """
-    with SOURCE.open(newline="", encoding="utf-8") as handle:
+    # The stored table is gzipped once the panel spans years; open it accordingly rather than
+    # handing raw deflate bytes to a UTF-8 decoder.
+    opener = gzip.open if SOURCE.suffix == ".gz" else open
+    with opener(SOURCE, "rt", newline="", encoding="utf-8") as handle:
         reader = csv.DictReader(handle)
         missing = sorted(set(FIELDS) - set(reader.fieldnames or ()))
         if missing:
@@ -1796,13 +1800,27 @@ SCRIPT = r"""
   async function refreshProjectCSV() {
     if (!["http:", "https:"].includes(location.protocol)) return;
     try {
-      const response = await fetch("../data/processed/gold_emission_daily.csv", { cache: "no-store" });
+      const response = await fetch("../data/processed/gold_emission_daily.csv.gz", { cache: "no-store" });
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const rows = normalizeCSV(await response.text());
+      // The stored table is gzipped: 3.5 years of world-days came to 82.6 MB as plain CSV, past
+      // GitHub's 50 MB warning, and this page downloaded every byte of it. Whether the bytes
+      // arrive still compressed depends on the server - one that sets Content-Encoding: gzip has
+      // already decompressed them by now, one serving the file as an opaque download has not.
+      // Sniff the gzip magic number instead of trusting either, so the page works on both.
+      const buffer = await response.arrayBuffer();
+      const head = new Uint8Array(buffer.slice(0, 2));
+      let text;
+      if (head[0] === 0x1f && head[1] === 0x8b) {
+        const stream = new Response(buffer).body.pipeThrough(new DecompressionStream("gzip"));
+        text = await new Response(stream).text();
+      } else {
+        text = new TextDecoder().decode(buffer);
+      }
+      const rows = normalizeCSV(text);
       const updatedAt = response.headers.get("last-modified") || new Date().toISOString();
       applyDataset(
         rows,
-        datasetMeta(rows, "data/processed/gold_emission_daily.csv", updatedAt, "project"),
+        datasetMeta(rows, "data/processed/gold_emission_daily.csv.gz", updatedAt, "project"),
         true
       );
     } catch (_) {

@@ -30,7 +30,7 @@ import pandas as pd
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 P = ROOT / "data" / "processed"
-OUT = P / "gold_emission_daily.csv"
+OUT = P / "gold_emission_daily.csv.gz"
 WORK = pathlib.Path("/tmp/tibia-ks-hist-sparse")
 REPO = "https://github.com/tibiamaps/tibia-kill-stats-from-2022-08-23-to-2025-12-04.git"
 KEEP = "--keep" in sys.argv

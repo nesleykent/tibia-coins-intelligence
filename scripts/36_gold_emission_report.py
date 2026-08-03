@@ -26,7 +26,7 @@ def records(frame: pd.DataFrame) -> list[dict]:
 def main() -> None:
     quality = json.loads((P / "gold_emission_quality.json").read_text())
     results = json.loads((P / "gold_emission_results.json").read_text())
-    daily = pd.read_csv(P / "gold_emission_daily.csv", parse_dates=["date"])
+    daily = pd.read_csv(P / "gold_emission_daily.csv.gz", parse_dates=["date"])
     creatures = pd.read_csv(P / "creature_gold_value.csv")
     models = pd.read_csv(P / "gold_emission_model_comparison.csv")
     oos = pd.read_csv(P / "gold_emission_oos.csv")
@@ -134,13 +134,13 @@ def main() -> None:
         {
             "id": "src_daily",
             "label": "Daily world emission series",
-            "path": "data/processed/gold_emission_daily.csv",
+            "path": "data/processed/gold_emission_daily.csv.gz",
             "query": {
                 "description": "World-day emission series reconstructed from positive creature kills and reliable loot models.",
                 "engine": "Python/pandas",
                 "language": "python",
                 "tables_used": [
-                    "data/processed/gold_emission_daily.csv",
+                    "data/processed/gold_emission_daily.csv.gz",
                     "data/processed/population_daily.csv",
                 ],
                 "filters": [
@@ -233,7 +233,7 @@ def main() -> None:
             {
                 "id": "src_daily_chart",
                 "label": "Daily normalized emission query",
-                "path": "data/processed/gold_emission_daily.csv",
+                "path": "data/processed/gold_emission_daily.csv.gz",
                 "query": {
                     "description": "Aggregate direct and 50%-realization GP per average online player by date.",
                     "engine": "SQLite",

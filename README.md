@@ -168,13 +168,13 @@ The monetary-emission reconstruction is also available as four audit layers:
 |---|---|
 | `data/processed/creature_loot_items.csv` | Item-level probability, expected quantity, classification, NPC value, source revision and confidence |
 | `data/processed/creature_gold_value.csv` | Canonical creature coverage and expected direct/potential GP per kill |
-| `data/processed/gold_emission_daily.csv` | World-day direct, potential, realization-adjusted, boss-separated, cumulative and activity-normalized series |
+| `data/processed/gold_emission_daily.csv.gz` | World-day direct, potential, realization-adjusted, boss-separated, cumulative and activity-normalized series. Gzipped: 90,701 world-days over 3.5 years is 82.6 MB as plain CSV, past GitHub's 50 MB warning and gaining roughly 23 MB a year, against 33 MB compressed. Every row and column is kept — `pandas.read_csv` handles the extension, and the dashboard decompresses in the browser |
 | `reports/gold_emission_report_artifact.json` | Validated technical report manifest and bounded evidence snapshot |
 | `reports/gold_emission_dashboard.html` | Self-contained interactive dashboard with world, time, realization and series filters |
 
 Open `reports/gold_emission_dashboard.html` directly in a browser for its embedded offline
 snapshot. When the project is served over HTTP, the dashboard automatically refreshes from
-`data/processed/gold_emission_daily.csv`, preserves shareable URL filters, and falls back to
+`data/processed/gold_emission_daily.csv.gz`, preserves shareable URL filters, and falls back to
 the embedded data if that file is unavailable. A newer CSV can also be selected through the
 **Load updated CSV** control.
 
