@@ -1,9 +1,9 @@
 feature,n_considered,n_flipped,flip_rate,median_move
+log_age,200,0,0.0,
 premium_x_disp,200,0,0.0,
-ret_lag1,200,0,0.0,
 turnover_7,200,0,0.0,
-log_boss_kills,200,0,0.0,
+log_day_sold,200,0,0.0,
 log_kills_pp,200,0,0.0,
+log_players_online_avg,200,0,0.0,
 mom14,200,0,0.0,
-idx_activity,200,0,0.0,
-ob_log_bid_depth,200,0,0.0,
+idx_premium_demand,200,0,0.0,

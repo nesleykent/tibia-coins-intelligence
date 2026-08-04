@@ -164,12 +164,12 @@ def main() -> None:
     # a visible plain explanation rather than replaced by one.
     assert "Executable prices now" in html
     for term, explanation in (
-        ("Buy TC", "What you pay for 1 TC"),
-        ("Sell TC", "What you receive for 1 TC"),
-        ("Mid", "Halfway point, not executable"),
-        ("Spread", "Gap between the two prices"),
-        ("Demand depth", "TC players want to buy"),
-        ("Supply depth", "TC offered for sale"),
+        ("Buy TC", "Lowest Piece Price in Sell Offers"),
+        ("Sell TC", "Highest Piece Price in Buy Offers"),
+        ("Mid", "Between the two Piece Prices"),
+        ("Spread", "Gap between the two Piece Prices"),
+        ("Demand depth", "Amount in Buy Offers"),
+        ("Supply depth", "Amount in Sell Offers"),
     ):
         assert f"<th>{term}<span class=\"term-help\">{explanation}</span></th>" in html
     for term, explanation in (

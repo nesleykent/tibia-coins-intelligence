@@ -1,5 +1,5 @@
 {
- "n_rows": 40631,
+ "n_rows": 40846,
  "n_worlds": 93,
  "start": "2023-01-11",
  "end": "2026-07-30",
@@ -158,6 +158,6 @@
  ],
  "move_threshold": 0.02,
  "n_converged": 61,
- "max_abs_corr_feature_vs_next_return": 0.12925336169526622,
+ "max_abs_corr_feature_vs_next_return": 0.1292107197767623,
  "max_abs_corr_feature": "ret_ew3"
 }

@@ -1,81 +1,81 @@
 world,inflow,outflow,net,px_last,region
-Aethera,37.0,1.0,36.0,38771.5,North America
-Antica,18.0,23.0,-5.0,39158.0,Europe
-Astera,4.0,6.0,-2.0,43406.5,North America
-Belobra,12.0,8.0,4.0,42843.5,South America
+Aethera,37.0,1.0,36.0,41335.0,North America
+Antica,18.0,23.0,-5.0,40130.0,Europe
+Astera,4.0,6.0,-2.0,43958.0,North America
+Belobra,12.0,8.0,4.0,43985.5,South America
 Blumera,4.0,11.0,-7.0,38985.0,North America
-Bona,8.0,18.0,-10.0,42475.5,Europe
-Bravoria,2.0,1.0,1.0,37971.0,Europe
-Calmera,3.0,5.0,-2.0,42013.5,North America
+Bona,8.0,18.0,-10.0,42775.0,Europe
+Bravoria,2.0,1.0,1.0,39545.0,Europe
+Calmera,3.0,5.0,-2.0,43273.0,North America
 Cantabra,8.0,6.0,2.0,40534.5,South America
-Celebra,1.0,5.0,-4.0,43811.5,South America
-Celesta,16.0,6.0,10.0,43167.5,Europe
-Citra,7.0,2.0,5.0,37526.0,Europe
+Celebra,1.0,5.0,-4.0,43942.5,South America
+Celesta,16.0,6.0,10.0,43339.5,Europe
+Citra,7.0,2.0,5.0,36498.0,Europe
 Collabra,8.0,3.0,5.0,40040.0,South America
-Descubra,3.0,3.0,0.0,40221.5,South America
-Dia,2.0,8.0,-6.0,37868.5,Europe
-Eclipta,4.0,5.0,-1.0,38202.5,Europe
-Epoca,2.0,1.0,1.0,39284.0,Europe
+Descubra,3.0,3.0,0.0,40597.5,South America
+Dia,2.0,8.0,-6.0,38354.5,Europe
+Eclipta,4.0,5.0,-1.0,37766.0,Europe
+Epoca,2.0,1.0,1.0,37018.0,Europe
 Escura,0.0,1.0,-1.0,25998.0,Europe
 Etebra,4.0,1.0,3.0,39591.5,South America
-Ferobra,13.0,12.0,1.0,39365.5,South America
-Firmera,3.0,1.0,2.0,38347.5,North America
-Gentebra,8.0,6.0,2.0,42954.5,South America
-Gladera,1.0,2.0,-1.0,42558.0,North America
-Gladibra,0.0,5.0,-5.0,36948.5,South America
+Ferobra,13.0,12.0,1.0,39945.5,South America
+Firmera,3.0,1.0,2.0,39701.0,North America
+Gentebra,8.0,6.0,2.0,43432.0,South America
+Gladera,1.0,2.0,-1.0,42395.0,North America
+Gladibra,0.0,5.0,-5.0,38157.5,South America
 Harmonia,1.0,3.0,-2.0,43883.5,Europe
-Havera,15.0,4.0,11.0,39096.5,North America
+Havera,15.0,4.0,11.0,39957.5,North America
 Honbra,8.0,10.0,-2.0,39958.0,South America
 Idyllia,0.0,1.0,-1.0,31017.5,Europe
-Ignitera,1.0,7.0,-6.0,37671.5,North America
-Inabra,7.0,16.0,-9.0,39690.5,South America
-Issobra,3.0,1.0,2.0,39182.0,South America
-Jadebra,6.0,8.0,-2.0,39545.5,South America
+Ignitera,1.0,7.0,-6.0,39883.5,North America
+Inabra,7.0,16.0,-9.0,40521.5,South America
+Issobra,3.0,1.0,2.0,39625.5,South America
+Jadebra,6.0,8.0,-2.0,39772.5,South America
 Kalanta,4.0,3.0,1.0,37135.0,Europe
-Kalibra,4.0,6.0,-2.0,43513.0,South America
-Kalimera,9.0,0.0,9.0,37101.0,North America
-Karmeya,6.0,6.0,0.0,38353.0,Europe
-Lobera,3.0,10.0,-7.0,39114.5,North America
+Kalibra,4.0,6.0,-2.0,44176.0,South America
+Kalimera,9.0,0.0,9.0,37472.5,North America
+Karmeya,6.0,6.0,0.0,39282.5,Europe
+Lobera,3.0,10.0,-7.0,38499.0,North America
 Luminera,4.0,3.0,1.0,43400.5,North America
-Luzibra,3.0,0.0,3.0,39649.5,South America
-Menera,1.0,6.0,-5.0,43492.0,North America
-Monstera,2.0,2.0,0.0,36667.5,North America
-Monza,8.0,3.0,5.0,42392.5,Europe
-Nefera,7.0,7.0,0.0,43395.0,North America
-Nevia,2.0,8.0,-6.0,39021.0,Europe
+Luzibra,3.0,0.0,3.0,41332.0,South America
+Menera,1.0,6.0,-5.0,43876.0,North America
+Monstera,2.0,2.0,0.0,36552.5,North America
+Monza,8.0,3.0,5.0,43024.5,Europe
+Nefera,7.0,7.0,0.0,44101.5,North America
+Nevia,2.0,8.0,-6.0,39135.5,Europe
 Noctalia,8.0,0.0,8.0,36373.0,Europe
-Oceanis,5.0,2.0,3.0,43448.0,Oceania
-Ombra,5.0,3.0,2.0,39259.0,South America
-Ourobra,2.0,17.0,-15.0,39606.5,South America
-Pacera,7.0,9.0,-2.0,43248.5,North America
-Peloria,6.0,6.0,0.0,38073.5,Europe
-Premia,7.0,4.0,3.0,38087.5,Europe
-Quelibra,20.0,8.0,12.0,40004.5,South America
-Quidera,12.0,2.0,10.0,38838.0,North America
-Quintera,8.0,7.0,1.0,39699.0,North America
-Rasteibra,9.0,3.0,6.0,40048.0,South America
-Refugia,17.0,5.0,12.0,43080.0,Europe
-Retalia,0.0,1.0,-1.0,36875.0,Europe
-Secura,13.0,12.0,1.0,43343.0,Europe
-Serdebra,7.0,10.0,-3.0,39380.0,South America
-Solidera,14.0,16.0,-2.0,40784.0,North America
-Sombra,3.0,0.0,3.0,41976.5,South America
+Oceanis,5.0,2.0,3.0,44975.0,Oceania
+Ombra,5.0,3.0,2.0,40827.5,South America
+Ourobra,2.0,17.0,-15.0,40834.5,South America
+Pacera,7.0,9.0,-2.0,43935.5,North America
+Peloria,6.0,6.0,0.0,39202.5,Europe
+Premia,7.0,4.0,3.0,39255.0,Europe
+Quelibra,20.0,8.0,12.0,40850.5,South America
+Quidera,12.0,2.0,10.0,39011.0,North America
+Quintera,8.0,7.0,1.0,41040.5,North America
+Rasteibra,9.0,3.0,6.0,40078.5,South America
+Refugia,17.0,5.0,12.0,43172.0,Europe
+Retalia,0.0,1.0,-1.0,36835.0,Europe
+Secura,13.0,12.0,1.0,43970.0,Europe
+Serdebra,7.0,10.0,-3.0,40384.0,South America
+Solidera,14.0,16.0,-2.0,40923.5,North America
+Sombra,3.0,0.0,3.0,42629.5,South America
 Sonira,2.0,2.0,0.0,39697.0,Europe
 Stralis,1.0,1.0,0.0,39881.5,Oceania
-Talera,6.0,10.0,-4.0,38791.5,North America
-Tempestera,2.0,4.0,-2.0,36871.5,North America
-Terribra,3.0,2.0,1.0,37459.0,South America
-Thyria,2.0,4.0,-2.0,39195.5,Europe
-Tornabra,3.0,3.0,0.0,40357.0,South America
+Talera,6.0,10.0,-4.0,39884.0,North America
+Tempestera,2.0,4.0,-2.0,39336.0,North America
+Terribra,3.0,2.0,1.0,37026.0,South America
+Thyria,2.0,4.0,-2.0,39106.5,Europe
+Tornabra,3.0,3.0,0.0,40871.5,South America
 Unebra,4.0,14.0,-10.0,40526.5,South America
-Ustebra,5.0,2.0,3.0,38822.0,South America
-Venebra,5.0,0.0,5.0,38730.0,South America
-Vunira,8.0,8.0,0.0,38889.0,Europe
-Wintera,6.0,6.0,0.0,39171.0,North America
+Ustebra,5.0,2.0,3.0,39710.0,South America
+Venebra,5.0,0.0,5.0,39844.5,South America
+Vunira,8.0,8.0,0.0,39134.5,Europe
+Wintera,6.0,6.0,0.0,38990.5,North America
 Xybra,3.0,0.0,3.0,39617.0,South America
 Xyla,2.0,10.0,-8.0,39092.0,Europe
-Xymera,4.0,37.0,-33.0,40431.0,North America
-Yonabra,4.0,6.0,-2.0,43225.5,South America
-Yovera,3.0,7.0,-4.0,39311.5,North America
-Yubra,3.0,7.0,-4.0,38455.0,South America
-Zunera,1.0,0.0,1.0,54001.0,North America
+Xymera,4.0,37.0,-33.0,40760.0,North America
+Yonabra,4.0,6.0,-2.0,44142.5,South America
+Yovera,3.0,7.0,-4.0,39975.0,North America
+Yubra,3.0,7.0,-4.0,40354.5,South America
+Zunera,1.0,0.0,1.0,56361.0,North America
