@@ -1464,11 +1464,11 @@ function drawDepth(svg,tooltip,a,b,labels,mode){
 function renderWorldFacts(){
   const name=$("#worldA").value,row=worldMap.get(name)||{},book=orderBookMap.get(name)||{},prediction=predictionMap.get(name);
   $("#worldFacts").innerHTML=`<h2>${escapeHtml(name)}</h2>
-    <div class="fact"><span><b>Sell Offers</b><small>lowest Piece Price open right now</small></span><strong>${book.best_ask?fmt.format(book.best_ask)+" GP":"No sell offer"}</strong></div>
-    <div class="fact"><span><b>Buy Offers</b><small>highest Piece Price open right now</small></span><strong>${book.best_bid?fmt.format(book.best_bid)+" GP":"No buy offer"}</strong></div>
-    <div class="fact"><span><b>Mid</b><small>calculated: halfway between the two Piece Prices</small></span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
-    <div class="fact"><span><b>Spread</b><small>calculated: gap between the two Piece Prices, before the Fee</small></span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
-    <div class="fact"><span><b>Demand / Supply</b><small>TC on the Buy Offers / on the Sell Offers</small></span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
+    <div class="fact"><span><b>Sell Offers</b><small>Lowest Piece Price</small></span><strong>${book.best_ask?fmt.format(book.best_ask)+" GP":"No sell offer"}</strong></div>
+    <div class="fact"><span><b>Buy Offers</b><small>Highest Piece Price</small></span><strong>${book.best_bid?fmt.format(book.best_bid)+" GP":"No buy offer"}</strong></div>
+    <div class="fact"><span><b>Mid</b><small>Between the two Piece Prices</small></span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
+    <div class="fact"><span><b>Spread</b><small>Gap between the two Piece Prices</small></span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
+    <div class="fact"><span><b>Demand / Supply</b><small>TC on the Buy Offers / Sell Offers</small></span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
     <div class="fact"><span><b>Book snapshot</b><small>when this offer list was read</small></span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
     <div class="fact"><span><b>Latest executed midpoint</b><small>average of what players paid and received that day</small></span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
     <div class="fact"><span><b>Latest executed buy / sell</b><small>what players actually paid / received that day</small></span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>

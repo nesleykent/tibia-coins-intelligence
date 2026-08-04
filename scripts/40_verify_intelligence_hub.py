@@ -176,11 +176,11 @@ def main() -> None:
     ):
         assert f"<th>{term}<span class=\"term-help\">{explanation}</span></th>" in html
     for term, explanation in (
-        ("Sell Offers", "lowest Piece Price open right now"),
-        ("Buy Offers", "highest Piece Price open right now"),
-        ("Mid", "calculated: halfway between the two Piece Prices"),
-        ("Spread", "calculated: gap between the two Piece Prices, before the Fee"),
-        ("Demand / Supply", "TC on the Buy Offers / on the Sell Offers"),
+        ("Sell Offers", "Lowest Piece Price"),
+        ("Buy Offers", "Highest Piece Price"),
+        ("Mid", "Between the two Piece Prices"),
+        ("Spread", "Gap between the two Piece Prices"),
+        ("Demand / Supply", "TC on the Buy Offers / Sell Offers"),
         ("Book snapshot", "when this offer list was read"),
         ("Latest executed midpoint", "average of what players paid and received that day"),
         ("Latest executed buy / sell", "what players actually paid / received that day"),
