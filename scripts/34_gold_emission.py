@@ -1009,7 +1009,20 @@ def build_daily(daily: pd.DataFrame) -> pd.DataFrame:
 
 def main() -> None:
     if not SRC.exists():
-        raise SystemExit(f"kill-statistics archive not found at {SRC}")
+        # The recent kill archive is a 4.2 GB clone. Without it this stage cannot rescan, but the
+        # table it would write is tracked and already covers the window, so a machine that does
+        # not hold the archive - a CI runner, a fresh clone - should carry on rather than fail
+        # the whole pipeline. Refuse only when there is no table to fall back on.
+        out = P / "gold_emission_daily.csv.gz"
+        if out.exists():
+            existing = pd.read_csv(out, usecols=["world", "date"], low_memory=False)
+            print(f"[GOLD EMISSION] archive absent at {SRC}; keeping the tracked series "
+                  f"({len(existing):,} world-days, {existing.date.min()} to {existing.date.max()}). "
+                  f"Clone it and re-run to rescan.")
+            return
+        raise SystemExit(
+            f"kill-statistics archive not found at {SRC} and no tracked series to fall back on"
+        )
     for required in (LOOT_CACHE, ITEM_META, CREATURE_CACHE):
         if not required.exists():
             raise SystemExit(f"required source cache missing: {required.relative_to(ROOT)}")

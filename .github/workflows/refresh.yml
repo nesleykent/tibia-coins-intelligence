@@ -59,8 +59,9 @@ jobs:
         continue-on-error: true
 
       - name: Rebuild
-        # The kill-statistics history stages skip on their own when the aggregated tables
-        # already cover the archive window, so no 17 GB download happens here.
+        # No archive is cloned here. The kill-statistics history stages skip when the tracked
+        # tables already cover their window, and 34_gold_emission keeps the tracked series when
+        # the 4.2 GB recent archive is absent, so the run needs 166 MB of prices and nothing else.
         run: python scripts/run_all.py --no-collect
 
       - name: Published numbers are current
