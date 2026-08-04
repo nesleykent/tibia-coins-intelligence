@@ -8,14 +8,40 @@ Output: data/processed/snapshots_raw.parquet  (one row per raw snapshot)
 No cleaning is applied here beyond typing; -1 sentinels are preserved so that
 the cleaning stage (03) is auditable in isolation.
 """
-import json, pathlib
+import json, os, pathlib, sys
 import pandas as pd
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-ARCHIVE = pathlib.Path(
-    "/private/tmp/claude-501/-Users-nesleykent-Code-Tibia-Coins/"
-    "8add2f59-46e0-4dd2-9edd-8ce0dbeb3d2d/scratchpad/repo/data/market/world"
-)
+
+# The price history is the one input this project cannot regenerate, and its path used to point
+# at a scratchpad directory belonging to a session that no longer exists. Nothing failed loudly:
+# the archive was simply unreachable, so every re-run rebuilt the same frozen panel and the
+# published end date never moved. Take the path from the command line, then the environment,
+# then a conventional clone location, and fail with the clone command when none exists.
+#
+#     git clone --depth 1 --filter=blob:none --sparse \
+#         https://github.com/nesleykent/tibia-warzones-schedule /tmp/tibia-warzones
+#     cd /tmp/tibia-warzones && git sparse-checkout set data/market/world
+CANDIDATES = [
+    *(pathlib.Path(a) for a in sys.argv[1:] if not a.startswith("-")),
+    *([pathlib.Path(os.environ["TIBIA_PRICE_ARCHIVE"])]
+      if os.environ.get("TIBIA_PRICE_ARCHIVE") else []),
+    pathlib.Path("/tmp/tibia-warzones/data/market/world"),
+    pathlib.Path(
+        "/private/tmp/claude-501/-Users-nesleykent-Code-Tibia-Coins/"
+        "8add2f59-46e0-4dd2-9edd-8ce0dbeb3d2d/scratchpad/repo/data/market/world"
+    ),
+]
+ARCHIVE = next((c for c in CANDIDATES if c.is_dir()), None)
+if ARCHIVE is None:
+    raise SystemExit(
+        "price archive not found. Clone it and re-run:\n"
+        "  git clone --depth 1 --filter=blob:none --sparse "
+        "https://github.com/nesleykent/tibia-warzones-schedule /tmp/tibia-warzones\n"
+        "  cd /tmp/tibia-warzones && git sparse-checkout set data/market/world\n"
+        "Or set TIBIA_PRICE_ARCHIVE to an existing checkout."
+    )
+print(f"[INGEST] price archive: {ARCHIVE}")
 OUT = ROOT / "data" / "processed"
 OUT.mkdir(parents=True, exist_ok=True)
 

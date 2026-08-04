@@ -1,0 +1,57 @@
+# Runs on every push and pull request. Fast, no network beyond pip, no model fitting.
+# This is the layer that would have caught the defect shipped by hand this week: a run_all.py
+# that did not parse, pushed because the stage list was checked and the file was not.
+
+name: verify
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install verification dependencies
+        # The verifiers read published tables and artifacts and fit nothing, so the ML stack
+        # (torch, catboost, lightgbm, xgboost, shap) is not installed here. That keeps this job
+        # to about a minute, which is what makes it worth running on every push.
+        run: pip install -r requirements-verify.txt
+
+      - name: Every script parses
+        # A stage that does not compile cannot fail loudly later, because it never runs at all.
+        # scripts/run_all.py was pushed in a state where a stray string sat as a dictionary key,
+        # and nothing noticed until the pipeline was invoked by hand.
+        run: python -m compileall -q scripts/
+
+      - name: Gold emission artifacts agree with their tables
+        run: python scripts/37_verify_gold_emission.py
+
+      - name: Hub agrees with its inputs
+        run: python scripts/40_verify_intelligence_hub.py
+
+      - name: Published artifacts agree with each other
+        run: python scripts/46_verify_artifacts.py
+
+      - name: The site publishes every unit of the report
+        # Fails on an unexplained omission, so a chapter cannot quietly stop being published.
+        run: python scripts/52_coverage_manifest.py
+
+      - name: Coverage manifest is unchanged by this run
+        # The manifest is a tracked output. If running it here produces a different file, the
+        # committed one was stale and the claim it makes about coverage was not current.
+        run: git diff --exit-code -- data/processed/coverage_manifest.csv

@@ -45,10 +45,26 @@ except SystemExit:
     pass
 read_world = _ks.read_world
 
+existing = pd.read_csv(OUT) if OUT.exists() else pd.DataFrame()
+
+# The archive this stage folds in is fixed: it ends 2025-12-04 and gains nothing afterwards.
+# Demanding the clone before checking whether anything is missing turned a completed aggregation
+# into a hard pipeline failure the moment the working copy was cleaned up - 16_killstats.py has
+# skipped on the same condition all along, and this stage should too rather than asking for a
+# 17 GB download to rediscover rows already in the table.
+ARCHIVE_END = pd.Timestamp("2025-12-04")
+if len(existing) and "--force-fetch" not in sys.argv:
+    dates = pd.to_datetime(existing.date)
+    inside = existing.loc[dates <= ARCHIVE_END]
+    if dates.min() <= pd.Timestamp("2022-08-24") and inside.world.nunique() >= 90:
+        print(f"[HISTORY] skipped; {len(existing):,} rows already aggregated from "
+              f"{dates.min().date()}, {inside.world.nunique()} worlds inside the archive window "
+              f"(pass --force-fetch to re-read it)")
+        raise SystemExit(0)
+
 if not SRC.is_dir():
     raise SystemExit(f"archive not found at {SRC}; clone it first, or pass the path")
 
-existing = pd.read_csv(OUT) if OUT.exists() else pd.DataFrame()
 have = set(zip(existing.world, existing.date)) if len(existing) else set()
 print(f"[HISTORY] {len(existing):,} rows already aggregated")
 

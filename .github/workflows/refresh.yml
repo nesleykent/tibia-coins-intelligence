@@ -1,0 +1,102 @@
+# Collects current market data and rebuilds the study from it.
+#
+# Deliberately does NOT commit the rebuilt artifacts. One run regenerates about 82 MB of them -
+# a 24 MB hub, a 17 MB dashboard, a 35 MB emission table, a 6 MB PDF - and committing that daily
+# would add roughly 30 GB a year to a repository that is 673 MB today. Git stores every version
+# of a binary in full, so the history would outgrow the work by an order of magnitude within
+# months.
+#
+# Instead the run uploads what it built and reports whether it is sound. Publishing the site
+# from these artifacts (Pages, or a release) is the natural next step, and is a decision about
+# how the project distributes its output rather than something to switch on inside a workflow.
+
+name: refresh
+
+on:
+  schedule:
+    # 06:00 UTC, after the upstream price archive's own daily run.
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    inputs:
+      collect:
+        description: "Fetch live order books (slow: rate-limited to 1 request / 5s)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install the full pipeline
+        run: pip install -r requirements.txt
+
+      - name: Fetch the price archive
+        # The one input this project cannot regenerate. 02_ingest_prices.py looks here by
+        # default; TIBIA_PRICE_ARCHIVE overrides it.
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/nesleykent/tibia-warzones-schedule /tmp/tibia-warzones
+          cd /tmp/tibia-warzones && git sparse-checkout set data/market/world
+
+      - name: Collect live order books
+        if: inputs.collect != false
+        # api.tibiamarket.top allows one request every five seconds and answers 429 above that,
+        # so 93 worlds take about ten minutes. --refresh ignores the on-disk cache, without
+        # which the collector reports "cached" for every world and fetches nothing.
+        run: python scripts/01_collect.py --refresh
+        continue-on-error: true
+
+      - name: Rebuild
+        # The kill-statistics history stages skip on their own when the aggregated tables
+        # already cover the archive window, so no 17 GB download happens here.
+        run: python scripts/run_all.py --no-collect
+
+      - name: Published numbers are current
+        run: python scripts/54_verify_freshness.py
+
+      - name: The site publishes every unit of the report
+        run: python scripts/52_coverage_manifest.py
+
+      - name: Upload rebuilt artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ github.run_number }}
+          path: |
+            reports/intelligence_hub.html
+            reports/tibia_coin_market_report.pdf
+            reports/gold_emission_dashboard.html
+            reports/gold_emission_report.html
+            reports/creature_gp_per_kill.html
+            data/processed/coverage_manifest.csv
+            data/processed/decision_policy.csv
+          retention-days: 14
+
+      - name: Report what changed
+        if: always()
+        run: |
+          echo "### Refresh result" >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import pandas as pd
+          panel = pd.read_csv("data/processed/panel_daily.csv", usecols=["date"])
+          print(f"- cleaned panel ends **{pd.to_datetime(panel.date).max().date()}**")
+          try:
+              policy = pd.read_csv("data/processed/decision_policy.csv")
+              counts = ", ".join(f"{n} {a}" for a, n in policy.action.value_counts().items())
+              print(f"- decisions: {counts}")
+          except Exception as error:
+              print(f"- decisions unavailable: {error}")
+          PY
+          git status --porcelain -- data reports | head -20 >> "$GITHUB_STEP_SUMMARY" || true

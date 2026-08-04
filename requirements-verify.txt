@@ -1,0 +1,6 @@
+# Just enough to run the verifiers: they read published tables and artifacts and fit no
+# models, so the ML stack is not needed to check that a change is consistent.
+pandas==3.0.5
+numpy==2.4.6
+pypdf==6.14.2
+pyarrow==25.0.0
