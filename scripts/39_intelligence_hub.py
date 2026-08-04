@@ -78,6 +78,14 @@ def build_payload() -> dict:
     results_fund = json.loads((P / "fundamentals_results.json").read_text())
     manifest = json.loads(FIGURES.read_text())
 
+    decision_policy = json.loads((P / "decision_policy.json").read_text())
+    decisions = records(
+        P / "decision_policy.csv",
+        ["world", "as_of", "price_gp", "deviation_pct", "predicted_change_pct",
+         "low80_pct", "high80_pct", "horizon_days", "action", "confidence", "reason",
+         "policy_version"],
+    )
+
     market_index = records(
         P / "market_index.csv",
         ["date", "ew_price", "disp_pct", "breadth_up", "n_worlds"],
@@ -283,6 +291,8 @@ def build_payload() -> dict:
         "launchRegistry": launch_registry,
         "launchComparison": launch_comparison,
         "strategy": strategy,
+        "decisions": decisions,
+        "decisionPolicy": decision_policy,
         "figures": figures,
     }
 
@@ -387,7 +397,10 @@ HTML = r"""<!doctype html>
       padding:9px 11px;font-size:11px;line-height:1.5;opacity:0;transition:opacity .1s;min-width:180px}
     .chart-tooltip.visible{opacity:1}
     .chart-empty{color:var(--muted);text-align:center;padding:100px 20px}
-    .chart-note{margin:10px 2px 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
+    .pill-lg{font-size:1.05rem;padding:6px 14px}
+.decision-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:10px}
+.decision-reason{margin:0 0 14px;font-size:1.02rem;line-height:1.55}
+.chart-note{margin:10px 2px 0;font-size:11.5px;line-height:1.5;color:var(--muted)}
     .split{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(260px,.8fr);gap:16px;margin-top:16px}
     .table-tools{display:flex;gap:8px;align-items:center}
     .table-tools input{min-width:200px}
@@ -573,6 +586,9 @@ __EMISSION_STYLE__
       <button class="nav-button active" data-view="overview">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4v9Zm0 7h6v-4H4v4Zm10 0h6v-9h-6v9Zm0-13h6V4h-6v3Z"/></svg>Overview
       </button>
+      <button class="nav-button" data-view="decision">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 8h14M7 8l-3 6h6zM17 8l-3 6h6z"/></svg>Decision
+      </button>
       <button class="nav-button" data-view="worlds">
         <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/></svg>Worlds
       </button>
@@ -727,6 +743,37 @@ __EMISSION_STYLE__
         <article class="panel" style="margin-top:16px">
           <div class="panel-heading"><div><h2>Minimum-group sensitivity</h2><p>The preferred five-world gate is declared before the final holdout, not selected from it.</p></div></div>
           <div class="table-wrap"><table class="data-table"><thead><tr><th>Minimum worlds</th><th>Specific models</th><th>Exact worlds</th><th>Region pooled</th><th>PvP pooled</th><th>General validation RMSE</th><th>Specific validation RMSE</th></tr></thead><tbody id="modelSensitivityTable"></tbody></table></div>
+        </article>
+      </section>
+
+      <section id="view-decision" class="view" hidden>
+        <div class="view-head">
+          <h1>What the evidence supports doing</h1>
+          <p class="lede">One call per world, with the reason it was reached and what would make it wrong. Most worlds get <strong>Hold</strong>: that is a result, not a missing answer.</p>
+        </div>
+        <article class="panel">
+          <div class="panel-heading">
+            <div>
+              <h2>Decision card</h2>
+              <p id="decisionAsOf" class="muted"></p>
+            </div>
+            <div class="table-tools"><label for="decisionWorld">World</label><select id="decisionWorld"></select></div>
+          </div>
+          <div id="decisionCard"></div>
+        </article>
+        <article class="panel" style="margin-top:16px">
+          <div class="panel-heading"><div><h2>How this call is made</h2>
+          <p class="muted">Versioned rules, and the evidence behind each threshold. A rule change moves the version.</p></div></div>
+          <div id="decisionRules"></div>
+        </article>
+        <article class="panel" style="margin-top:16px">
+          <div class="panel-heading"><div><h2>Every world</h2>
+          <p class="muted">Sorted by how far each world sits from the other worlds.</p></div></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr>
+            <th>World</th><th>Action</th><th>Confidence</th>
+            <th>Deviation<span class="term-help">Price vs the other worlds</span></th>
+            <th>Price (GP/TC)</th><th>As of</th></tr></thead>
+            <tbody id="decisionTable"></tbody></table></div>
         </article>
       </section>
 
@@ -900,7 +947,7 @@ function initialize(){
   selectedStrategyHorizon=[7,30,91].includes(Number(params.get("days")))?Number(params.get("days")):7;
   bindEvents();
   populateLibraryChapters();
-  showView(["overview","worlds","forecasts","models","strategy","emission","creatures","library"].includes(params.get("view"))?params.get("view"):"overview",false);
+  showView(["overview","decision","worlds","forecasts","models","strategy","emission","creatures","library"].includes(params.get("view"))?params.get("view"):"overview",false);
   updateStatus();
   renderAll();
   enhanceSortableTables();
@@ -1026,6 +1073,7 @@ function showView(view,push=true){
   if(view==="forecasts")renderForecasts();
   if(view==="models")renderModels();
   if(view==="strategy")renderStrategy();
+  if(view==="decision")renderDecision();
   if(view==="library")renderLibrary();
   if(push)updateURL();
   window.scrollTo({top:0,behavior:matchMedia("(prefers-reduced-motion:reduce)").matches?"auto":"smooth"});
@@ -1111,7 +1159,7 @@ function openClaimView(kind){
 }
 
 function renderAll(){
-  renderOverview();renderWorlds();renderForecasts();renderModels();renderStrategy();renderLibrary();
+  renderOverview();renderWorlds();renderForecasts();renderModels();renderStrategy();renderDecision();renderLibrary();
   renderHeadline();
   $("#footerCoverage").textContent=`${fmt.format(data.meta.worldDays)} world-days · ${fmt.format(data.meta.worlds)} worlds · ${data.meta.start} to ${data.meta.end}`;
 }
@@ -1636,6 +1684,106 @@ function renderModelSensitivity(){
     <td data-label="General validation RMSE">${num(row.general_rmse_pct).toFixed(3)}%</td>
     <td data-label="Specific validation RMSE">${num(row.specific_rmse_pct).toFixed(3)}%</td></tr>`).join("");
 }
+
+/* The decision surface. Every number here is read from decision_policy.{csv,json}; nothing is
+   recomputed in the browser, so the card cannot drift from the policy that produced it. The
+   design separates what was observed, what was fitted, and what is advised, because the fitted
+   change is not a forecast anyone should trade: it loses to a random walk at every horizon. */
+const ACTION_TONE = {
+  "Buy TC": "good", "Sell TC": "good", "Hold": "neutral",
+  "Avoid": "bad", "Investigate": "warn", "Abstain": "neutral"
+};
+
+function decisionRow(world){
+  return (data.decisions || []).find(row => row.world === world) || null;
+}
+
+function renderDecision(){
+  const rows = data.decisions || [];
+  const policy = data.decisionPolicy || {};
+  const select = $("#decisionWorld");
+  if(!select) return;
+  if(!select.options.length){
+    const ordered = [...rows].sort((a,b)=>a.world.localeCompare(b.world));
+    select.innerHTML = ordered.map(row=>`<option value="${escapeHtml(row.world)}">${escapeHtml(row.world)}</option>`).join("");
+    const preferred = rows.find(row=>row.action==="Buy TC"||row.action==="Sell TC");
+    if(preferred) select.value = preferred.world;
+    select.addEventListener("change", ()=>{renderDecisionCard();updateURL();});
+  }
+  $("#decisionAsOf").textContent = rows.length
+    ? `Policy v${policy.version||"?"} · ${rows.length} worlds · horizon ${policy.horizon_used_days||"none"} days`
+    : "No decision data available.";
+  renderDecisionCard();
+  renderDecisionRules();
+  $("#decisionTable").innerHTML = [...rows]
+    .sort((a,b)=>Math.abs(numberOrNaN(b.deviation_pct))-Math.abs(numberOrNaN(a.deviation_pct)))
+    .map(row=>`<tr data-world="${escapeHtml(row.world)}"><td>${escapeHtml(row.world)}</td>
+      <td><span class="pill ${ACTION_TONE[row.action]||"neutral"}">${escapeHtml(row.action)}</span></td>
+      <td>${escapeHtml(row.confidence)}</td>
+      <td>${signed(numberOrNaN(row.deviation_pct))}%</td>
+      <td>${fmt.format(numberOrNaN(row.price_gp))}</td>
+      <td>${escapeHtml(String(row.as_of))}</td></tr>`).join("");
+  $$("#decisionTable tr").forEach(tr=>tr.addEventListener("click",()=>{
+    $("#decisionWorld").value = tr.dataset.world; renderDecisionCard(); updateURL();
+  }));
+}
+
+function renderDecisionCard(){
+  const row = decisionRow($("#decisionWorld").value);
+  const policy = data.decisionPolicy || {};
+  const node = $("#decisionCard");
+  if(!row){ node.innerHTML = '<div class="empty">Insufficient evidence: this world has no current decision record.</div>'; return; }
+  const tone = ACTION_TONE[row.action] || "neutral";
+  const dev = numberOrNaN(row.deviation_pct);
+  const low = numberOrNaN(row.low80_pct), high = numberOrNaN(row.high80_pct);
+  const abstained = row.action === "Abstain";
+  node.innerHTML = `
+    <div class="decision-head">
+      <span class="pill ${tone} pill-lg">${escapeHtml(row.action)}</span>
+      <span class="muted">confidence: <strong>${escapeHtml(row.confidence)}</strong> · as of ${escapeHtml(String(row.as_of))} · horizon ${escapeHtml(String(row.horizon_days||"—"))} days</span>
+    </div>
+    <p class="decision-reason">${escapeHtml(row.reason)}</p>
+    <div class="facts">
+      <div class="fact"><span><b>Observed</b><small>What the market shows today</small></span>
+        <strong>${fmt.format(numberOrNaN(row.price_gp))} GP/TC · ${signed(dev)}% vs other worlds</strong></div>
+      <div class="fact"><span><b>Fitted change</b><small>Not a forecast to trade: it loses to a random walk</small></span>
+        <strong>${signed(numberOrNaN(row.predicted_change_pct))}% · 80% range ${signed(low)}% to ${signed(high)}%</strong></div>
+      <div class="fact"><span><b>Cost to act</b><small>Market fee, charged on each side</small></span>
+        <strong>${(2*(policy.rules?.fee_rate_pct||0)).toFixed(1)}% round trip</strong></div>
+      <div class="fact"><span><b>Model used</b><small>Only signal that survived a holdout</small></span>
+        <strong>${escapeHtml(policy.signal_admitted||"—")}</strong></div>
+    </div>
+    ${abstained ? '<p class="muted">Insufficient evidence: the policy declines to advise on this world.</p>' : `
+    <details class="claim-details"><summary>What would make this call wrong</summary>
+      <ul>
+        <li>The gap closes for a reason other than reversion — a world-specific shock the cross-world comparison cannot see.</li>
+        <li>Depth is a single snapshot, so an order larger than the resting side reaches worse prices than quoted.</li>
+        <li>The holdout ran on ${escapeHtml(String(policy.horizons?.[String(policy.horizon_used_days)]?.n_effective ?? "?"))} effective episodes; a regime the sample never contained is not covered.</li>
+        <li>Costs here are the Market fee only. Transfer limits, cancellations and partial fills are not deducted.</li>
+      </ul>
+    </details>`}`;
+}
+
+function renderDecisionRules(){
+  const policy = data.decisionPolicy || {};
+  const rules = policy.rules || {};
+  const refused = Object.entries(policy.signals_refused || {});
+  $("#decisionRules").innerHTML = `
+    <div class="facts">
+      <div class="fact"><span><b>Trades above</b><small>The cutoff the holdout was validated at</small></span>
+        <strong>${(policy.horizons?.[String(policy.horizon_used_days)]?.cutoff_pct ?? 0).toFixed(2)}%</strong></div>
+      <div class="fact"><span><b>Reversion starts</b><small>Below this, gaps widen instead of closing</small></span>
+        <strong>${(rules.band_threshold_pct||0).toFixed(2)}%</strong></div>
+      <div class="fact"><span><b>Holdout evidence</b><small>Net return out of sample at the traded horizon</small></span>
+        <strong>${signed(policy.horizons?.[String(policy.horizon_used_days)]?.net_pct ?? NaN)}% · t=${(policy.horizons?.[String(policy.horizon_used_days)]?.t_newey_west ?? 0).toFixed(1)}</strong></div>
+    </div>
+    <p class="chart-note"><strong>Refused as signals.</strong> ${refused.map(([name,why])=>`${escapeHtml(name)} — ${escapeHtml(why)}`).join(" · ")}</p>
+    <details class="claim-details"><summary>Limitations of this policy</summary><ul>${
+      (policy.limitations||[]).map(item=>`<li>${escapeHtml(item)}</li>`).join("")}</ul></details>`;
+}
+
+function signed(value){ return Number.isFinite(value) ? (value>=0?"+":"") + value.toFixed(2) : "—"; }
+function numberOrNaN(value){ const n = Number(value); return Number.isFinite(n) ? n : NaN; }
 
 function renderStrategy(){
   $$("#strategyHorizon .segment").forEach(button=>button.classList.toggle("active",Number(button.dataset.days)===selectedStrategyHorizon));

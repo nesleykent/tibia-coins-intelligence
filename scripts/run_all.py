@@ -70,7 +70,7 @@ REQUIRED_FUND = {
     "gold_emission": "35_gold_emission_models.py",
     "group_specific_models": "41_group_models.py",
     "launch_phase_models": "44_launch_phase_models.py",
-    "participants": "31_participants.py", "53_decision_policy.py",
+    "participants": "31_participants.py",
 }
 
 

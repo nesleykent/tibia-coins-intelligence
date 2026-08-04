@@ -156,6 +156,20 @@ if "--rebuild-only" in sys.argv:
     _refresh_quality(built)
     raise SystemExit(0)
 
+# The archive this stage reads is fixed: it ends 2025-12-04 and gains nothing afterwards. Once
+# its span is merged, re-running the pipeline should not pull 17 GB again to rediscover rows
+# that are already in the table - which is what happened as soon as the working clone was
+# cleaned up, because the clone came before any check of what was missing.
+ARCHIVE_END = pd.Timestamp("2025-12-04")
+if len(existing) and "--force-fetch" not in sys.argv:
+    covered = pd.to_datetime(existing.date)
+    worlds_with_history = existing.loc[covered <= ARCHIVE_END, "world"].nunique()
+    if covered.min() <= pd.Timestamp("2022-08-23") and worlds_with_history >= 80:
+        print(f"[SPARSE] history already merged: {len(existing):,} rows from "
+              f"{covered.min().date()}, {worlds_with_history} worlds inside the archive window; "
+              f"nothing to fetch (pass --force-fetch to override)")
+        raise SystemExit(0)
+
 if not (WORK / ".git").exists():
     shutil.rmtree(WORK, ignore_errors=True)
     WORK.parent.mkdir(parents=True, exist_ok=True)

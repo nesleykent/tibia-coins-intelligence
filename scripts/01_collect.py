@@ -8,14 +8,42 @@ import requests
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "raw"
+P = ROOT / "data" / "processed"
+# The world list used to be read from a scratchpad directory belonging to a since-deleted
+# session, so collection failed with FileNotFoundError on any machine but the one that wrote it.
+# The repository already tracks the list this script itself produces, and the world metadata
+# behind it, so read those and keep the scratchpad only as a last resort.
 ARCHIVE = pathlib.Path(
     "/private/tmp/claude-501/-Users-nesleykent-Code-Tibia-Coins/"
     "8add2f59-46e0-4dd2-9edd-8ce0dbeb3d2d/scratchpad/repo/data/market/world"
 )
+# --refresh ignores the on-disk cache. Without it `get()` returns "cached" for every file that
+# already exists, so re-running collection to update prices fetched nothing at all.
+REFRESH = "--refresh" in sys.argv
 UA = ("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
       "(KHTML, like Gecko) Chrome/120.0 Safari/537.36")
 
-worlds = sorted(p.name for p in ARCHIVE.iterdir() if p.is_dir())
+def world_list() -> list[str]:
+    listed = RAW / "world_list.json"
+    if listed.exists():
+        names = json.load(open(listed))
+        if names:
+            return sorted(names)
+    meta = P / "world_metadata.csv"
+    if meta.exists():
+        import csv
+        with meta.open(newline="") as handle:
+            names = [row["world"] for row in csv.DictReader(handle) if row.get("world")]
+        if names:
+            return sorted(names)
+    if ARCHIVE.is_dir():
+        return sorted(p.name for p in ARCHIVE.iterdir() if p.is_dir())
+    raise SystemExit(
+        "no world list: expected data/raw/world_list.json or data/processed/world_metadata.csv"
+    )
+
+
+worlds = world_list()
 (RAW / "guildstats_oc").mkdir(parents=True, exist_ok=True)
 (RAW / "market_board").mkdir(parents=True, exist_ok=True)
 json.dump(worlds, open(RAW / "world_list.json", "w"), indent=1)
@@ -25,7 +53,7 @@ s.headers["User-Agent"] = UA
 
 
 def get(url, dest, delay, is_json=False):
-    if dest.exists() and dest.stat().st_size > 2000:
+    if dest.exists() and dest.stat().st_size > 2000 and not REFRESH:
         return "cached"
     for attempt in range(3):
         try:
