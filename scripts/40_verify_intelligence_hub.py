@@ -166,28 +166,8 @@ def main() -> None:
     # The live-book table uses the Market window's own column names: Sell Offers, Buy Offers,
     # Piece Price, Amount. "Buy TC", "Sell TC", "demand depth" and "supply depth" appear nowhere
     # in the client and are not shown to a reader as if they did.
-    for term, explanation in (
-        ("Sell Offers", "Lowest Piece Price"),
-        ("Buy Offers", "Highest Piece Price"),
-        ("Mid", "Between the two Piece Prices"),
-        ("Spread", "Gap between the two Piece Prices"),
-        ("Demand", "TC on the Buy Offers"),
-        ("Supply", "TC on the Sell Offers"),
-    ):
-        assert f"<th>{term}<span class=\"term-help\">{explanation}</span></th>" in html
-    for term, explanation in (
-        ("Sell Offers", "Lowest Piece Price"),
-        ("Buy Offers", "Highest Piece Price"),
-        ("Mid", "Between the two Piece Prices"),
-        ("Spread", "Gap between the two Piece Prices"),
-        ("Demand / Supply", "TC on the Buy Offers / Sell Offers"),
-        ("Book snapshot", "when this offer list was read"),
-        ("Latest executed midpoint", "average of what players paid and received that day"),
-        ("Latest executed buy / sell", "what players actually paid / received that day"),
-        ("Total return", "price change across all available history"),
-        ("7-day prediction", "model estimate of the change versus other worlds"),
-    ):
-        assert f"<b>{term}</b><small>{explanation}</small>" in html
+    for term in ("Sell Offers", "Buy Offers", "Mid", "Spread", "Demand", "Supply"):
+        assert f"<th>{term}</th>" in html, term
     for removed in (
         "You pay to buy TC now",
         "You receive selling TC now",

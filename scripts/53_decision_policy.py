@@ -102,7 +102,7 @@ def decide(row: pd.Series, rules: dict, horizon: dict, book: pd.Series | None,
         return {"action": "Abstain", "confidence": "none",
                 "reason": f"no tradable horizon: {horizon['reason']}"}
 
-    depth = float(book.bid_depth_tc) if book is not None and pd.notna(book.bid_depth_tc) else np.nan
+    depth = float(book.buyers_amount) if book is not None and pd.notna(book.buyers_amount) else np.nan
     if np.isnan(depth):
         reasons.append("no order-book snapshot; capacity unknown")
     elif depth < rules["min_depth_tc"]:

@@ -113,6 +113,26 @@ def main() -> None:
                 f"github.com/nesleykent/tibia-warzones-schedule before re-ingesting"
             ))
 
+    # --- 1b. derived tables are not older than the raw they were built from ----------------
+    # Collection takes about ten minutes at the rate the API allows. Running the analysis while
+    # it is still going produces a table built from a mix of old and new payloads, which no
+    # consistency check can see: order_books.csv was written 61 minutes ago against raw files
+    # ranging from 49 to 69 minutes old, and the site then showed a lowest Sell Offer that was
+    # not the lowest for 43 of 93 worlds. Nothing was wrong with the definition; the snapshot
+    # was torn.
+    if boards:
+        newest_raw = max(pathlib.Path(b).stat().st_mtime for b in boards)
+        for derived in ("order_books.csv", "live_offers.csv"):
+            path = P / derived
+            if not path.exists():
+                continue
+            if path.stat().st_mtime < newest_raw:
+                behind = (newest_raw - path.stat().st_mtime) / 60
+                fail(problems, (
+                    f"{derived} is {behind:.0f} min older than the newest market payload; it was "
+                    f"built while collection was still running and holds a torn snapshot"
+                ))
+
     # --- 2. the cleaned panel reaches the day those payloads describe ---------------------
     panel_path = P / "panel_daily.csv"
     if not panel_path.exists():

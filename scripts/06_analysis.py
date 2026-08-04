@@ -65,8 +65,8 @@ by_world = (panel.groupby("world")
                  px_first=("price_gp", "first"), px_last=("price_gp", "last"),
                  px_med=("price_gp", "median"), px_min=("price_gp", "min"),
                  px_max=("price_gp", "max"), vol=("ret", lambda s: s.std() * 100),
-                 sold=("tc_sold", "median"), bought=("tc_bought", "median"),
-                 lots_sold=("txn_sold", "median"))
+                 sold=("day_sold_tc", "median"), bought=("day_bought_tc", "median"),
+                 lots_sold=("day_sold_txn", "median"))
             .reset_index())
 by_world = by_world.merge(meta[["world", "region", "pvp_type", "battleye_protected", "battleye_date",
                                 "transfer_type", "created", "is_merge_destination",
@@ -115,7 +115,7 @@ idx["ew_log"] = np.log(base) + cr.fillna(0).cumsum()
 idx.loc[:first_ok, "ew_log"] = np.nan
 idx["ew_price"] = np.exp(idx["ew_log"])
 idx["index_valid"] = idx["n_worlds"] >= MIN_XW
-qty = CONV.pivot_table(index="date", columns="world", values="txn_sold").reindex_like(piv)
+qty = CONV.pivot_table(index="date", columns="world", values="day_sold_txn").reindex_like(piv)
 w = qty.div(qty.sum(axis=1), axis=0)
 idx["vw_log"] = (piv * w).sum(axis=1, min_count=1).values
 idx["vw_price"] = np.exp(idx["vw_log"])
@@ -477,7 +477,7 @@ R["cross_section"]["be_age_confound"] = {
 
 # panel population term with the true daily series (H1)
 pan = CONV.dropna(subset=["log_activity"]).copy()
-pan["log_qty_lag"] = np.log(pan.groupby("world")["txn_sold"].shift(1).where(lambda s: s > 0))
+pan["log_qty_lag"] = np.log(pan.groupby("world")["day_sold_txn"].shift(1).where(lambda s: s > 0))
 pan["log_act_lag"] = pan.groupby("world")["log_activity"].shift(1)
 panel_specs = {}
 panel_specs["dev_only_wfe"] = ols(pan, "ret", ["dev_lag"], fe=["world"], cluster=["world", "date"])
@@ -641,9 +641,9 @@ def _antica_example() -> dict:
         "example_world": w,
         "example_sell_orders": int(len(sells)),
         "example_buy_orders": int(len(buys)),
-        "example_bids_below_2000": int((buys.price < 2000).sum()),
+        "example_buy_offers_below_2000": int((buys.price < 2000).sum()),
         "example_mid_gp": float(mid.iloc[0]) if len(mid) else float("nan"),
-        "example_cheapest_bids": [int(x) for x in cheap],
+        "example_cheapest_buyers": [int(x) for x in cheap],
     }
 
 # ============================================================ 23. microstructure
@@ -651,22 +651,22 @@ boards = []
 for f in sorted((ROOT / "data" / "raw" / "market_board").glob("*.json")):
     d = json.load(open(f))
     s = pd.DataFrame(d["sellers"]); b = pd.DataFrame(d["buyers"])
-    rec = {"world": f.stem, "n_sell_orders": len(s), "n_buy_orders": len(b),
+    rec = {"world": f.stem, "n_sellers": len(s), "n_buyers": len(b),
            "update_time": d.get("update_time")}
     if len(s):
-        rec |= {"best_ask": s.price.min(), "ask_depth_tc": s.amount.sum(),
+        rec |= {"sellers_price": s.price.min(), "sellers_amount": s.amount.sum(),
                 "anon_sell": (s.name_ if False else (s["name"] == "Anonymous").mean())}
     if len(b):
-        rec |= {"best_bid": b.price.max(), "bid_depth_tc": b.amount.sum(),
+        rec |= {"buyers_price": b.price.max(), "buyers_amount": b.amount.sum(),
                 "anon_buy": (b["name"] == "Anonymous").mean(),
-                "buy_orders_below_2000": int((b.price < 2000).sum()),
-                "buy_depth_below_2000": int(b.loc[b.price < 2000, "amount"].sum())}
+                "buyers_below_2000": int((b.price < 2000).sum()),
+                "buyers_amount_below_2000": int(b.loc[b.price < 2000, "amount"].sum())}
     boards.append(rec)
 bd = pd.DataFrame(boards)
-bd["mid"] = (bd.best_ask + bd.best_bid) / 2
-bd["quoted_spread_pct"] = (bd.best_ask - bd.best_bid) / bd["mid"] * 100
-bd["order_count_ratio"] = bd.n_buy_orders / bd.n_sell_orders
-bd["depth_ratio"] = bd.bid_depth_tc / bd.ask_depth_tc
+bd["mid"] = (bd.sellers_price + bd.buyers_price) / 2
+bd["spread_pct"] = (bd.sellers_price - bd.buyers_price) / bd["mid"] * 100
+bd["offer_count_ratio"] = bd.n_buyers / bd.n_sellers
+bd["sellers_buyers_ratio"] = bd.buyers_amount / bd.sellers_amount
 bd.to_csv(P / "order_books.csv", index=False)
 
 # A second file, alongside the one above rather than instead of it. order_books.csv is the
@@ -682,8 +682,8 @@ bd.to_csv(P / "order_books.csv", index=False)
 # re-running this stage without a fresh collection rewrites the same rows instead of inventing
 # a second observation of one reading.
 HIST = P / "order_book_history.csv"
-keep = ["world", "update_time", "best_bid", "best_ask", "mid", "quoted_spread_pct",
-        "bid_depth_tc", "ask_depth_tc", "n_buy_orders", "n_sell_orders"]
+keep = ["world", "update_time", "buyers_price", "sellers_price", "mid", "spread_pct",
+        "buyers_amount", "sellers_amount", "n_buyers", "n_sellers"]
 snap = bd[[c for c in keep if c in bd.columns]].copy()
 if HIST.exists():
     snap = pd.concat([pd.read_csv(HIST), snap], ignore_index=True)
@@ -696,11 +696,11 @@ print(f"[BOOK HISTORY] {len(snap):,} captures, {snap.world.nunique()} worlds, "
       f"{snap.date.min()} to {snap.date.max()}")
 R["micro"] = {
     "n_worlds": int(len(bd)),
-    "quoted_spread_median_pct": float(bd.quoted_spread_pct.median()),
-    "quoted_spread_iqr": [float(bd.quoted_spread_pct.quantile(.25)), float(bd.quoted_spread_pct.quantile(.75))],
+    "quoted_spread_median_pct": float(bd.spread_pct.median()),
+    "quoted_spread_iqr": [float(bd.spread_pct.quantile(.25)), float(bd.spread_pct.quantile(.75))],
     "executed_gap_median_pct": float(CONV.executed_gap_pct.median()),
     "executed_gap_mean_pct": float(CONV.executed_gap_pct.mean()),
-    "median_buy_orders": float(bd.n_buy_orders.median()),
+    "median_buy_orders": float(bd.n_buyers.median()),
     # The worked example the report uses to show why an order count is not depth. Computed
     # rather than transcribed: the counts, the sub-2,000 GP tail and the mid all moved when
     # the snapshot was refreshed, and a hand-typed version silently did not.
@@ -709,17 +709,17 @@ R["micro"] = {
     # ranges are only accepted when both ends survive the filter.
     "placeholder_low_share": float(
         (lambda v: (v[v > -1] <= 1).mean())(panel.day_lowest_buy.dropna())),
-    "median_sell_orders": float(bd.n_sell_orders.median()),
-    "median_orders_below_2000": float(bd.buy_orders_below_2000.median()),
-    "share_buy_orders_below_2000": float((bd.buy_orders_below_2000 / bd.n_buy_orders).median()),
+    "median_sell_orders": float(bd.n_sellers.median()),
+    "median_orders_below_2000": float(bd.buyers_below_2000.median()),
+    "share_buy_orders_below_2000": float((bd.buyers_below_2000 / bd.n_buyers).median()),
     "anon_share_buy": float(bd.anon_buy.median()), "anon_share_sell": float(bd.anon_sell.median()),
-    "median_bid_depth_tc": float(bd.bid_depth_tc.median()),
-    "median_ask_depth_tc": float(bd.ask_depth_tc.median()),
-    "corr_ordercount_vs_depth_ratio": float(bd[["order_count_ratio", "depth_ratio"]].corr().iloc[0, 1]),
+    "median_demand_tc": float(bd.buyers_amount.median()),
+    "median_supply_tc": float(bd.sellers_amount.median()),
+    "corr_ordercount_vs_depth_ratio": float(bd[["offer_count_ratio", "sellers_buyers_ratio"]].corr().iloc[0, 1]),
     "day_lowest_buy_median": float(panel.day_lowest_buy.median()),
-    "antica_spread_pct": float(bd.loc[bd.world == "Antica", "quoted_spread_pct"].iloc[0]),
-    "antica_ask": float(bd.loc[bd.world == "Antica", "best_ask"].iloc[0]),
-    "antica_bid": float(bd.loc[bd.world == "Antica", "best_bid"].iloc[0]),
+    "antica_spread_pct": float(bd.loc[bd.world == "Antica", "spread_pct"].iloc[0]),
+    "antica_sellers_price": float(bd.loc[bd.world == "Antica", "sellers_price"].iloc[0]),
+    "antica_buyers_price": float(bd.loc[bd.world == "Antica", "buyers_price"].iloc[0]),
     "antica_executed_gap": float(CONV.loc[CONV.world == "Antica", "executed_gap_pct"].median()),
 }
 # liquidity vs volatility / spread
@@ -728,22 +728,22 @@ R["micro"]["spearman_turnover_vol"] = [float(x) for x in stats.spearmanr(liq.sol
 bdc = bd.merge(by_world[["world", "vol", "sold", "converged", "population", "activity_year", "premium_share"]], on="world")
 bdc = bdc[bdc.converged]
 R["micro"]["spearman_spread_turnover"] = [float(x) for x in
-    stats.spearmanr(bdc.quoted_spread_pct, bdc.sold, nan_policy="omit")]
+    stats.spearmanr(bdc.spread_pct, bdc.sold, nan_policy="omit")]
 R["micro"]["spearman_spread_pop"] = [float(x) for x in
-    stats.spearmanr(bdc.quoted_spread_pct, bdc.population, nan_policy="omit")]
+    stats.spearmanr(bdc.spread_pct, bdc.population, nan_policy="omit")]
 
 # turnover: report sides separately (never summed)
 R["micro"]["turnover"] = {
     # Transaction counts, not coins. The coin figure is bounded below at 25x the count.
-    "median_sold_per_day": float(CONV.txn_sold.median()),
-    "median_bought_per_day": float(CONV.txn_bought.median()),
-    "total_sold_window": float(CONV.txn_sold.sum()),
-    "total_bought_window": float(CONV.txn_bought.sum()),
+    "median_sold_per_day": float(CONV.day_sold_txn.median()),
+    "median_bought_per_day": float(CONV.day_bought_txn.median()),
+    "total_sold_window": float(CONV.day_sold_txn.sum()),
+    "total_bought_window": float(CONV.day_bought_txn.sum()),
     "lot_size": 25,
-    "median_tc_sold_per_day": float(CONV.tc_sold.median()),
-    "median_tc_bought_per_day": float(CONV.tc_bought.median()),
-    "total_tc_sold_window": float(CONV.tc_sold.sum()),
-    "total_tc_bought_window": float(CONV.tc_bought.sum()),
+    "median_tc_sold_per_day": float(CONV.day_sold_tc.median()),
+    "median_tc_bought_per_day": float(CONV.day_bought_tc.median()),
+    "total_tc_sold_window": float(CONV.day_sold_tc.sum()),
+    "total_tc_bought_window": float(CONV.day_bought_tc.sum()),
     "units_note": ("day_sold and day_bought are counts of 25-coin lots, so coin volume is "
                    "25x the field; order-book amounts are already coins"),
 }
@@ -803,7 +803,7 @@ if "npc_buy" in im.columns:
 rob = {}
 alt = CONV.copy()
 for nm, col in [("headline_mean_executed", "price_gp"), ("quantity_weighted", "price_vw"),
-                ("order_book_mid", "price_book_mid"), ("sell_side_only", "px_sell")]:
+                ("order_book_mid", "offer_mid"), ("sell_side_only", "day_average_sell_valid")]:
     a = alt.dropna(subset=[col]).copy()
     a["lp"] = np.log(a[col])
     a["dv"] = a["lp"] - a.groupby("date")["lp"].transform("mean")

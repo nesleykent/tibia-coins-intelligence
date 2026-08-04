@@ -141,11 +141,11 @@ pan = pd.read_csv(P / "panel_daily.csv", parse_dates=["date"])
 N_WORLDS = int(pan.world.nunique())
 rows = []
 for y in sorted(set(hist.year) & set(pan.date.dt.year.unique())):
-    obs = pan[(pan.date.dt.year == y) & pan.tc_sold.notna()]
+    obs = pan[(pan.date.dt.year == y) & pan.day_sold_tc.notna()]
     if len(obs) < 500:
         continue
     days = obs.date.nunique()
-    mean_wd = float(obs.tc_sold.mean())
+    mean_wd = float(obs.day_sold_tc.mean())
     scaled = mean_wd * N_WORLDS * days
     baz = float(hist.loc[hist.year == y, "tc_exchanged"].iloc[0])
     # Compare like with like: the Bazaar total is for the whole year, so a partial calendar
@@ -155,10 +155,10 @@ for y in sorted(set(hist.year) & set(pan.date.dt.year.unique())):
         "year": y, "market_world_days_observed": len(obs),
         "market_world_days_possible": N_WORLDS * days,
         "coverage": len(obs) / (N_WORLDS * days),
-        "market_tc_observed": float(obs.tc_sold.sum()),
+        "market_tc_observed": float(obs.day_sold_tc.sum()),
         "market_tc_scaled": scaled,
         "bazaar_tc_year": baz, "bazaar_tc_same_span": baz_span,
-        "ratio_naive": baz / float(obs.tc_sold.sum()),
+        "ratio_naive": baz / float(obs.day_sold_tc.sum()),
         "ratio_comparable": baz_span / scaled,
     })
 ven = pd.DataFrame(rows)

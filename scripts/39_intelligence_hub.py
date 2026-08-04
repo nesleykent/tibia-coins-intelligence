@@ -105,8 +105,8 @@ def build_payload() -> dict:
     world_series = records(
         P / "panel_daily.csv",
         [
-            "world", "date", "price_gp", "px_sell", "px_buy",
-            "executed_gap_pct", "tc_sold", "tc_bought",
+            "world", "date", "price_gp", "day_average_sell_valid", "day_average_buy_valid",
+            "executed_gap_pct", "day_sold_tc", "day_bought_tc",
         ],
         where=lambda frame: frame[frame["price_gp"].notna()],
     )
@@ -120,14 +120,14 @@ def build_payload() -> dict:
     # stretch is an absence of collection rather than an absence of offers.
     depth_series = records(
         P / "panel_daily.csv",
-        ["world", "date", "sell_offers", "buy_offers", "tc_sold", "tc_bought"],
+        ["world", "date", "sell_offers", "buy_offers", "day_sold_tc", "day_bought_tc"],
         where=lambda frame: frame[frame["sell_offers"].notna()],
     )
     order_books = records(
         P / "order_books.csv",
         [
-            "world", "update_time", "best_bid", "best_ask", "mid",
-            "quoted_spread_pct", "bid_depth_tc", "ask_depth_tc",
+            "world", "update_time", "buyers_price", "sellers_price", "mid",
+            "spread_pct", "buyers_amount", "sellers_amount",
         ],
     )
     forecasts = records(
@@ -408,8 +408,6 @@ HTML = r"""<!doctype html>
     table{width:100%;border-collapse:collapse;font-size:12px}
     th,td{padding:10px 12px;border-bottom:1px solid var(--line-soft);text-align:right;white-space:nowrap}
     th{color:#34405a;background:#fafbfd;font-weight:750;position:sticky;top:0;z-index:1}
-    th .term-help{display:block;color:var(--muted);font-size:10px;font-weight:500;
-      line-height:1.3;margin-top:3px;white-space:normal}
     th:first-child,td:first-child{text-align:left}
     .sort-button{width:100%;min-height:28px;border:0;background:transparent;color:inherit;
       padding:0;font:inherit;font-weight:inherit;text-align:inherit;cursor:pointer}
@@ -682,7 +680,7 @@ __EMISSION_STYLE__
           <article class="panel chart-panel" style="margin-top:16px"><div class="panel-heading"><div><h2 id="depthChartTitle">Supply on the Market, day by day</h2><p id="depthChartDescription">Coins traded and offers left open, over time.</p><details class="claim-details"><summary>Why resting depth is not plotted here</summary><p>The <strong>Supply</strong> column in the table above is the number of TC standing on the Sell Offers right now. It comes from a single reading of the complete offer list, and it cannot be drawn over time: an offer list read today shows only the offers that still exist, so reconstructing past depth from it would count the offers that survived and miss every one already taken or withdrawn.</p><p>Two things about supply do have a history, and both are plotted here. <strong>Coins sold</strong> is TC that actually changed hands that day, so it is measured in coins and covers the whole price history. <strong>Open offers</strong> is how many sell or buy offers were left standing, so it is a count rather than a quantity and starts only when the field began to be collected. A world can have few offers holding many coins, or many offers holding few, so the two do not move together.</p></details></div><div><div id="depthLegend" class="legend"></div><div id="depthChartMode" class="segmented" aria-label="Choose what to plot"><button class="segment active" data-mode="coins" title="TC that actually changed hands each day">Coins sold</button><button class="segment" data-mode="both" title="Open offers on both sides">Open offers</button><button class="segment" data-mode="sell" title="Open offers to sell TC">Sell offers</button><button class="segment" data-mode="ratio" title="Sell offers as a share of all open offers">Supply share</button></div></div></div><div class="chart-wrap"><svg id="depthChart" class="chart" role="img" aria-labelledby="depthChartTitle depthChartDescription"></svg><div id="depthTooltip" class="chart-tooltip"></div></div><p id="depthCoverage" class="chart-note"></p></article>
           <aside id="worldFacts" class="panel world-facts"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Executable prices now</h2><p>The lowest Piece Price on the Sell Offers, and the highest Piece Price on the Buy Offers, for each world.</p><details class="claim-details"><summary>How these numbers are calculated</summary><p>Each world has its own Market, with its own Sell Offers and Buy Offers. The columns show the lowest Piece Price on the Sell Offers and the highest Piece Price on the Buy Offers, the Demand and Supply standing on each side, and the gap between the two Piece Prices before the Fee. An order larger than the Amount on that side reaches a worse Piece Price.</p></details></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Sell Offers<span class="term-help">Lowest Piece Price</span></th><th>Buy Offers<span class="term-help">Highest Piece Price</span></th><th>Mid<span class="term-help">Between the two Piece Prices</span></th><th>Spread<span class="term-help">Gap between the two Piece Prices</span></th><th>Demand<span class="term-help">TC on the Buy Offers</span></th><th>Supply<span class="term-help">TC on the Sell Offers</span></th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Executable prices now</h2><p>The lowest Piece Price on the Sell Offers, and the highest Piece Price on the Buy Offers, for each world.</p><details class="claim-details"><summary>How these numbers are calculated</summary><p>Each world has its own Market, with its own Sell Offers and Buy Offers. The columns show the lowest Piece Price on the Sell Offers and the highest Piece Price on the Buy Offers, the Demand and Supply standing on each side, and the gap between the two Piece Prices before the Fee. An order larger than the Amount on that side reaches a worse Piece Price.</p></details></div><div class="table-tools"><input id="worldSearch" type="search" placeholder="Search worlds…" aria-label="Search all worlds"></div></div><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Sell Offers</th><th>Buy Offers</th><th>Mid</th><th>Spread</th><th>Demand</th><th>Supply</th></tr></thead><tbody id="worldTable"></tbody></table></div></article>
       </section>
 
       <section id="view-forecasts" class="view" hidden>
@@ -771,7 +769,7 @@ __EMISSION_STYLE__
           <p class="muted">Sorted by how far each world sits from the other worlds.</p></div></div>
           <div class="table-wrap"><table class="data-table"><thead><tr>
             <th>World</th><th>Action</th><th>Confidence</th>
-            <th>Deviation<span class="term-help">Price vs the other worlds</span></th>
+            <th>Deviation</th>
             <th>Price (GP/TC)</th><th>As of</th></tr></thead>
             <tbody id="decisionTable"></tbody></table></div>
         </article>
@@ -887,7 +885,7 @@ function rebuildIndexes(){
   }
   for(const row of data.worlds){
     const latest=latestByWorld.get(row.world);
-    if(latest){row.buy_tc_gp=latest.px_sell;row.sell_tc_gp=latest.px_buy;row.executed_gap_pct=latest.executed_gap_pct}
+    if(latest){row.buy_tc_gp=latest.day_average_sell_valid;row.sell_tc_gp=latest.day_average_buy_valid;row.executed_gap_pct=latest.executed_gap_pct}
   }
   worldMap=new Map(data.worlds.map(row=>[row.world,row]));
   orderBookMap=new Map((data.orderBooks||[]).map(row=>[row.world,row]));
@@ -1323,10 +1321,10 @@ function commonSeries(worldA,worldB){
     const ar=aMap.get(item),br=bMap.get(item);
     const aMid=ar?num(ar.price_gp):null,bMid=br?num(br.price_gp):null;
     return{date:item,aMid,bMid,
-      aBuy:ar&&ar.px_sell!==null?num(ar.px_sell):null,
-      bBuy:br&&br.px_sell!==null?num(br.px_sell):null,
-      aSell:ar&&ar.px_buy!==null?num(ar.px_buy):null,
-      bSell:br&&br.px_buy!==null?num(br.px_buy):null,
+      aBuy:ar&&ar.day_average_sell_valid!==null?num(ar.day_average_sell_valid):null,
+      bBuy:br&&br.day_average_sell_valid!==null?num(br.day_average_sell_valid):null,
+      aSell:ar&&ar.day_average_buy_valid!==null?num(ar.day_average_buy_valid):null,
+      bSell:br&&br.day_average_buy_valid!==null?num(br.day_average_buy_valid):null,
       aReturn:aMid!==null&&a0?(aMid/a0-1)*100:null,
       bReturn:bMid!==null&&b0?(bMid/b0-1)*100:null};
   });
@@ -1414,7 +1412,7 @@ function drawDepth(svg,tooltip,a,b,labels,mode){
   const aMap=new Map(a.map(row=>[row.date,row])),bMap=new Map(b.map(row=>[row.date,row]));
   const value=(row,side)=>{
     if(!row)return null;
-    if(mode==="coins")return side==="alt"?num(row.tc_bought):num(row.tc_sold);
+    if(mode==="coins")return side==="alt"?num(row.day_bought_tc):num(row.day_sold_tc);
     const sell=num(row.sell_offers),buy=num(row.buy_offers);
     if(mode==="ratio"){const total=sell+buy;return total>0?sell/total*100:null}
     return side==="alt"?buy:sell;
@@ -1464,16 +1462,16 @@ function drawDepth(svg,tooltip,a,b,labels,mode){
 function renderWorldFacts(){
   const name=$("#worldA").value,row=worldMap.get(name)||{},book=orderBookMap.get(name)||{},prediction=predictionMap.get(name);
   $("#worldFacts").innerHTML=`<h2>${escapeHtml(name)}</h2>
-    <div class="fact"><span><b>Sell Offers</b><small>Lowest Piece Price</small></span><strong>${book.best_ask?fmt.format(book.best_ask)+" GP":"No sell offer"}</strong></div>
-    <div class="fact"><span><b>Buy Offers</b><small>Highest Piece Price</small></span><strong>${book.best_bid?fmt.format(book.best_bid)+" GP":"No buy offer"}</strong></div>
-    <div class="fact"><span><b>Mid</b><small>Between the two Piece Prices</small></span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
-    <div class="fact"><span><b>Spread</b><small>Gap between the two Piece Prices</small></span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
-    <div class="fact"><span><b>Demand / Supply</b><small>TC on the Buy Offers / Sell Offers</small></span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
-    <div class="fact"><span><b>Book snapshot</b><small>when this offer list was read</small></span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
-    <div class="fact"><span><b>Latest executed midpoint</b><small>average of what players paid and received that day</small></span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
-    <div class="fact"><span><b>Latest executed buy / sell</b><small>what players actually paid / received that day</small></span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>
-    <div class="fact"><span><b>Total return</b><small>price change across all available history</small></span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
-    <div class="fact"><span><b>7-day prediction</b><small>model estimate of the change versus other worlds</small></span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"No model"}</strong></div>`;
+    <div class="fact"><span><b>Sell Offers</b></span><strong>${book.sellers_price?fmt.format(book.sellers_price)+" GP":"No sell offer"}</strong></div>
+    <div class="fact"><span><b>Buy Offers</b></span><strong>${book.buyers_price?fmt.format(book.buyers_price)+" GP":"No buy offer"}</strong></div>
+    <div class="fact"><span><b>Mid</b></span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
+    <div class="fact"><span><b>Spread</b></span><strong>${book.spread_pct!==null&&book.spread_pct!==undefined?num(book.spread_pct).toFixed(1)+"%":"—"}</strong></div>
+    <div class="fact"><span><b>Demand / Supply</b></span><strong>${book.buyers_amount?compact(book.buyers_amount)+" TC":"—"} / ${book.sellers_amount?compact(book.sellers_amount)+" TC":"—"}</strong></div>
+    <div class="fact"><span><b>Book snapshot</b></span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
+    <div class="fact"><span><b>Latest executed midpoint</b></span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
+    <div class="fact"><span><b>Latest executed buy / sell</b></span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>
+    <div class="fact"><span><b>Total return</b></span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
+    <div class="fact"><span><b>7-day prediction</b></span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"No model"}</strong></div>`;
 }
 
 function renderWorldTable(){
@@ -1481,12 +1479,12 @@ function renderWorldTable(){
   const rows=[...data.worlds].filter(row=>row.world.toLowerCase().includes(term)).sort((a,b)=>num(orderBookMap.get(b.world)?.mid)-num(orderBookMap.get(a.world)?.mid));
   $("#worldTable").innerHTML=rows.map(row=>`<tr data-world="${escapeHtml(row.world)}" class="${row.world===$("#worldA").value?"selected":""}">
     <td data-label="World"><strong>${escapeHtml(row.world)}</strong></td>
-    <td data-label="Sell Offers · lowest Piece Price">${orderBookMap.get(row.world)?.best_ask?fmt.format(orderBookMap.get(row.world).best_ask):"—"}</td>
-    <td data-label="Buy Offers · highest Piece Price">${orderBookMap.get(row.world)?.best_bid?fmt.format(orderBookMap.get(row.world).best_bid):"—"}</td>
+    <td data-label="Sell Offers · lowest Piece Price">${orderBookMap.get(row.world)?.sellers_price?fmt.format(orderBookMap.get(row.world).sellers_price):"—"}</td>
+    <td data-label="Buy Offers · highest Piece Price">${orderBookMap.get(row.world)?.buyers_price?fmt.format(orderBookMap.get(row.world).buyers_price):"—"}</td>
     <td data-label="Mid · calculated">${orderBookMap.get(row.world)?.mid?fmt.format(orderBookMap.get(row.world).mid):"—"}</td>
-    <td data-label="Spread · calculated">${orderBookMap.get(row.world)?.quoted_spread_pct!==null&&orderBookMap.get(row.world)?.quoted_spread_pct!==undefined?num(orderBookMap.get(row.world).quoted_spread_pct).toFixed(1)+"%":"—"}</td>
-    <td data-label="Demand">${orderBookMap.get(row.world)?.bid_depth_tc?compact(orderBookMap.get(row.world).bid_depth_tc)+" TC":"—"}</td>
-    <td data-label="Supply">${orderBookMap.get(row.world)?.ask_depth_tc?compact(orderBookMap.get(row.world).ask_depth_tc)+" TC":"—"}</td></tr>`).join("");
+    <td data-label="Spread · calculated">${orderBookMap.get(row.world)?.spread_pct!==null&&orderBookMap.get(row.world)?.spread_pct!==undefined?num(orderBookMap.get(row.world).spread_pct).toFixed(1)+"%":"—"}</td>
+    <td data-label="Demand">${orderBookMap.get(row.world)?.buyers_amount?compact(orderBookMap.get(row.world).buyers_amount)+" TC":"—"}</td>
+    <td data-label="Supply">${orderBookMap.get(row.world)?.sellers_amount?compact(orderBookMap.get(row.world).sellers_amount)+" TC":"—"}</td></tr>`).join("");
   $$("#worldTable tr").forEach(row=>row.addEventListener("click",()=>{$("#worldA").value=row.dataset.world;renderWorlds();updateURL()}));
 }
 
@@ -1749,13 +1747,13 @@ function renderDecisionCard(){
     </div>
     <p class="decision-reason">${escapeHtml(row.reason)}</p>
     <div class="facts">
-      <div class="fact"><span><b>Observed</b><small>What the market shows today</small></span>
+      <div class="fact"><span><b>Observed</b></span>
         <strong>${fmt.format(numberOrNaN(row.price_gp))} GP/TC · ${signed(dev)}% vs other worlds</strong></div>
-      <div class="fact"><span><b>Fitted change</b><small>Not a forecast to trade: it loses to a random walk</small></span>
+      <div class="fact"><span><b>Fitted change</b></span>
         <strong>${signed(numberOrNaN(row.predicted_change_pct))}% · 80% range ${signed(low)}% to ${signed(high)}%</strong></div>
-      <div class="fact"><span><b>Cost to act</b><small>Market fee, charged on each side</small></span>
+      <div class="fact"><span><b>Cost to act</b></span>
         <strong>${(2*(policy.rules?.fee_rate_pct||0)).toFixed(1)}% round trip</strong></div>
-      <div class="fact"><span><b>Model used</b><small>Only signal that survived a holdout</small></span>
+      <div class="fact"><span><b>Model used</b></span>
         <strong>${escapeHtml(policy.signal_admitted||"—")}</strong></div>
     </div>
     ${abstained ? '<p class="muted">Insufficient evidence: the policy declines to advise on this world.</p>' : `
@@ -1775,11 +1773,11 @@ function renderDecisionRules(){
   const refused = Object.entries(policy.signals_refused || {});
   $("#decisionRules").innerHTML = `
     <div class="facts">
-      <div class="fact"><span><b>Trades above</b><small>The cutoff the holdout was validated at</small></span>
+      <div class="fact"><span><b>Trades above</b></span>
         <strong>${(policy.horizons?.[String(policy.horizon_used_days)]?.cutoff_pct ?? 0).toFixed(2)}%</strong></div>
-      <div class="fact"><span><b>Reversion starts</b><small>Below this, gaps widen instead of closing</small></span>
+      <div class="fact"><span><b>Reversion starts</b></span>
         <strong>${(rules.band_threshold_pct||0).toFixed(2)}%</strong></div>
-      <div class="fact"><span><b>Holdout evidence</b><small>Net return out of sample at the traded horizon</small></span>
+      <div class="fact"><span><b>Holdout evidence</b></span>
         <strong>${signed(policy.horizons?.[String(policy.horizon_used_days)]?.net_pct ?? NaN)}% · t=${(policy.horizons?.[String(policy.horizon_used_days)]?.t_newey_west ?? 0).toFixed(1)}</strong></div>
     </div>
     <p class="chart-note"><strong>Refused as signals.</strong> ${refused.map(([name,why])=>`${escapeHtml(name)} — ${escapeHtml(why)}`).join(" · ")}</p>

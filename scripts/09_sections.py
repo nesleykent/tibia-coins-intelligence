@@ -157,7 +157,7 @@ table([
      f"Displayed intent is wholesale - {PB.iloc[3].share_of_tc:.0%} of resting coins sit in "
      f"orders of ten thousand or more - while a whole day of trade is "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins, about one ordinary order. The sell "
-     f"side holds only {1 - PART['bid_share']:.0%} of resting coins.", "7.5.2"],
+     f"side holds only {1 - PART['buyers_share']:.0%} of resting coins.", "7.5.2"],
     ["Why does the band exist?",
      f"Transaction costs. The Market fee is {pc(FE['rate_pct'], 0)} per offer, capped at {gp(FE['cap_gp'])} GP, and capital "
      "is locked while offers rest.", "2.2, 5.2.4, 5.2.6"],
@@ -205,7 +205,7 @@ para(tag("econ") + f"<b>What the price is.</b> A Tibia Coin has a money price Ci
 para(tag("stat") + f"<b>What the evidence favours, and what it eliminates.</b> Set against each "
      f"other rather than each against zero, the candidate explanations separate. Transaction "
      f"costs, thin need-driven clearing and the absence of carry are <b>favoured</b>. A hidden "
-     f"forecastable driver and the information content of the order book are <b>weakened</b> - "
+     f"forecastable driver and the information content of the offer list are <b>weakened</b> - "
      f"a perfectly observed common state explains "
      f"{IRR['latent_state']['r2_factor_smoothed']:.1%} of daily variance and "
      f"{IRR['latent_state']['r2_factor_forecast']:.1%} one step ahead. Gold production, "
@@ -381,8 +381,8 @@ bullets([
 
     tag("lim") + f"<b>This report prices one venue of three.</b> Coins also settle through "
     f"the official Tibia Token on the BNB Smart Chain - {gp(VN['token']['total_supply'])} "
-    f"tokens outstanding, {VN['tib_over_ask_depth']:.1f} times the coins on offer across every "
-    f"in-game order book combined - and through fiat resellers. Which venue a seller uses is a "
+    f"tokens outstanding, {VN['tib_over_sellers_amount']:.1f} times the coins on offer across every "
+    f"Market offer list combined - and through fiat resellers. Which venue a seller uses is a "
     f"transaction-cost decision, and the gold price measured here is the price on one of them.",
 
     tag("stat") + f"<b>Standard errors that ignore cross-world dependence are far too small.</b> "
@@ -435,7 +435,7 @@ table([["#", "Question", "Sections", "Status"],
         "21", "Answered: provenance determines the opening price"],
        ["Q6", "Do world merges move prices?",
         "22", "Not testable with available data"],
-       ["Q7", "What does the order book reveal about liquidity?",
+       ["Q7", "What does the offer list reveal about liquidity?",
         "23", "Answered, with several field semantics corrected"],
        ["Q8", "What is a defensible forward view?",
         "27, 28, 32", "Answered: no directional edge on the level"]],
@@ -614,7 +614,7 @@ para(tag("econ") + "The framing does earn its place in one respect. It explains 
      "show.")
 
 h3("2.3.3 Market microstructure")
-para(tag("mech") + "Prices here are set in a continuous limit-order book with no designated "
+para(tag("mech") + "Prices here are set in a continuous limit-offer list with no designated "
      "market maker and full anonymity. Three canonical frameworks bear on it, and they make "
      "different predictions that Section 5.6 can partly separate:")
 bullets([
@@ -628,7 +628,7 @@ bullets([
     "and price impact per unit of order flow is the inverse of market depth. Prediction: "
     "deeper worlds show smaller price impact.",
 ])
-para(tag("judg") + "Anonymity is the binding constraint on testing these. Order-book "
+para(tag("judg") + "Anonymity is the binding constraint on testing these. Offer-list "
      "identities are almost entirely the literal string 'Anonymous' (Section 5.6.3), so order "
      "flow cannot be signed, no trade-direction classification is possible, and neither the "
      "adverse-selection component of the spread nor Kyle's lambda can be estimated. What "
@@ -709,7 +709,7 @@ table([["Endpoint", "Returns", "Coverage"],
        ["/item_history", "Full MarketValues rows", "From 2023-01-11; intraday; includes failed "
                                                    "scans written entirely as -1"],
        ["/events", "{date, events[]} daily labels", "From 2023-01-30; no world dimension"],
-       ["/market_board", "Order book: name, amount, price, time", "Current snapshot only"],
+       ["/market_board", "Offer list: name, amount, price, time", "Current snapshot only"],
        ["/market_values", "Current MarketValues rows", "Current only"],
        ["/item_metadata", "Item names, categories, NPC prices", "5,096 items"],
        ["/item_activity", "Activity measures", "Current only"],
@@ -841,7 +841,7 @@ table([["#", "Step", "Rule", "Effect"],
         "Zero-trade days write 0, not null"],
        ["4", "Price construction", "Mean of the two valid daily executed averages",
         f"{SRC_N['both']:,} world-days use both sides"],
-       ["5", "Order-book fallback", "Book mid only when 0.5 &lt;= ask/bid &lt;= 2.0",
+       ["5", "Offer-list fallback", "Book mid only when 0.5 &lt;= ask/bid &lt;= 2.0",
         "501 world-days filled"],
        ["6", "Outlier scrub", "Drop days beyond 5 MAD, floor 12%, from a centred 15-day "
                               "rolling median", "73 world-days dropped (0.18%)"],
@@ -873,7 +873,7 @@ para(tag("lim") + "Timestamps are floored to the UTC day. The Tibia economic day
 
 h3("3.3.3 Validation against an independent measurement")
 para(tag("obs") + "Two independently constructed price measures agree closely. Comparing the "
-     "transaction-based price against the order-book mid on overlapping world-days gives a mean "
+     "transaction-based price against the offer-list mid on overlapping world-days gives a mean "
      f"absolute deviation of "
      f"{RB['order_book_mid']['mean_dev_from_headline_pct']:.2f}%. Section 7.2 extends this to a "
      f"full sensitivity analysis.")
@@ -882,7 +882,7 @@ story.append(PageBreak())
 # ===================================================================== 7
 h2sec('3.4', 'Field definitions', 'Three fields invite readings the data do not support')
 para("Several fields in the source schema carry names that invite incorrect readings. Each was "
-     "validated against the live order book before use.")
+     "validated against the live offer list before use.")
 table([["Field", "What it actually is", "What it is not"],
        ["buy_offer / sell_offer", "Best standing bid and best standing ask price, in GP",
         "Not a traded price"],
@@ -912,17 +912,17 @@ bullets([
     f"{MI['median_buy_orders']:.0f} buy orders against {MI['median_sell_orders']:.0f} sell "
     f"orders, which invites a reading of overwhelming demand. {MI['example_world']}'s book at "
     f"the time of collection held {MI['example_sell_orders']} sell orders against "
-    f"{MI['example_buy_orders']} buy orders - but {MI['example_bids_below_2000']} of those buy "
+    f"{MI['example_buy_orders']} buy orders - but {MI['example_buy_offers_below_2000']} of those buy "
     f"orders sat below 2,000 GP against a market near {gp(MI['example_mid_gp'])} GP, including "
-    f"bids at {', '.join(str(x) for x in MI['example_cheapest_bids'])} GP. These are "
+    f"bids at {', '.join(str(x) for x in MI['example_cheapest_buyers'])} GP. These are "
     f"non-executable placeholders. Across all 93 worlds the correlation between the order-count "
     f"ratio and the actual depth ratio is only {MI['corr_ordercount_vs_depth_ratio']:.2f}.",
 
-    tag("lim") + f"<b>The executed-average gap is not a bid-ask spread.</b> The difference "
+    tag("lim") + f"<b>The executed-average gap is not a Sell/Buy Offer spread.</b> The difference "
     f"between day_average_sell and day_average_buy is the gap between mean executed prices on "
     f"each side, with a median of {pc(MI['executed_gap_median_pct'])} across converged worlds. "
-    f"The true quoted spread is a different quantity: on Antica it is "
-    f"{gp(MI['antica_ask'])} minus {gp(MI['antica_bid'])}, or "
+    f"The true spread is a different quantity: on Antica it is "
+    f"{gp(MI['antica_sellers_price'])} minus {gp(MI['antica_buyers_price'])}, or "
     f"{pc(MI['antica_spread_pct'])} of mid, against an executed gap of "
     f"{pc(MI['antica_executed_gap'])}. Only the executed gap has history.",
 
@@ -944,7 +944,7 @@ table([["Measure", "Definition", "Mean abs. deviation from headline"],
        ["Headline", "Mean of day_average_sell and day_average_buy", "-"],
        ["Quantity-weighted", "Executed averages weighted by TC traded each side",
         pc(RB["quantity_weighted"]["mean_dev_from_headline_pct"])],
-       ["Order-book mid", "(best bid + best ask) / 2, gated on ask/bid in [0.5, 2.0]",
+       ["Offer-list mid", "(buyers price + sellers price) / 2, gated on ask/bid in [0.5, 2.0]",
         pc(RB["order_book_mid"]["mean_dev_from_headline_pct"])],
        ["Sell-side only", "day_average_sell alone",
         pc(RB["sell_side_only"]["mean_dev_from_headline_pct"])]],
@@ -956,7 +956,7 @@ para(tag("obs") + f"The measures agree closely. The largest divergence, sell-sid
      f"and the central arbitrage result holds on all four. The choice of price measure is not "
      f"driving any conclusion in this report.")
 para(tag("obs") + f"Coverage by construction path: {SRC_N['both']:,} world-days use both "
-     f"sides, {SRC_N['book_mid']:,} fall back to the order-book mid, and "
+     f"sides, {SRC_N['book_mid']:,} fall back to the offer-list mid, and "
      f"{SRC_N['buy_only'] + SRC_N['sell_only']:,} have only one executed side available.")
 story.append(PageBreak())
 
@@ -1236,12 +1236,12 @@ comparison_page(
          f"{MI['corr_ordercount_vs_depth_ratio']:.2f}.",
          f"r = {MI['corr_ordercount_vs_depth_ratio']:.2f}", "Section 5.6"),
 
-        ("<b>The quoted spread</b> as what trading costs.",
+        ("<b>The spread</b> as what trading costs.",
          f"The outer envelope, not the typical execution. Most volume executes inside the "
          f"quotes against resting limit orders, so the Roll effective spread is "
          f"{pc(FN['roll']['median_roll_spread_pct'])} against a quoted "
-         f"{pc(FN['roll']['median_quoted_spread_pct'])}.",
-         f"{FN['roll']['median_quoted_spread_pct'] / FN['roll']['median_roll_spread_pct']:.0f}x",
+         f"{pc(FN['roll']['median_spread_pct'])}.",
+         f"{FN['roll']['median_spread_pct'] / FN['roll']['median_roll_spread_pct']:.0f}x",
          "Section 5.6"),
     ],
     foot="Each correction is derived where it is first needed and is applied consistently "
@@ -1554,7 +1554,7 @@ bullets([
 ])
 para(tag("judg") + "Both predict a lower GP price on event days with the same sign and a similar "
      "magnitude. Separating them would require order-flow data identifying who initiated each "
-     "trade, which the anonymised order book does not provide.")
+     "trade, which the anonymised offer list does not provide.")
 story.append(PageBreak())
 
 # ===================================================================== 18
@@ -2013,27 +2013,27 @@ story.append(PageBreak())
 # ===================================================================== 23
 hero(pc(FN["roll"]["median_roll_spread_pct"]),
      "is what a Tibia Coin round trip actually costs.",
-     "The quoted spread is 4.29%, five times larger. Most volume executes inside the quotes "
+     "The spread is 4.29%, five times larger. Most volume executes inside the quotes "
      "against resting limit orders, so the dominant cost of trading across worlds is "
-     "CipSoft's Market fee, not the bid-ask spread.",
+     "CipSoft's Market fee, not the Sell/Buy Offer spread.",
      mark="cost")
-h2sec('5.6', 'Liquidity and microstructure', 'Traders pay a fifth of the quoted spread; the fee is the real cost')
+h2sec('5.6', 'Liquidity and microstructure', 'Traders pay a fifth of the spread; the fee is the real cost')
 para(tag("obs") + "Live order books for all 93 worlds were captured on 2026-07-30, giving a "
      "single simultaneous cross-section of true depth alongside the historical executed series.")
 takeaway('The buy side carries four times the orders and four times the depth - but not on the same worlds, which is why the two must be measured separately.')
 table([["Measure", "Median across 93 worlds"],
-       ["Quoted spread (lowest Sell Offer Piece Price minus highest Buy Offer Piece Price, over mid)", pc(MI["quoted_spread_median_pct"])],
+       ["Spread (sellers price minus buyers price, over mid)", pc(MI["quoted_spread_median_pct"])],
        ["Standing buy orders / sell orders",
         f"{MI['median_buy_orders']:.0f} / {MI['median_sell_orders']:.0f}"],
        ["Bid depth / ask depth",
-        f"{gp(MI['median_bid_depth_tc'])} / {gp(MI['median_ask_depth_tc'])} TC"],
+        f"{gp(MI['median_demand_tc'])} / {gp(MI['median_supply_tc'])} TC"],
        ["Correlation of the two ratios across worlds",
         f"{MI['corr_ordercount_vs_depth_ratio']:.2f}"],
        ["TC sold / bought per world-day",
         f"{gp(MI['turnover']['median_tc_sold_per_day'])} / "
         f"{gp(MI['turnover']['median_tc_bought_per_day'])} TC"]],
       [90 * mm, AVAIL - 90 * mm], align=[None, "R"],
-      caption="Table 5.13 - Microstructure measures the argument below turns on. Order-book "
+      caption="Table 5.13 - Microstructure measures the argument below turns on. Offer-list "
               "measures are a single snapshot; executed measures are medians over the full "
               "window. Table E.2 gives the complete block, including dispersion, anonymity "
               "and the placeholder share.")
@@ -2053,8 +2053,8 @@ para(tag("stat") + f"The correlation between the two ratios is only "
      f"{MI['corr_ordercount_vs_depth_ratio']:.2f}. A world can show many more buy orders than "
      f"sell orders while carrying less genuine bid depth, because a long tail of tiny orders far "
      f"below market inflates the count without contributing executable size. Median bid depth "
-     f"({gp(MI['median_bid_depth_tc'])} TC) does exceed median ask depth "
-     f"({gp(MI['median_ask_depth_tc'])} TC), so a real asymmetry exists - but it must be measured "
+     f"({gp(MI['median_demand_tc'])} TC) does exceed median ask depth "
+     f"({gp(MI['median_supply_tc'])} TC), so a real asymmetry exists - but it must be measured "
      f"from quantities, not counts.")
 
 para(tag("mech") + f"Depth is also granular. Because offers are placed in lots of "
@@ -2071,8 +2071,8 @@ para(tag("judg") + "<b>The lot constraint binds on quantity, not on price.</b> A
      "to the fee-cap threshold in Section 2.2 rather than left implicit.")
 
 h3("5.6.4 Decomposing the spread: what traders actually pay")
-para(tag("stat") + "The quoted spread is what a market order would cross, but most volume in a "
-     "limit-order book executes inside the quotes. Roll (1984) provides an estimator of the "
+para(tag("stat") + "The spread is what a market order would cross, but most volume in a "
+     "limit-offer list executes inside the quotes. Roll (1984) provides an estimator of the "
      "<i>effective</i> spread that requires no order-flow data: if prices bounce between bid "
      "and ask, successive returns inherit a negative first-order autocovariance of exactly "
      "-(s/2)&sup2;, so s = 2&radic;(-&gamma;<sub>1</sub>).")
@@ -2081,13 +2081,13 @@ para(tag("obs") + f"The required negative autocovariance is present on "
      f"{RL['n_negative_gamma1']} of {RL['n_worlds']} converged worlds. This is the same serial "
      f"correlation reported as measurement noise in Section 4.4.2; Roll's model says it is not "
      f"an artefact of measurement but a structural consequence of trading against a spread.")
-takeaway('What traders actually pay is 0.84%, about a fifth of the quoted spread; the dominant cost of a cross-world round trip is the Market fee, not the spread.')
+takeaway('What traders actually pay is 0.84%, about a fifth of the spread; the dominant cost of a cross-world round trip is the Market fee, not the spread.')
 figure("fig20_spread_decomposition.png",
        "Exhibit 5.10 - Cost of a round trip under five measures, against the arbitrage band "
        "estimated independently from prices. Sources: price archive item_id 22118; "
        "TibiaMarket.top /market_board; documented Market mechanics.")
 para(tag("stat") + f"The effective spread of {pc(RL['median_roll_spread_pct'])} is about "
-     f"{RL['share_of_quoted']:.0%} of the quoted spread, and across worlds the two are not "
+     f"{RL['share_of_quoted']:.0%} of the spread, and across worlds the two are not "
      f"related at all: the rank correlation is {RL['corr_roll_vs_quoted']:.2f} on "
      f"{RL['corr_roll_vs_quoted_n']} worlds, p {pval(RL['corr_roll_vs_quoted_p'])}. A world "
      f"with a wide posted spread is not a world where trades pay more. A large gap between "
@@ -2097,7 +2097,7 @@ para(tag("stat") + f"The effective spread of {pc(RL['median_roll_spread_pct'])} 
 para(tag("econ") + "This materially changes the read on trading costs. Judged on the quoted "
      "spread, the market looks expensive. Judged on what trades actually pay, the effective "
      "cost is below the small-trader Market fee itself - meaning the dominant cost of a "
-     "cross-world round trip is CipSoft's fee, not the bid-ask spread. That ordering is what "
+     "cross-world round trip is CipSoft's fee, not the Sell/Buy Offer spread. That ordering is what "
      "makes the fee the natural candidate for the arbitrage band in Section 5.2.")
 
 h3("5.6.5 Which microstructure model fits, and what cannot be tested")
@@ -2156,9 +2156,9 @@ h3("5.6.3 Liquidity and its correlates")
 sp_t = MI["spearman_spread_turnover"]; sp_p = MI["spearman_spread_pop"]
 sp_v = MI["spearman_turnover_vol"]
 table([["Relationship", "Spearman rho", "p", "Reading"],
-       ["Quoted spread vs TC traded per day", f"{sp_t[0]:+.3f}", pval(sp_t[1]),
+       ["Spread vs TC traded per day", f"{sp_t[0]:+.3f}", pval(sp_t[1]),
         "Busier worlds quote tighter"],
-       ["Quoted spread vs population", f"{sp_p[0]:+.3f}", pval(sp_p[1]),
+       ["Spread vs population", f"{sp_p[0]:+.3f}", pval(sp_p[1]),
         "Larger worlds quote tighter"],
        ["Return volatility vs TC traded per day", f"{sp_v[0]:+.3f}", pval(sp_v[1]),
         "Thinner worlds are more volatile"]],
@@ -2169,7 +2169,7 @@ para(tag("econ") + "All three point the same way and are what a conventional mic
      "while thin worlds show wider spreads and noisier daily marks. This also explains the "
      "measurement-noise finding of Section 4.4.2 - the daily price on a thin world is estimated "
      "from few trades and is correspondingly noisy.")
-para(tag("lim") + "Participant counts are unavailable. The order book returns the literal string "
+para(tag("lim") + "Participant counts are unavailable. The offer list returns the literal string "
      f"'Anonymous' for {pc(MI['anon_share_buy'] * 100, 0)} of buy-side orders, so unique traders "
      f"cannot be identified and no concentration measure can be computed.")
 story.append(PageBreak())
@@ -2249,11 +2249,11 @@ para(tag("obs") + f"The token venue leaves a public trace, and it is not small. 
      f"supply measures directly how much of the float has left. Read from the "
      f"{VN['token']['chain']} at block {VN['token']['block']:,}, supply stood at "
      f"<b>{gp(VN['token']['total_supply'])} {VN['token']['symbol']}</b>.")
-para(tag("obs") + f"For scale, the order-book snapshot used in Section 5.6 shows "
-     f"{gp(VN['book_ask_depth_tc'])} TC offered for sale across all {VN['n_book_worlds']} "
-     f"worlds, against {gp(VN['book_bid_depth_tc'])} TC bid for. The tokens outstanding are "
+para(tag("obs") + f"For scale, the offer-list snapshot used in Section 5.6 shows "
+     f"{gp(VN['sellers_amount_total'])} TC offered for sale across all {VN['n_book_worlds']} "
+     f"worlds, against {gp(VN['buyers_amount_total'])} TC bid for. The tokens outstanding are "
      f"therefore "
-     f"{VN['tib_over_ask_depth']:.2f} times the quantity of coins on offer across every world "
+     f"{VN['tib_over_sellers_amount']:.2f} times the quantity of coins on offer across every world "
      f"at once, and {VN['tib_over_total_depth']:.0%} of resting interest on both sides "
      f"combined.")
 para(tag("obs") + f"That figure needs a denominator, and the Char Bazaar supplies one. The "
@@ -3008,7 +3008,7 @@ story.append(PageBreak())
 
 h2sec('6.6', 'Fundamentals and predictability',
       'Observing the economy that makes the gold does not make the price forecastable')
-bottomline(f"Kill statistics, activity, liquidity, the order book and the calendar were assembled "
+bottomline(f"Kill statistics, activity, liquidity, the offer list and the calendar were assembled "
            f"into a {FD['panel']['n_features']}-feature panel and put through every model class "
            f"the brief names. On the price level every model "
            "loses to a random walk. On the price relative to other worlds one model beats it. "
@@ -3796,7 +3796,7 @@ para(tag("stat") + f"<b>There is an apparent contradiction here, and resolving i
      f"first principal component explains just {pc(VA['pc1_share'] * 100, 1)}.")
 para(tag("econ") + "Both are true because they describe different frequencies. The common trend "
      "operates on the level over months; daily movement is dominated by local order flow "
-     "against a thin book and by the bid-ask bounce of Section 5.6.4. Worlds share a "
+     "against a thin book and by the Sell/Buy Offer bounce of Section 5.6.4. Worlds share a "
      "destination but travel there on independent paths. For a holder this means coin "
      "positions across several worlds diversify substantially at daily frequency, while "
      "providing almost no diversification against the common level over long horizons.")
@@ -3851,13 +3851,13 @@ table([["Price measure", "Deviation coefficient", "Std. error", "p", "n",
         f"{RB[k]['n']:,}", pc(RB[k]["mean_dev_from_headline_pct"])]
        for k, lab in [("headline_mean_executed", "Headline (mean of executed)"),
                       ("quantity_weighted", "Quantity-weighted"),
-                      ("order_book_mid", "Order-book mid"),
+                      ("order_book_mid", "Offer-list mid"),
                       ("sell_side_only", "Sell-side only")]],
       [44 * mm, 30 * mm, 20 * mm, 16 * mm, 18 * mm, AVAIL - 128 * mm],
       align=[None, "R", "R", "R", "R", "R"],
       caption="Table 7.4 - The central result under four independent price constructions.")
 para(tag("obs") + "The coefficient is negative, of similar magnitude and significant at any "
-     "conventional level under every construction, including the order-book mid, which shares no "
+     "conventional level under every construction, including the offer-list mid, which shares no "
      "input data with the executed-price measures. The finding is not an artefact of price "
      "construction.")
 
@@ -3956,7 +3956,7 @@ table([["#", "Limitation", "Consequence"],
         "Section 6.6.14, where the channel is rejected. What is still missing is the "
         "accumulated stock and the quantity of coins issued, so the level cannot be tied to a "
         "monetary aggregate even though the flow channel is closed"],
-       ["7", "Order book is a single snapshot",
+       ["7", "Offer list is a single snapshot",
         "Depth and quoted spreads have no history; only executed measures are time series"],
        ["8", "Participants are anonymised",
         "No concentration, no order-flow attribution, no participant counts"],
@@ -4061,7 +4061,7 @@ para(tag("judg") + "Several questions are well posed but not answerable with the
 bullets([
     tag("hyp") + "<b>Behavioural pricing around round numbers.</b> Whether offers cluster at "
     "salient gold prices, and whether anchoring on those levels slows adjustment, would "
-    "require a history of the order book rather than the single snapshot collected here.",
+    "require a history of the offer list rather than the single snapshot collected here.",
     tag("hyp") + "<b>Overreaction and correction around updates.</b> The pre-update effect in "
     "Section 4.6.2 decays monotonically with window length, which is consistent with "
     "anticipatory buying followed by correction. Distinguishing that from rational anticipation "
@@ -4191,7 +4191,7 @@ table([["Element", "Position"],
 h3("7.5.2 Who is on the other side, and what each one wants")
 para(tag("econ") + "A single demand curve hides five participants with different motives. "
      "Total demand is the sum of consumption, investment, arbitrage and value export, and each "
-     "responds to a different price. The order book can be cut by size to bound how much of it "
+     "responds to a different price. The offer list can be cut by size to bound how much of it "
      "each could account for, because the Store publishes its prices in coins and a purchase "
      "has a characteristic size.")
 table([["Band", "Offers", "Share of coins", "Bid share", "Median size", "Fee paid"]] +
@@ -4200,10 +4200,10 @@ table([["Band", "Offers", "Share of coins", "Bid share", "Median size", "Fee pai
        for _, r in PB.iterrows()],
       [34 * mm, 18 * mm, 24 * mm, 18 * mm, 24 * mm, AVAIL - 118 * mm], fs=6.9,
       align=[None, "R", "R", "R", "R", "R"],
-      caption="Table 7.10 - The live order book cut at Store-purchase sizes. A month of premium "
+      caption="Table 7.10 - The live offer list cut at Store-purchase sizes. A month of premium "
               "is 250 TC, a mount or outfit about 750.")
 figure("fig30_participants.png",
-       "Exhibit 7.4 - The live order book by order size, and resting depth against executed "
+       "Exhibit 7.4 - The live offer list by order size, and resting depth against executed "
        "volume. Sources: TibiaMarket.top /market_board; price archive, item_id 22118.")
 para(tag("stat") + f"Read naively this says consumption is negligible: orders under 500 TC are "
      f"{PB.iloc[0].share_of_offers:.0%} of offers and {PB.iloc[0].share_of_tc:.1%} of coins, "
@@ -4214,7 +4214,7 @@ para(tag("lim") + f"A resting order is an unfilled intention, not a trade. A con
      f"for weeks. The median world executes "
      f"{PX['median_executed_txn_per_world_day']:,.0f} lots a day - "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins - against a resting bid "
-     f"depth of {gp(PX['median_resting_bid_depth_tc'])} coins, and "
+     f"depth of {gp(PX['median_resting_buyers_amount'])} coins, and "
      f"{PX['share_wholesale_bids_20pct_below_mid']:.0%} of wholesale bids sit more than 20% "
      f"below the mid where they will never fill.")
 para(tag("mech") + f"<b>The two series are on different scales, and the Market's own rule "
@@ -4222,7 +4222,7 @@ para(tag("mech") + f"<b>The two series are on different scales, and the Market's
      f"accepted - and the executed series counts lots, while the book is quoted in coins. "
      f"Converting at the lot, the median world clears "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins a day against a resting bid depth of "
-     f"{gp(PX['median_resting_bid_depth_tc'])}, so the book holds <b>"
+     f"{gp(PX['median_resting_buyers_amount'])}, so the book holds <b>"
      f"{PX['resting_over_daily_flow']:,.0f} days</b> of trade.")
 para(tag("lim") + f"<b>Two daily volumes exist and they are not interchangeable.</b> The median "
      f"world buys {gp(PX['median_executed_per_world_day_tc'])} coins a day and sells "
@@ -4240,8 +4240,8 @@ para(tag("econ") + f"So the two sides still describe different things, and the d
      f"or more - while a whole day of execution is "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins, roughly ten Store purchases.</b> A "
      f"book concentrated in a few large intentions, cleared by a trickle of small ones, is the "
-     f"shape the mechanism in Section 7.6 requires. That is why the quoted spread of "
-     f"{pc(FN['roll']['median_quoted_spread_pct'])} bears so little relation to the "
+     f"shape the mechanism in Section 7.6 requires. That is why the spread of "
+     f"{pc(FN['roll']['median_spread_pct'])} bears so little relation to the "
      f"{pc(FN['roll']['median_roll_spread_pct'])} that trades actually pay.")
 table([["Participant", "Side", "Responds to", "What this study can say"]] +
       [[r.profile, r.side, r.stimulus, r.evidence] for _, r in PPROF.iterrows()],
@@ -4249,7 +4249,7 @@ table([["Participant", "Side", "Responds to", "What this study can say"]] +
       caption="Table 7.11 - The five participant types, the stimulus each responds to, and what "
               "the evidence in this report bears on each.")
 para(tag("judg") + f"Three consequences follow for positioning. The <b>sell side is thin</b> - "
-     f"only {1 - PART['bid_share']:.0%} of resting coins are offers - so the price is more "
+     f"only {1 - PART['buyers_share']:.0%} of resting coins are offers - so the price is more "
      f"exposed to gold buyers withdrawing than to consumers arriving. The <b>speculative motive "
      f"leaves no trace</b>: if investors were buying on expected appreciation the returns would "
      f"show momentum, and Section 6.6.2 finds none out of sample. And the <b>farmer who sells "
@@ -4621,12 +4621,12 @@ para(tag("lim") + "<b>What that does and does not settle.</b> Both tests run gol
 para(tag("stat") + f"<b>Three. Clearing is thin, and it is need-driven.</b> The median world "
      f"executes {PX['median_executed_txn_per_world_day']:,.0f} lots a day - "
      f"{gp(PX['median_executed_per_world_day_tc'])} coins - against a resting bid "
-     f"depth of {gp(PX['median_resting_bid_depth_tc'])} coins, so the book holds "
+     f"depth of {gp(PX['median_resting_buyers_amount'])} coins, so the book holds "
      f"{PX['resting_over_daily_flow']:,.0f} days of trade, of which "
      f"{PX['share_wholesale_bids_20pct_below_mid']:.0%} of the large orders sit more than 20% "
      f"below the mid and will never fill. The book is a wall of patient intent; the price is set "
      f"by the small minority who are impatient. The sell side is the thin one, at "
-     f"{1 - PART['bid_share']:.0%} of resting coins.")
+     f"{1 - PART['buyers_share']:.0%} of resting coins.")
 para(tag("stat") + f"<b>Four. A cost band, not an information equilibrium, bounds the "
      f"relation.</b> The threshold at which cross-world gaps begin to close is "
      f"{pc(R['advanced']['tar']['threshold_pct'])}, estimated by grid search rather than "
@@ -4668,7 +4668,7 @@ table([["Hypothesis", "Verdict", "What decides it"],
         f"{IRR['latent_state']['r2_factor_smoothed']:.1%} of daily variance in retrospect and "
         f"{IRR['latent_state']['r2_factor_forecast']:.1%} one step ahead. The ceiling on any "
         f"observer is low"],
-       ["The order book carries pressure information",
+       ["The offer list carries pressure information",
         "<b>Weakened</b>",
         f"Resting depth is {PX['resting_over_daily_flow']:,.0f} times executed flow and "
         f"{PX['share_wholesale_bids_20pct_below_mid']:.0%} of large bids are unexecutable. The "
@@ -4680,7 +4680,7 @@ table([["Hypothesis", "Verdict", "What decides it"],
        ["Clearing is thin and driven by need, not by view",
         "<b>Favoured</b>",
         f"{gp(PX['median_executed_per_world_day_tc'])} TC executed per world-day; sell side "
-        f"{1 - PART['bid_share']:.0%} of resting coins; reversal equal to the "
+        f"{1 - PART['buyers_share']:.0%} of resting coins; reversal equal to the "
         f"{pc(FN['roll']['median_roll_spread_pct'])} effective spread and no wider"],
        ["The level is a martingale because neither leg carries",
         "<b>Favoured</b>",
@@ -4757,7 +4757,7 @@ bullets([
     f"unchanged, the cost explanation is incomplete and something is preventing arbitrage that "
     f"is not a fee.",
     f"<b>A thickening sell side.</b> If offers rise materially above "
-    f"{1 - PART['bid_share']:.0%} of resting coins without a fee change, the thin-clearing "
+    f"{1 - PART['buyers_share']:.0%} of resting coins without a fee change, the thin-clearing "
     f"component is wrong and the price becomes a depth phenomenon.",
 ])
 para(tag("judg") + "The report's answer to what the price will do is still that it does not "
@@ -4819,7 +4819,7 @@ bullets([
     f"<b>Selecting on noise.</b> Entering the day after the signal, so the selection day and "
     f"the entry day share no observation, leaves the 91-day net at "
     f"{pc(float(STD[STD.horizon == 91].net_pct.iloc[0]), 2)} against "
-    f"{pc(float(STOV[STOV.horizon == 91].net_pct.iloc[0]), 2)}. The bid-ask bounce is not "
+    f"{pc(float(STOV[STOV.horizon == 91].net_pct.iloc[0]), 2)}. The Sell/Buy Offer bounce is not "
     f"driving it.",
     f"<b>A few worlds or one episode.</b> {STA['n_worlds_profitable']} of "
     f"{STA['n_worlds_used']} worlds are profitable on average, and every calendar year is "
@@ -5251,7 +5251,7 @@ bullets([
     f"<b>Dispersion widening past 4%.</b> Cross-world dispersion is "
     f"{pc(IN['dispersion_last'], 1)} among converged worlds. Sustained above 4% and the "
     f"arbitrage trade clears its cost without any fee change.",
-    f"<b>The sell side thickening.</b> Only {1 - PART['bid_share']:.0%} of resting coins are "
+    f"<b>The sell side thickening.</b> Only {1 - PART['buyers_share']:.0%} of resting coins are "
     f"offers. A material rise means gold buyers are arriving in force, which is the one "
     f"mechanism that would push the gold price of a coin down persistently rather than "
     f"noisily.",
@@ -5374,13 +5374,13 @@ table([["Field", "Type", "Definition", "Notes"],
        ["world", "text", "World name", "Join key across all sources"],
        ["date", "date", "UTC-floored observation date", "Not the server-save day"],
        ["price_gp", "GP/TC", "Mean of the two valid daily executed averages", "Headline measure"],
-       ["px_sell / px_buy", "GP/TC", "Validated day_average_sell / day_average_buy",
+       ["day_average_sell_valid / day_average_buy_valid", "GP/TC", "Validated day_average_sell / day_average_buy",
         "Gated on quantity &gt; 0 and value &gt; 1,000 GP"],
        ["price_vw", "GP/TC", "Executed averages weighted by TC traded", "Sensitivity measure"],
-       ["price_book_mid", "GP/TC", "(best bid + best ask) / 2",
+       ["offer_mid", "GP/TC", "(buyers price + sellers price) / 2",
         "Only when ask/bid in [0.5, 2.0]"],
-       ["quoted_spread_pct", "%", "(ask - bid) / mid", "A true quoted spread"],
-       ["executed_gap_pct", "%", "(px_sell - px_buy) / mean", "<b>Not a bid-ask spread</b>"],
+       ["spread_pct", "%", "(ask - bid) / mid", "A true spread"],
+       ["executed_gap_pct", "%", "(day_average_sell_valid - day_average_buy_valid) / mean", "<b>Not a Sell/Buy Offer spread</b>"],
        ["log_price", "log GP", "Natural log of price_gp", "-"],
        ["ret", "log points", "First difference of log_price",
         "Only between consecutive observed days"],
@@ -5389,7 +5389,7 @@ table([["Field", "Type", "Definition", "Notes"],
        ["dev_lag", "log points", "dev lagged one day", "<b>Always lagged before use</b>"],
        ["closure_pp", "pp/day", "Fall in |dev| from one day to the next",
         "Positive means the gap narrowed"],
-       ["tc_sold / tc_bought", "TC/day", "Coins executed on each side: day_sold and "
+       ["day_sold_tc / day_bought_tc", "TC/day", "Coins executed on each side: day_sold and "
         "day_bought converted at the 25-coin lot the Market enforces",
         "<b>Never summed</b>"],
        ["day_high / day_low", "GP/TC", "Daily extremes, band-checked",
@@ -5570,7 +5570,7 @@ h3("8.3.10 Reproducibility")
 # The table claims to run in pipeline order, so it is generated from run_all.py's own stage
 # lists rather than maintained by hand. A hand-kept ordering drifted: 08_figures.py sat ahead
 # of every analysis stage whose output it draws.
-_PURPOSE = {'01_collect.py': 'Per-world GuildStats and order-book collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the order-book size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement', '48_stability_and_seasonality.py': 'Within-year seasonality, rolling parameter stability, forecast error in economic units, and regime splits', '16b_killstats_history.py': 'Folds the 2022-2025 archive in a world at a time, reclaiming the disk as it goes', '49_long_horizon_production.py': 'Flow, cumulative, acceleration and threshold production tests to a one-year horizon, with per-date inference', 'emission_view.py': 'Shared Gold Emission workspace: payload, styles, markup and behaviour for both publication surfaces', '34b_emission_history.py': 'Extends the GP-emission series over the 2022-2025 archive by sparse fetch, one world at a time, deleting as it goes', '50_testing_ledger.py': 'Counts every hypothesis the study tests, by family, and records which families carry a correction and which are reported without one', '51_render_gold_emission_report.py': 'Renders the standalone Gold Emission report from its own artifact, so it is generated in-repo rather than exported by a reader this project does not contain', '52_coverage_manifest.py': 'Pairs every published chapter, section, table and exhibit with a site destination and fails on an omission that is not declared', '53_decision_policy.py': 'Maps validated evidence to a per-world action under versioned rules, and abstains where the evidence does not support one', '54_verify_freshness.py': 'Checks that the published artifacts were rebuilt from current data, which consistency checks alone cannot detect'}
+_PURPOSE = {'01_collect.py': 'Per-world GuildStats and offer-list collection', '01b_census.py': 'Per-world population census', '02_ingest_prices.py': 'Archive to snapshot-level table', '03_build_metadata.py': 'World metadata, merge register, event calendar', '04_population.py': 'Daily population panel', '04b_diurnal.py': 'Diurnal snapshot-bias profile', '05_clean_panel.py': 'Section 3.3 cleaning pipeline', 'econ.py': 'Fixed-effect absorption and multi-way clustered errors', '06_analysis.py': 'All statistics and models', '07_forecast.py': 'Forecasts and rolling-origin backtest', 'chartstyle.py': 'Chart system, layout bands, text-overlap checker', '08_figures.py': 'All figures', '10_advanced.py': 'Threshold, cointegration, spatial and IV models', '11_finance.py': 'Microstructure, efficiency, volatility and diagnostics', '16_killstats.py': 'Per-world daily kill statistics aggregated to a fundamentals  panel (Section 6.6)', '17_features.py': "{FD['panel']['n_features']}-feature matrix with the leakage assertion", '18_predict.py': 'Leading indicators, walk-forward model comparison,  Diebold-Mariano', '19_regimes.py': 'Hidden Markov states, change points and SHAP attribution', '20_hierarchy.py': 'Global, regional, per-world, hierarchical and multi-task scopes', '21_models_extra.py': 'OLS, CatBoost, ARIMA, Prophet, structural time series; rolling window; volatility targets', '22_discovery.py': 'Boruta, RFE, LASSO path, interaction search, partial dependence, conformal intervals, counterfactuals', '23_timeseries.py': 'SARIMA, SARIMAX, Markov-switching autoregression, latent cross-world factors, GARCH volatility forecast', '24_deep.py': 'LSTM and time-series transformer on 30-day windows', '25_arbitrage.py': 'Band-conditional forecasting of the deviation, pairwise world network, net-of-cost trading rule', '26_maximise.py': 'Tuned and ensembled models aimed at the largest achievable out-of-sample R² on the deviation', '27_irreducible.py': 'Entropy against surrogates, BDS, martingale tests and a common-factor ceiling on what any observer could know', '28_supply_demand.py': 'Direct test of the gold-production channel against demand and behavioural blocks', '29_scenarios.py': 'Block-bootstrap scenarios, probability bands and actionable levels', '30_model_artifact.py': 'Fits, persists and scores the shipped model; run with --predict', '41_group_models.py': 'Hierarchical PvP, BattlEye and region models; threshold sensitivity, untouched holdout comparison and current scores', '42_verify_group_models.py': 'Independently verifies coverage, pooling order, PvP isolation, holdout metrics and the deployable model family', '44_launch_phase_models.py': 'PvP-specific launch-phase models with age bounds, unseen-world cohorts and mature/zero baselines', '45_verify_launch_models.py': 'Independently verifies launch cohorts, PvP isolation, current coverage, metrics and artifact completeness', '43_build_group_model_notebook.py': 'Builds and executes the reproducible general-versus-specific model notebook', '31_participants.py': 'Demand decomposed by participant type from the offer-list size distribution', '32_scenario_backtest.py': 'Walk-forward coverage test of the scenario bands', '33_strategy.py': 'Signal strength by holding period, net of fees; Newey-West and delayed-entry attacks; a true holdout; the long-only variant', '46_verify_artifacts.py': 'Holds the report and the site to the same numbers: canonical facts computed once, every artifact that states one must agree', '47_bazaar_history.py': 'Char Bazaar year pages from 2020 onward, and the venue ratio recomputed on comparable coverage', 'narrative.py': 'The claims both artifacts publish, defined once with their own numbers; the report renders them as paragraphs and the site as interactive cards', '34a_collect_loot.py': 'Revision-audited TibiaWiki loot probabilities and quantities', '34b_collect_creatures.py': 'Creature classification, boss, event and explicit no-loot evidence', '34_gold_emission.py': 'Creature-level gold value and daily world monetary-emission reconstruction', '35_gold_emission_models.py': 'Fixed-effects, lag, holdout and sensitivity tests for gold emission', '36_gold_emission_report.py': 'Validated technical report artifact for the monetary reconstruction', '37_verify_gold_emission.py': 'Data, model, report and dashboard integrity checks for gold emission', '38_gold_emission_dashboard.py': 'Self-contained interactive world-by-time gold-emission explorer', '39_intelligence_hub.py': 'Unified interactive workspace for worlds, forecasts, strategy, emission and exhibits', '40_verify_intelligence_hub.py': 'Structural and data-integrity checks for the interactive workspace', '14_venues.py': 'Token contract, liquidity pools and Char Bazaar turnover  (Section 5.8); network reads are cached and block-stamped', 'remap_sections.py': 'Chapter consolidation and reference renumbering', '15_verify.py': 'Reads the built PDF back and checks it against the data:  references, numbering, contents, coverage and conventions', 'run_all.py': 'Runs every stage in dependency order and verifies that all  result blocks are present', '12_art.py': 'Duotone artwork treatment for the chapter marks', '13_icons.py': 'Executive-summary pictograms', '09_report.py': 'Document architecture, page templates and the build', '09_sections.py': 'The report body: every section, table and exhibit placement', '48_stability_and_seasonality.py': 'Within-year seasonality, rolling parameter stability, forecast error in economic units, and regime splits', '16b_killstats_history.py': 'Folds the 2022-2025 archive in a world at a time, reclaiming the disk as it goes', '49_long_horizon_production.py': 'Flow, cumulative, acceleration and threshold production tests to a one-year horizon, with per-date inference', 'emission_view.py': 'Shared Gold Emission workspace: payload, styles, markup and behaviour for both publication surfaces', '34b_emission_history.py': 'Extends the GP-emission series over the 2022-2025 archive by sparse fetch, one world at a time, deleting as it goes', '50_testing_ledger.py': 'Counts every hypothesis the study tests, by family, and records which families carry a correction and which are reported without one', '51_render_gold_emission_report.py': 'Renders the standalone Gold Emission report from its own artifact, so it is generated in-repo rather than exported by a reader this project does not contain', '52_coverage_manifest.py': 'Pairs every published chapter, section, table and exhibit with a site destination and fails on an omission that is not declared', '53_decision_policy.py': 'Maps validated evidence to a per-world action under versioned rules, and abstains where the evidence does not support one', '54_verify_freshness.py': 'Checks that the published artifacts were rebuilt from current data, which consistency checks alone cannot detect'}
 _runall = (ROOT / "scripts" / "run_all.py").read_text()
 _stage_order, _seen = [], set()
 for _name in re.findall(r'"([0-9a-z_]+\.py)"', _runall):
@@ -5900,7 +5900,7 @@ REFS = [
      'Physiological time-series analysis using approximate entropy and sample entropy. <i>American Journal of Physiology</i> 278(6), H2039-H2049.',
      'Regularity measure against surrogates (Section 6.6.16)'),
     ('Roll, R. (1984)',
-     'A simple implicit measure of the effective bid-ask spread in an efficient market. <i>Journal of Finance</i> 39(4), 1127-1139.',
+     'A simple implicit measure of the effective Sell/Buy Offer spread in an efficient market. <i>Journal of Finance</i> 39(4), 1127-1139.',
      'Effective spread from serial covariance (Section 5.6.4)'),
     ('Schreiber, T. and Schmitz, A. (1996)',
      'Improved surrogate data for nonlinearity tests. <i>Physical Review Letters</i> 77(4), 635-638.',
@@ -6011,21 +6011,21 @@ table([["Region", "Worlds", "Peak hour (UTC)", "Peak hour (server)",
               "GuildStats.eu /online-counter, 15-minute resolution, 7 days to 2026-07-30.")
 h3("E.4 Microstructure measures, full detail")
 table([["Measure", "Median across 93 worlds"],
-       ["Quoted spread (lowest Sell Offer Piece Price minus highest Buy Offer Piece Price, over mid)", pc(MI["quoted_spread_median_pct"])],
-       ["Quoted spread, interquartile range",
+       ["Spread (sellers price minus buyers price, over mid)", pc(MI["quoted_spread_median_pct"])],
+       ["Spread, interquartile range",
         f"{pc(MI['quoted_spread_iqr'][0])} to {pc(MI['quoted_spread_iqr'][1])}"],
        ["Executed-average gap (a different quantity)", pc(MI["executed_gap_median_pct"])],
        ["Standing buy orders", f"{MI['median_buy_orders']:.0f}"],
        ["Standing sell orders", f"{MI['median_sell_orders']:.0f}"],
-       ["Bid depth", f"{gp(MI['median_bid_depth_tc'])} TC"],
-       ["Ask depth", f"{gp(MI['median_ask_depth_tc'])} TC"],
+       ["Bid depth", f"{gp(MI['median_demand_tc'])} TC"],
+       ["Ask depth", f"{gp(MI['median_supply_tc'])} TC"],
        ["Share of buy orders posted below 2,000 GP",
         pc(MI["share_buy_orders_below_2000"] * 100, 1)],
        ["Share of orders posted anonymously (buy side)", pc(MI["anon_share_buy"] * 100, 1)],
        ["TC sold per world-day", f"{gp(MI['turnover']['median_tc_sold_per_day'])} TC"],
        ["TC bought per world-day", f"{gp(MI['turnover']['median_tc_bought_per_day'])} TC"]],
       [90 * mm, AVAIL - 90 * mm], align=[None, "R"],
-      caption="Table E.2 - Microstructure measures, complete. Order-book measures are a single snapshot; "
+      caption="Table E.2 - Microstructure measures, complete. Offer-list measures are a single snapshot; "
               "executed measures are medians over the full history of converged worlds.")
 
 h3("E.3 Market index, dated detail")
@@ -6045,7 +6045,7 @@ table([["Measure", "Value"],
 
 h3("E.2 Round-trip cost measures, full detail")
 table([["Cost measure", "Median", "What it represents"],
-       ["Quoted spread", pc(RL["median_quoted_spread_pct"]),
+       ["Spread", pc(RL["median_spread_pct"]),
         "Cost of crossing the book with a market order"],
        ["Round-trip fee, small offer", "4.00%", "Two offers at the uncapped 2% rate"],
        ["Executed-price gap", pc(RL["median_executed_gap_pct"]),

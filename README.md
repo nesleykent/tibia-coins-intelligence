@@ -90,7 +90,7 @@ coins exchanged sit flat between 488M and 607M a year. Fewer character sales at 
 **A units error, found late and corrected throughout.** `day_sold` / `day_bought` count
 25-coin lots, not coins: the values run 1, 2, 3 with only 3.7% multiples of 25, which a coin
 count cannot be, since the Market accepts no other quantity. Every traded-volume figure is
-converted at the lot. The order book is the opposite case — minimum 25, every amount a whole
+converted at the lot. The offer list is the opposite case — minimum 25, every amount a whole
 lot, quoted against a per-coin price — so those are already coins and are left alone. Two
 verifier checks now re-derive both classifications from the data on every build.
 

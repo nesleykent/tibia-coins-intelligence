@@ -35,7 +35,7 @@ lo = pd.read_csv(P / "live_offers.csv")
 R = json.load(open(P / "results.json"))
 FE = R["fees"]
 lo["is_buy"] = lo.side.eq("buyers")
-print(f"live order book: {len(lo):,} offers across {lo.world.nunique()} worlds")
+print(f"live offer list: {len(lo):,} offers across {lo.world.nunique()} worlds")
 
 # Store prices in Tibia Coins, from the documented catalogue. These set the bands: an order that
 # buys roughly one purchase is consumption-shaped, and one that buys hundreds is not.
@@ -84,7 +84,7 @@ for name, lo_, hi_, note in BANDS:
         "note": note})
 bands = pd.DataFrame(rows)
 bands.to_csv(P / "participant_bands.csv", index=False)
-print("\n[BANDS] the order book by size, and the balance within each")
+print("\n[BANDS] the offer list by size, and the balance within each")
 print(bands[["band", "n_offers", "share_of_tc", "buy_share_of_tc",
              "median_size", "median_fee_rate_pct"]].round(3).to_string(index=False))
 
@@ -112,31 +112,31 @@ ex["rel"] = ex.price / ex["mid"] - 1
 buy = ex[ex.is_buy]
 near = buy[buy.rel > -0.05]
 pan = pd.read_csv(P / "panel_daily.csv")
-# day_bought is a count of 25-coin lots; bid_depth_tc is already coins. Comparing them
+# day_bought is a count of 25-coin lots; buyers_amount is already coins. Comparing them
 # without converting was a units error of exactly 25x.
 LOT = FE["lot_size"]
 txn = float(pan.day_bought.median())
 flow = txn * LOT
-depth = float(bd.bid_depth_tc.median())
+depth = float(bd.buyers_amount.median())
 deep_far = float((buy[buy.amount > 10000].rel < -0.20).mean())
 EXEC = {
     "median_executed_txn_per_world_day": txn,
     "lot_size": LOT,
     "median_executed_per_world_day_tc": flow,
-    "median_resting_bid_depth_tc": depth,
+    "median_resting_buyers_amount": depth,
     "resting_over_daily_flow": depth / max(1.0, flow),
     "share_wholesale_bids_20pct_below_mid": deep_far,
     "median_offer_size_tc": float(lo.amount.median()),
     # The fee schedule and market impact pull in opposite directions, and the ratio is the
     # size of the conflict: the cheapest order to place is a large share of a day's volume.
     "median_tc_sold_per_world_day": float(pan[pan.world.isin(
-        set(pd.read_csv(P / "world_summary.csv").query("converged").world))].tc_sold.median()),
+        set(pd.read_csv(P / "world_summary.csv").query("converged").world))].day_sold_tc.median()),
     "cap_lot_share_of_daily_volume": float(CAP_LOT / max(1.0, pan[pan.world.isin(
-        set(pd.read_csv(P / "world_summary.csv").query("converged").world))].tc_sold.median())),
+        set(pd.read_csv(P / "world_summary.csv").query("converged").world))].day_sold_tc.median())),
     "median_gp_turnover_per_world_day": float(
-        (pan.tc_sold * pan.price_gp).median()),
-    "near_mid_bid_tc": float(near.amount.sum()),
-    "near_mid_share_of_bids": float(near.amount.sum() / max(1, buy.amount.sum())),
+        (pan.day_sold_tc * pan.price_gp).median()),
+    "near_mid_buyers_amount": float(near.amount.sum()),
+    "near_mid_share_of_buyers": float(near.amount.sum() / max(1, buy.amount.sum())),
     "consumption_share_of_near_mid": float(
         near[near.amount < 500].amount.sum() / max(1, near.amount.sum())),
 }
@@ -188,10 +188,10 @@ stim.to_csv(P / "participant_profiles.csv", index=False)
 
 RES = {"executable": EXEC, "bands": bands.drop(columns=["note"]).to_dict("records"),
        "band_notes": {r["band"]: r["note"] for _, r in bands.iterrows()},
-       "total_bid_tc": int(tot_buy), "total_ask_tc": int(tot_sell),
-       "bid_share": float(tot_buy / (tot_buy + tot_sell)),
-       "consumption_share_of_bids": float(cons_tc / max(1, tot_buy)),
-       "large_share_of_bids": float(spec_tc / max(1, tot_buy)),
+       "total_buyers_amount": int(tot_buy), "total_sellers_amount": int(tot_sell),
+       "buyers_share": float(tot_buy / (tot_buy + tot_sell)),
+       "consumption_share_of_buyers": float(cons_tc / max(1, tot_buy)),
+       "large_share_of_buyers": float(spec_tc / max(1, tot_buy)),
        "store_prices_tc": STORE,
        "profiles": STIM,
        "caveat": ("the mapping from order size to motive is a hypothesis; what is measured is "

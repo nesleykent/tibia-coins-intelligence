@@ -118,9 +118,10 @@ Write the visible player layer as a guildmate would explain it in chat:
   and do not introduce a player-perspective or offer-poster-perspective framing
   to reconcile a name with the screen — if the name needs reconciling, it is the
   wrong name;
-- `bid`, `ask`, `best bid`, `best ask` and `order book` are data definitions in
-  this file and belong in the data dictionary and methodology, never on a
-  visible label.
+- `bid`, `ask`, `best bid`, `best ask` and `order book` are not used anywhere in
+  this project: not on a label, not in prose, and not as a column name. The
+  Market has Sell Offers and Buy Offers with a Piece Price and an Amount, and
+  those are the words for it at every layer.
 
 Translate in both directions. Players need the financial and statistical terms
 explained; analysts and finance professionals need the Tibia mechanics
@@ -298,16 +299,13 @@ rather than displayed as an unexplained blank.
   - **GP/TC** is the price of one Tibia Coin measured in gold pieces.
 - Do not collapse market microstructure into one ambiguous “price” when
   side-specific data exists. Use these reader-facing definitions consistently:
-  - **Sell Offers, Piece Price:** the lowest Piece Price standing on the Sell
-    Offers; historically, the seller-side executed average.
-  - **Buy Offers, Piece Price:** the highest Piece Price standing on the Buy
-    Offers; historically, the buyer-side executed average.
+  - **Sell Offers:** the price shown for the Sell Offers side; historically, the seller-side executed average.
+  - **Buy Offers:** the price shown for the Buy Offers side; historically, the buyer-side executed average.
   - **Mid:** halfway between the two Piece Prices; a calculated reference with
     no counterpart in the client, so label it as calculated.
-  - **Quoted spread:** `(best ask - best bid) / mid`; use only for a valid
-    simultaneous order-book snapshot.
+  - **Spread:** `(sellers price - buyers price) / mid`; use only for a valid simultaneous reading of the offer list.
   - **Executed-side gap:** difference between daily executed averages; never
-    label it a bid-ask or quoted spread.
+    label it a Spread.
   - **Amount, Buy Offers** and **Amount, Sell Offers:** the TC standing on each
     side, using the window's own `Amount` column. Always show the snapshot/as-of
     time for a live reading.

@@ -48,20 +48,20 @@ FIN["roll"] = {
     "n_negative_gamma1": int((roll.gamma1 < 0).sum()),
     "median_roll_spread_pct": float(roll.roll_spread_pct.median()),
     "iqr": [float(roll.roll_spread_pct.quantile(.25)), float(roll.roll_spread_pct.quantile(.75))],
-    "median_quoted_spread_pct": float(bd.quoted_spread_pct.median()),
+    "median_spread_pct": float(bd.spread_pct.median()),
     "median_executed_gap_pct": float(conv.executed_gap_pct.median()),
-    "corr_roll_vs_quoted": float(bdm[["roll_spread_pct", "quoted_spread_pct"]]
+    "corr_roll_vs_quoted": float(bdm[["roll_spread_pct", "spread_pct"]]
                                  .corr(method="spearman").iloc[0, 1]),
     # Report the test, not just the coefficient: a rank correlation this small on this many
     # worlds is indistinguishable from no relationship, and the text should say so.
     "corr_roll_vs_quoted_p": float(spearmanr(
-        *bdm[["roll_spread_pct", "quoted_spread_pct"]].dropna().values.T).pvalue),
-    "corr_roll_vs_quoted_n": int(bdm[["roll_spread_pct", "quoted_spread_pct"]]
+        *bdm[["roll_spread_pct", "spread_pct"]].dropna().values.T).pvalue),
+    "corr_roll_vs_quoted_n": int(bdm[["roll_spread_pct", "spread_pct"]]
                                  .dropna().shape[0]),
-    "share_of_quoted": float(roll.roll_spread_pct.median() / bd.quoted_spread_pct.median()),
+    "share_of_quoted": float(roll.roll_spread_pct.median() / bd.spread_pct.median()),
 }
 print(f"[ROLL] implied effective spread {FIN['roll']['median_roll_spread_pct']:.2f}% vs quoted "
-      f"{FIN['roll']['median_quoted_spread_pct']:.2f}% "
+      f"{FIN['roll']['median_spread_pct']:.2f}% "
       f"({FIN['roll']['share_of_quoted']:.0%} of quoted); "
       f"negative autocovariance on {FIN['roll']['n_negative_gamma1']}/{len(roll)} worlds")
 
@@ -205,7 +205,7 @@ print("[QUANTILE] dev_lag coefficient by quantile: "
 # Do large worlds lead small ones? If price discovery happens where trading is deepest, the
 # lagged return of the large-world group should predict the small-world group and not vice
 # versa. Tested as a bivariate Granger causality on the two group indices.
-med = conv.groupby("world").txn_sold.median()
+med = conv.groupby("world").day_sold_txn.median()
 big_w = med[med >= med.median()].index
 small_w = med[med < med.median()].index
 gi = pd.DataFrame({

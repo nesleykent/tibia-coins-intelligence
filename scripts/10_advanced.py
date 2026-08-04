@@ -213,7 +213,7 @@ pu.to_csv(P / "panel_unitroot_deviation.csv", index=False)
 # Johansen rank test on a small system of the largest worlds, to establish cointegration
 # rank formally rather than assuming the (1, -1) vector.
 piv = conv.pivot_table(index="date", columns="world", values="log_price")
-big = conv.groupby("world").txn_sold.median().nlargest(5).index.tolist()
+big = conv.groupby("world").day_sold_txn.median().nlargest(5).index.tolist()
 sub = piv[big].dropna()
 joh = None
 if len(sub) > 300:

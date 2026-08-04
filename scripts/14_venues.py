@@ -191,17 +191,17 @@ except Exception as e:
 # Scale the token venue against the in-game one. Ask depth is the right comparison: it is the
 # quantity of coins actually offered for sale, which is what the token venue competes with.
 bd = pd.read_csv(P / "order_books.csv")
-ask = float(bd.ask_depth_tc.sum())
-bid = float(bd.bid_depth_tc.sum())
+ask = float(bd.sellers_amount.sum())
+bid = float(bd.buyers_amount.sum())
 
 res = json.load(open(P / "results.json"))
 res["venues"] = {
     "token": tok,
-    "book_ask_depth_tc": ask,
-    "book_bid_depth_tc": bid,
+    "sellers_amount_total": ask,
+    "buyers_amount_total": bid,
     "book_total_depth_tc": ask + bid,
     "n_book_worlds": int(len(bd)),
-    "tib_over_ask_depth": tok["total_supply"] / ask,
+    "tib_over_sellers_amount": tok["total_supply"] / ask,
     "tib_over_total_depth": tok["total_supply"] / (ask + bid),
     "dex": dex,
     "bazaar": baz,
@@ -222,8 +222,8 @@ res["venues"] = {
 # Market is decisively the smaller one.
 _pan = pd.read_csv(P / "panel_daily.csv", parse_dates=["date"])
 _y = _pan[_pan.date.dt.year == baz["year"]]
-_mkt_tc = float(_y.tc_sold.sum())
-_mkt_gp = float((_y.tc_sold * _y.price_gp).sum())
+_mkt_tc = float(_y.day_sold_tc.sum())
+_mkt_gp = float((_y.day_sold_tc * _y.price_gp).sum())
 _usd_tc = (res["desc"]["price_latest_median"] * res["venues"]["usd_per_gp"]
            if res["venues"]["usd_per_gp"] else None)
 # Comparable coverage, not raw sums. The Bazaar total is complete - all worlds, all year -
@@ -233,7 +233,7 @@ _usd_tc = (res["desc"]["price_latest_median"] * res["venues"]["usd_per_gp"]
 # observed mean per world-day to the full world count and calendar makes the two comparable.
 _n_worlds = int(_pan.world.nunique())
 _days = int(_y.date.nunique())
-_mkt_scaled = float(_y.tc_sold.mean()) * _n_worlds * _days
+_mkt_scaled = float(_y.day_sold_tc.mean()) * _n_worlds * _days
 _baz_span = float(baz["tc_exchanged"]) * _days / 365
 res["venues"]["market_size"] = {
     "year": baz["year"],
@@ -269,7 +269,7 @@ json.dump(res, open(P / "results.json", "w"), indent=1, default=str)
 
 print(f"[VENUES] {tok['symbol']} supply {tok['total_supply']:,.0f} vs ask depth "
       f"{ask:,.0f} TC across {len(bd)} worlds "
-      f"({res['venues']['tib_over_ask_depth']:.2f}x); vs both sides "
+      f"({res['venues']['tib_over_sellers_amount']:.2f}x); vs both sides "
       f"({res['venues']['tib_over_total_depth']:.0%})")
 print(f"[VENUES] token supply is {res['venues']['tib_over_bazaar_year']:.1%} of one year of "
       f"Char Bazaar turnover; mean clearing price "

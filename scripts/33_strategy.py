@@ -430,7 +430,7 @@ print(f"  t = {OCC['episode_t_naive']:.1f} assuming independence, "
 # already a large share of a day's volume on the world in question.
 _ws = pd.read_csv(P / "world_summary.csv")
 _daily_tc = float(pan_tc.median()) if (pan_tc := pd.read_csv(P / "panel_daily.csv")
-                                       .query("world in @_ws.query('converged').world").tc_sold
+                                       .query("world in @_ws.query('converged').world").day_sold_tc
                                        ).size else float("nan")
 CAP_LOT = R["fees"]["cap_binds_at_lot_tc"]
 px = float(pd.read_csv(P / "market_index.csv").ew_price.dropna().iloc[-1])

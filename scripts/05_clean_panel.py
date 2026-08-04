@@ -45,38 +45,38 @@ audit["intraday_collapsed"] = len(df) - len(day)
 # --- 3. validity gates ------------------------------------------------------
 sell_ok = (day["day_sold"] > 0) & (day["day_average_sell"] > MIN_PRICE)
 buy_ok = (day["day_bought"] > 0) & (day["day_average_buy"] > MIN_PRICE)
-day["px_sell"] = day["day_average_sell"].where(sell_ok)
-day["px_buy"] = day["day_average_buy"].where(buy_ok)
+day["day_average_sell_valid"] = day["day_average_sell"].where(sell_ok)
+day["day_average_buy_valid"] = day["day_average_buy"].where(buy_ok)
 audit["sell_valid"] = int(sell_ok.sum())
 audit["buy_valid"] = int(buy_ok.sum())
 
 # --- 4. price = mean of valid executed averages -----------------------------
-day["price_gp"] = day[["px_sell", "px_buy"]].mean(axis=1, skipna=True)
+day["price_gp"] = day[["day_average_sell_valid", "day_average_buy_valid"]].mean(axis=1, skipna=True)
 day["price_source"] = np.where(sell_ok & buy_ok, "both",
                         np.where(sell_ok, "sell_only",
                           np.where(buy_ok, "buy_only", "none")))
 
 # alternative measures for the sensitivity check (Section 30)
 qty = day["day_sold"].fillna(0) + day["day_bought"].fillna(0)
-day["price_vw"] = ((day["px_sell"].fillna(0) * day["day_sold"].fillna(0) +
-                    day["px_buy"].fillna(0) * day["day_bought"].fillna(0)) /
+day["price_vw"] = ((day["day_average_sell_valid"].fillna(0) * day["day_sold"].fillna(0) +
+                    day["day_average_buy_valid"].fillna(0) * day["day_bought"].fillna(0)) /
                    qty.replace(0, np.nan))
 day.loc[day["price_source"] == "none", "price_vw"] = np.nan
 
 # --- 5. order-book mid fallback --------------------------------------------
 ratio = day["sell_offer"] / day["buy_offer"]
 book_ok = ratio.between(BOOK_LO, BOOK_HI) & (day["buy_offer"] > MIN_PRICE)
-day["price_book_mid"] = ((day["buy_offer"] + day["sell_offer"]) / 2).where(book_ok)
-day["quoted_spread_pct"] = ((day["sell_offer"] - day["buy_offer"]) /
-                            day["price_book_mid"] * 100).where(book_ok)
-filled = day["price_gp"].isna() & day["price_book_mid"].notna()
-day.loc[filled, "price_gp"] = day.loc[filled, "price_book_mid"]
+day["offer_mid"] = ((day["buy_offer"] + day["sell_offer"]) / 2).where(book_ok)
+day["spread_pct"] = ((day["sell_offer"] - day["buy_offer"]) /
+                            day["offer_mid"] * 100).where(book_ok)
+filled = day["price_gp"].isna() & day["offer_mid"].notna()
+day.loc[filled, "price_gp"] = day.loc[filled, "offer_mid"]
 day.loc[filled, "price_source"] = "book_mid"
 audit["book_mid_fills"] = int(filled.sum())
 
 # executed-average gap (NOT a bid-ask spread: gap between mean executed prices per side)
-day["executed_gap_pct"] = ((day["px_sell"] - day["px_buy"]) /
-                           day[["px_sell", "px_buy"]].mean(axis=1) * 100)
+day["executed_gap_pct"] = ((day["day_average_sell_valid"] - day["day_average_buy_valid"]) /
+                           day[["day_average_sell_valid", "day_average_buy_valid"]].mean(axis=1) * 100)
 
 day = day[day["price_gp"].notna()].copy()
 audit["priced_world_days"] = len(day)
@@ -117,10 +117,10 @@ day.loc[day["gap_days"] != 1, "ret"] = np.nan          # returns only over conse
 # be. Coin volume is therefore 25 x the field. The order-book amounts are the opposite case:
 # minimum 25 and 100% multiples of 25, so those are already coins and are left alone.
 LOT = 25
-day["tc_sold"] = day["day_sold"] * LOT
-day["tc_bought"] = day["day_bought"] * LOT
-day["txn_sold"] = day["day_sold"]
-day["txn_bought"] = day["day_bought"]
+day["day_sold_tc"] = day["day_sold"] * LOT
+day["day_bought_tc"] = day["day_bought"] * LOT
+day["day_sold_txn"] = day["day_sold"]
+day["day_bought_txn"] = day["day_bought"]
 
 # --- classification ---------------------------------------------------------
 meta = pd.read_csv(OUT / "world_metadata.csv", parse_dates=["created", "first_obs"])
@@ -147,7 +147,7 @@ print("date range :", day.date.min().date(), "->", day.date.max().date())
 print("worlds     :", day.world.nunique())
 
 print("\nPrice-measure sensitivity (mean |%| deviation from the headline mean-of-executed):")
-for c, lab in [("price_vw", "quantity-weighted"), ("price_book_mid", "order-book mid"),
-               ("px_sell", "sell-side only")]:
+for c, lab in [("price_vw", "quantity-weighted"), ("offer_mid", "order-book mid"),
+               ("day_average_sell_valid", "sell-side only")]:
     d = ((day[c] - day["price_gp"]).abs() / day["price_gp"] * 100).dropna()
     print(f"  {lab:<20} {d.mean():5.2f}%   (n={len(d):,})")

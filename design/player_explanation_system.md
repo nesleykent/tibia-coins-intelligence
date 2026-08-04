@@ -78,8 +78,7 @@ classification; one compact visible key should carry the shared definitions.
 | Total return | Total return — price change over the period | How much the price rose or fell since the first available day |
 
 Use the in-game Market vocabulary — buy offer, sell offer, Amount, Buy Offers, supply
-depth — on the visible labels of this product. Bid, ask, best bid and best ask
-belong to the data definitions in `AGENTS.md`, not to the interface.
+depth — on the visible labels of this product. Bid, ask, best bid and best ask are not used at any layer of this product in `AGENTS.md`, not to the interface.
 | Cross-world dispersion | Dispersion — difference between world prices | Whether worlds are selling TC at similar or very different prices |
 | Relative deviation | Deviation — price versus other worlds | How expensive or cheap this world is compared with the market |
 | Predicted 7d | Predicted 7d — expected change over the next 7 days | The model's estimate of how the world's deviation may change; it is not a guaranteed TC price |

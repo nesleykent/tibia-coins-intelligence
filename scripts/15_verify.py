@@ -113,14 +113,14 @@ _amt = _lo.amount.dropna()
 if len(_amt) and not (_amt % 25 == 0).all():
     _unit_bad.append(("live_offers.amount", "not every offer is a whole 25-coin lot"))
 # The converted column must be exactly 25x the raw one, with no double scaling anywhere.
-if "tc_sold" in _pan:
-    _r = (_pan.tc_sold / _pan.day_sold).dropna()
+if "day_sold_tc" in _pan:
+    _r = (_pan.day_sold_tc / _pan.day_sold).dropna()
     if len(_r) and not ((_r - 25).abs() < 1e-9).all():
-        _unit_bad.append(("tc_sold", f"not exactly 25x day_sold (min {_r.min():.3f})"))
+        _unit_bad.append(("day_sold_tc", f"not exactly 25x day_sold (min {_r.min():.3f})"))
 check("volume fields carry the units the report claims", not _unit_bad,
       f"{_unit_bad}" if _unit_bad else
       f"lots {(_pan.day_sold.dropna() % 25 == 0).mean():.1%} multiples of 25, "
-      f"offers {(_amt % 25 == 0).mean():.0%}, tc_sold = 25x")
+      f"offers {(_amt % 25 == 0).mean():.0%}, day_sold_tc = 25x")
 
 # No surviving sentence may report the lot count as if it were a coin quantity.
 _tc_claim = re.findall(r"\b103 TC\b|\bTC quantity executed", txt)

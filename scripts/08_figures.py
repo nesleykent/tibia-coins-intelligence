@@ -429,9 +429,9 @@ finish(fig, "fig08_worldtype.png",
        f"reported there rather than here, since plotting both on one axis would count every "
        f"world twice.", outdir=FIG, left=0.20)
 
-# ================================================================ 9 order book
+# ================================================================ 9 offer list
 fig, ax = plt.subplots(figsize=(6.0, 2.9))
-ax.scatter(bd.order_count_ratio, bd.depth_ratio, s=30, color=T10["blue"], alpha=.7,
+ax.scatter(bd.offer_count_ratio, bd.sellers_buyers_ratio, s=30, color=T10["blue"], alpha=.7,
            edgecolor="white", linewidth=0.5, zorder=3)
 ax.axhline(1, color=MUTED, ls=":", lw=HAIR*1.6, zorder=2)
 ax.axvline(1, color=MUTED, ls=":", lw=HAIR*1.6, zorder=2)
@@ -446,7 +446,7 @@ finish(fig, "fig09_orderbook.png",
        "Counting orders is not measuring depth",
        "Order-count ratio against true quantity depth, one point per world, log scales",
        SRC_MB,
-       "Each point is one world's live order book. Counts of standing orders are not depth: a "
+       "Each point is one world's live offer list. Counts of standing orders are not depth: a "
        "long tail of tiny non-executable bids far below market inflates the count without "
        "contributing executable size. Any demand imbalance inferred from order-count ratios "
        "is an artefact.", outdir=FIG)
@@ -790,7 +790,7 @@ FE = R["fees"]
 # so the reader can see the friction point sitting between the capped and uncapped fee rather
 # than having to hold two numbers in mind across a page.
 TARP = R["advanced"]["tar"]["threshold_pct"]
-comps = [("Quoted spread", FN["roll"]["median_quoted_spread_pct"],
+comps = [("Spread", FN["roll"]["median_spread_pct"],
           "what a market order would cross"),
          ("Round-trip fee, small offer", 4.0, "two offers at the uncapped 2% rate"),
          ("Executed-price gap", FN["roll"]["median_executed_gap_pct"],
@@ -821,14 +821,14 @@ ax.tick_params(axis="y", length=0)
 label_line(ax, TARP, len(comps) - 0.62,
            f"estimated arbitrage band {TARP:.2f}%", T10["orange"], dx=5, dy=0, fs=6.8)
 finish(fig, "fig20_spread_decomposition.png",
-       "Traders pay far less than the quoted spread suggests",
+       "Traders pay far less than the spread suggests",
        "Cost of a Tibia Coin round trip under five measures, percent of value",
        "Sources: price archive item_id 22118; TibiaMarket.top /market_board; documented "
        "Market mechanics.",
        f"The Roll (1984) effective spread is inferred from the negative first-order "
        f"autocovariance of returns and measures what trades actually pay; at "
        f"{FN['roll']['median_roll_spread_pct']:.2f}% it is about "
-       f"{FN['roll']['share_of_quoted']:.0%} of the quoted spread, which is what one expects "
+       f"{FN['roll']['share_of_quoted']:.0%} of the spread, which is what one expects "
        f"when most volume executes inside the quotes via resting limit orders. Medians across "
        f"{FN['roll']['n_worlds']} converged worlds (interquartile range "
        f"{FN['roll']['iqr'][0]:.2f}% to {FN['roll']['iqr'][1]:.2f}%); the autocovariance is "
@@ -898,7 +898,7 @@ finish(fig, "fig22_variance_ratio.png",
        f"A variance ratio of one is a random walk; below one indicates mean reversion at that "
        f"horizon. The heteroskedasticity-robust statistic rejects the random walk at q = 2 on "
        f"{FN['efficiency']['vr2_reject_5pct']} of {FN['efficiency']['n_worlds']} worlds. The "
-       f"reversion is the bid-ask bounce identified in Exhibit 5.6: a Roll effective spread of "
+       f"reversion is the Sell/Buy Offer bounce identified in Exhibit 5.6: a Roll effective spread of "
        f"{FN['roll']['median_roll_spread_pct']:.2f}% mechanically produces negative return "
        f"autocorrelation without implying any profit opportunity, since the reversal happens "
        f"between the bid and the ask rather than across it.", outdir=FIG)
@@ -1300,7 +1300,7 @@ for i, r in pb.iterrows():
                  color=INK)
 
 _nw_book = int(pd.read_csv(P / "order_books.csv").world.nunique())
-vals = [px_["median_resting_bid_depth_tc"], px_["near_mid_bid_tc"] / _nw_book,
+vals = [px_["median_resting_buyers_amount"], px_["near_mid_buyers_amount"] / _nw_book,
         px_["median_executed_per_world_day_tc"]]
 labs = ["resting bid depth\nper world", "bids within 5%\nof the mid", "executed\nper day"]
 axR.bar(np.arange(3), vals, width=.55, zorder=3,
@@ -1317,12 +1317,12 @@ axR.set_title("What rests, and what actually trades", fontsize=7.6, color=INK,
               fontweight=W_TITLE, pad=6)
 finish(fig, "fig30_participants.png",
        "The book holds weeks of intent; a day's trade is one ordinary order",
-       "Live order book by order size, and resting depth against executed volume",
+       "Live offer list by order size, and resting depth against executed volume",
        SRC_MB + " Executed volumes from the price archive, item_id 22118.",
        f"Left: orders under 500 TC - the size of a month of premium - are "
        f"{pb.iloc[0].share_of_offers:.0%} of orders but {pb.iloc[0].share_of_tc:.1%} of coins, "
        f"while orders above 10,000 TC are {pb.iloc[3].share_of_tc:.0%} of coins. Right: the "
-       f"median world rests {px_['median_resting_bid_depth_tc']:,.0f} TC of bids and executes "
+       f"median world rests {px_['median_resting_buyers_amount']:,.0f} TC of bids and executes "
        f"{px_['median_executed_per_world_day_tc']:,.0f} TC a day - the book is "
        f"{px_['resting_over_daily_flow']:,.0f} times a day's flow, and "
        f"{px_['share_wholesale_bids_20pct_below_mid']:.0%} of wholesale bids sit more than 20% "
