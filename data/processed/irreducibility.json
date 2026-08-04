@@ -1,10 +1,10 @@
 {
  "entropy": {
-  "permutation_entropy": 0.9925229998741751,
-  "pe_surrogate_mean": 0.9900000746586923,
-  "pe_p": 0.36,
-  "sample_entropy": 1.6764272385178447,
-  "se_surrogate_mean": 1.8643126130379872,
+  "permutation_entropy": 0.992498271279318,
+  "pe_surrogate_mean": 0.9898805373631636,
+  "pe_p": 0.345,
+  "sample_entropy": 1.6831161467213034,
+  "se_surrogate_mean": 1.854316783498408,
   "se_p": 0.0,
   "n_surrogates": 200,
   "note": "1.0 permutation entropy means no ordinal structure at all"
@@ -12,63 +12,63 @@
  "bds": [
   {
    "embedding": 2,
-   "statistic": 11.87302642663839,
-   "p": 1.634459321804485e-32
+   "statistic": 11.56687884673288,
+   "p": 6.064900759870083e-31
   },
   {
    "embedding": 3,
-   "statistic": 12.88061187232729,
-   "p": 5.78749020666217e-38
+   "statistic": 12.562463816920703,
+   "p": 3.395907314984018e-36
   },
   {
    "embedding": 4,
-   "statistic": 13.396702090352354,
-   "p": 6.321010589797698e-41
+   "statistic": 13.170424419565126,
+   "p": 1.2986556833230704e-39
   }
  ],
  "martingale": {
   "returns": [
    {
     "index": 5,
-    "lb_stat": 73.12349981279692,
-    "lb_pvalue": 2.291029743645614e-14
+    "lb_stat": 74.3053802387217,
+    "lb_pvalue": 1.2988355696864541e-14
    },
    {
     "index": 10,
-    "lb_stat": 123.2424296064149,
-    "lb_pvalue": 1.1107070368794307e-21
+    "lb_stat": 125.53649303826055,
+    "lb_pvalue": 3.7927787141195543e-22
    },
    {
     "index": 20,
-    "lb_stat": 163.3961242670065,
-    "lb_pvalue": 1.6561395826075523e-24
+    "lb_stat": 166.02946904768984,
+    "lb_pvalue": 5.116078369014194e-25
    }
   ],
   "squared_returns": [
    {
     "index": 5,
-    "lb_stat": 66.59510277984795,
-    "lb_pvalue": 5.229411137681407e-13
+    "lb_stat": 67.11185992858876,
+    "lb_pvalue": 4.0843934307917717e-13
    },
    {
     "index": 10,
-    "lb_stat": 77.11138065553389,
-    "lb_pvalue": 1.8442542643676223e-12
+    "lb_stat": 77.80138953627757,
+    "lb_pvalue": 1.3522069843603142e-12
    },
    {
     "index": 20,
-    "lb_stat": 88.45691908748728,
-    "lb_pvalue": 1.3779932627591048e-10
+    "lb_stat": 89.17745947226469,
+    "lb_pvalue": 1.0319404596981073e-10
    }
   ]
  },
  "latent_state": {
   "n_worlds": 12,
-  "n_dates": 717,
+  "n_dates": 723,
   "r2_factor_forecast": 0.0,
-  "r2_factor_filtered": 0.08987655487840363,
-  "r2_factor_smoothed": 0.08817769468943859,
-  "retrospect_gap": 0.08817769468943859,
+  "r2_factor_filtered": 0.08965512718942581,
+  "r2_factor_smoothed": 0.08788381182891125,
+  "retrospect_gap": 0.08788381182891125,
   "reading": "the smoothed figure is what a perfectly informed observer of the common driver could explain; the forecast figure is what is available in advance. The gap is the size of the prize for observing the hidden state, and the remainder above the smoothed figure is irreducible"
  }
 }

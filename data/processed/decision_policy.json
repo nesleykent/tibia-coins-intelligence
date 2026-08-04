@@ -1,8 +1,8 @@
 {
  "version": "1.0.0",
- "generated_utc": "2026-08-03T21:31:14.877069+00:00",
+ "generated_utc": "2026-08-04T17:54:48.698899+00:00",
  "rules": {
-  "band_threshold_pct": 1.7878999999999998,
+  "band_threshold_pct": 1.8297,
   "action_threshold_pct": 4.0,
   "fee_rate_pct": 2.0,
   "min_holdout_t": 2.0,
@@ -41,8 +41,8 @@
  },
  "horizon_used_days": 7,
  "actions": [
-  "Buy TC",
-  "Sell TC",
+  "Buy",
+  "Sell",
   "Hold",
   "Avoid",
   "Investigate",
@@ -57,7 +57,7 @@
  "counts": {
   "Hold": 56,
   "Abstain": 4,
-  "Buy TC": 1
+  "Buy": 1
  },
  "limitations": [
   "Deviation is measured against a cross-world index, so a call is relative: every world can be fairly priced against the others while all of them move together.",

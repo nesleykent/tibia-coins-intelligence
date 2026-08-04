@@ -872,6 +872,37 @@ RAW_DAILY_COLUMNS = [
 ]
 
 
+def carry_forward_history(daily: pd.DataFrame) -> pd.DataFrame:
+    """Keep world-days this scan does not cover.
+
+    34b_emission_history.py extends the same table back to 2022 from an archive this stage
+    cannot see. Writing the scanned frame straight out deleted that history on every pipeline
+    run - 90,701 rows became 21,691 - and the next stage then tried to re-download 17 GB to
+    rebuild what had just been discarded. Rows inside this scan's window are replaced; rows
+    outside it are carried forward, and this runs before the quality metrics so they describe
+    the table that is actually written.
+    """
+    out = P / "gold_emission_daily.csv.gz"
+    if not out.exists():
+        return daily
+    prior = pd.read_csv(out, low_memory=False)
+    prior["date"] = pd.to_datetime(prior["date"])
+    missing = [c for c in RAW_DAILY_COLUMNS if c not in prior.columns]
+    if missing:
+        raise SystemExit(
+            f"stored history lacks raw columns {missing}; re-derive it with "
+            f"34b_emission_history.py --rebuild-only before this stage overwrites the table"
+        )
+    prior = prior[RAW_DAILY_COLUMNS]
+    scanned = set(zip(daily.world, daily.date))
+    keep = prior[~prior.set_index(["world", "date"]).index.isin(scanned)]
+    if not len(keep):
+        return daily
+    print(f"  kept {len(keep):,} world-days outside this scan's window")
+    return (pd.concat([keep, daily], ignore_index=True)
+            .sort_values(["world", "date"]).reset_index(drop=True))
+
+
 def build_daily(daily: pd.DataFrame) -> pd.DataFrame:
     daily["coverage_deaths_pct_all"] = (
         daily.modeled_kills_all / daily.total_kills.replace(0, np.nan)
@@ -1071,7 +1102,11 @@ def main() -> None:
         default="",
     )
 
-    daily = build_daily(daily)
+    # Merge before deriving. Cumulative sums, per-player rates and the coverage flags are
+    # computed across the whole table, so concatenating after build_daily left the carried-forward
+    # rows holding cumulatives from a previous run and the scanned rows holding cumulatives that
+    # started at 2025-12-03. Union the raw rows first, then derive once over the full span.
+    daily = build_daily(carry_forward_history(daily))
     total_deaths = coverage.total_kills.sum()
     covered_deaths = coverage.loc[modeled_status | known_zero, "total_kills"].sum()
     nonboss = coverage[~coverage.is_boss]
@@ -1207,6 +1242,11 @@ def main() -> None:
     # 50 MB warning and heading for the 100 MB hard limit at roughly 23 MB a year. Every row and
     # column is kept; only the encoding changes. pandas reads .csv.gz by extension, and the
     # dashboard decompresses in the browser, which also cuts what that page downloads by 2.4x.
+    # Keep world-days this scan does not cover. 34b_emission_history.py extends the same table
+    # back to 2022 from an archive this stage cannot see, and writing the frame straight out
+    # deleted that history on every pipeline run: 90,701 rows became 21,691, and the next stage
+    # then tried to re-download 17 GB to rebuild what had just been thrown away. Rows inside this
+    # scan's own window are replaced; rows outside it are carried forward.
     daily.to_csv(P / "gold_emission_daily.csv.gz", index=False, compression="gzip")
     pd.DataFrame(
         [

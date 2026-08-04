@@ -2022,7 +2022,7 @@ para(tag("obs") + "Live order books for all 93 worlds were captured on 2026-07-3
      "single simultaneous cross-section of true depth alongside the historical executed series.")
 takeaway('The buy side carries four times the orders and four times the depth - but not on the same worlds, which is why the two must be measured separately.')
 table([["Measure", "Median across 93 worlds"],
-       ["Quoted spread (best ask minus best bid, over mid)", pc(MI["quoted_spread_median_pct"])],
+       ["Quoted spread (lowest Sell Offer Piece Price minus highest Buy Offer Piece Price, over mid)", pc(MI["quoted_spread_median_pct"])],
        ["Standing buy orders / sell orders",
         f"{MI['median_buy_orders']:.0f} / {MI['median_sell_orders']:.0f}"],
        ["Bid depth / ask depth",
@@ -6011,7 +6011,7 @@ table([["Region", "Worlds", "Peak hour (UTC)", "Peak hour (server)",
               "GuildStats.eu /online-counter, 15-minute resolution, 7 days to 2026-07-30.")
 h3("E.4 Microstructure measures, full detail")
 table([["Measure", "Median across 93 worlds"],
-       ["Quoted spread (best ask minus best bid, over mid)", pc(MI["quoted_spread_median_pct"])],
+       ["Quoted spread (lowest Sell Offer Piece Price minus highest Buy Offer Piece Price, over mid)", pc(MI["quoted_spread_median_pct"])],
        ["Quoted spread, interquartile range",
         f"{pc(MI['quoted_spread_iqr'][0])} to {pc(MI['quoted_spread_iqr'][1])}"],
        ["Executed-average gap (a different quantity)", pc(MI["executed_gap_median_pct"])],

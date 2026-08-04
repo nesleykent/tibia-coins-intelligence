@@ -104,21 +104,28 @@ Write the visible player layer as a guildmate would explain it in chat:
   calculated” or another optional detail;
 - do not solve complexity by replacing a technical term with a different
   unexplained term;
-- do not delete a canonical financial, statistical or market term and leave only
-  a paraphrase in its place. `Buy TC`, `Sell TC`, `Mid`, `Spread`,
-  `Demand depth`, `Supply depth`, `Book snapshot`, `Total return`, `Deviation`,
-  `Predicted 7d`, `Signal`, `Dispersion`, `RMSE` and `Holdout` stay on their
-  labels; the plain explanation goes beside them, not instead of them;
-- do not rename a visible label into different market vocabulary either. The
-  interface speaks the in-game Market's language — buy offer, sell offer,
-  demand depth, supply depth. `bid`, `ask`, `best bid`, `best ask` and
-  `order book` are data definitions in this file and belong in the data
-  dictionary and methodology, never on a visible label.
+- do not delete a canonical financial or statistical term and leave only a
+  paraphrase in its place. `Total return`, `Deviation`, `Predicted 7d`,
+  `Signal`, `Dispersion`, `RMSE` and `Holdout` stay on their labels; the plain
+  explanation goes beside them, not instead of them;
+- for anything the Market window itself names, use the client's own words and
+  do not invent an intermediate translation. The window shows `Sell Offers`,
+  `Buy Offers`, `Amount`, `Piece Price`, `Total Price`, `Ends At` and `Fee`.
+  Earlier revisions of this file prescribed `Buy TC`, `Sell TC`, `Demand depth`
+  and `Supply depth`; none of those strings appears anywhere in the client, and
+  they were a coinage this document then defended as canonical. Read the
+  interface and replicate it. Do not explain why a label means what it means,
+  and do not introduce a player-perspective or offer-poster-perspective framing
+  to reconcile a name with the screen — if the name needs reconciling, it is the
+  wrong name;
+- `bid`, `ask`, `best bid`, `best ask` and `order book` are data definitions in
+  this file and belong in the data dictionary and methodology, never on a
+  visible label.
 
 Translate in both directions. Players need the financial and statistical terms
 explained; analysts and finance professionals need the Tibia mechanics
 explained. Keep the original term on both sides: write “world (a separate local
-market)” and “Buy TC — what you pay for 1 TC”, never only the paraphrase.
+market)” and “Piece Price — what one TC costs”, never only the paraphrase.
 Every view must let a reader who has never played Tibia understand what a
 world, GP, TC, the Market, a world transfer and gold emission are.
 
@@ -291,19 +298,19 @@ rather than displayed as an unexplained blank.
   - **GP/TC** is the price of one Tibia Coin measured in gold pieces.
 - Do not collapse market microstructure into one ambiguous “price” when
   side-specific data exists. Use these reader-facing definitions consistently:
-  - **Buy TC price:** GP a player pays to obtain TC; for a live book, the best
-    ask (cheapest sell offer); historically, the seller-side executed average.
-  - **Sell TC price:** GP a player receives for selling TC; for a live book,
-    the best bid (highest buy offer); historically, the buyer-side executed
-    average.
-  - **Mid:** `(buy TC price + sell TC price) / 2`; a reference value, not
-    necessarily executable.
+  - **Sell Offers, Piece Price:** the lowest Piece Price standing on the Sell
+    Offers; historically, the seller-side executed average.
+  - **Buy Offers, Piece Price:** the highest Piece Price standing on the Buy
+    Offers; historically, the buyer-side executed average.
+  - **Mid:** halfway between the two Piece Prices; a calculated reference with
+    no counterpart in the client, so label it as calculated.
   - **Quoted spread:** `(best ask - best bid) / mid`; use only for a valid
     simultaneous order-book snapshot.
   - **Executed-side gap:** difference between daily executed averages; never
     label it a bid-ask or quoted spread.
-  - **Demand depth:** TC wanted by buyers; **supply depth:** TC offered by
-    sellers. Always show the snapshot/as-of time for live depth.
+  - **Amount, Buy Offers** and **Amount, Sell Offers:** the TC standing on each
+    side, using the window's own `Amount` column. Always show the snapshot/as-of
+    time for a live reading.
   Never expand GP as “gold price.” GP names the in-game currency; price is a
   relationship between units.
   Never shorten gold-piece output to “coins,” because readers may interpret it

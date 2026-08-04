@@ -1,5 +1,5 @@
 metric,value
-generated_utc,2026-08-03T17:45:40.968349+00:00
+generated_utc,2026-08-04T17:58:01.509233+00:00
 kill_source,github.com/tibiamaps/tibia-kill-stats local archive
 loot_source,"TibiaWiki / Fandom, Category:Loot Statistics"
 loot_collection_utc,2026-08-02T17:23:20.466395+00:00
@@ -18,7 +18,7 @@ absent_creatures,271
 total_deaths,20264044697
 covered_deaths,19904976295
 covered_deaths_pct_all,0.9822805166802085
-covered_deaths_pct_nonboss,0.9816206288000456
+covered_deaths_pct_nonboss,0.982594785224248
 low_quality_world_days,0
 low_quality_world_days_pct,0.0
 partial_date_world_days,0
@@ -39,4 +39,5 @@ npc_currency_rule,only offers paid in gold (currency_object_type_id 0) create GP
 event_rule,event flags are retained; per-kill values are not multiplied because the cache does not encode event-specific loot mechanics
 boss_rule,TibiaWiki boss classification supplemented by the official Bosstiary list; bosses are excluded from the main series and retained separately
 summon_training_rule,no special creature is assigned a zero value without source evidence; unmatched summons/training creatures remain explicitly uncovered
-history_source,https://github.com/tibiamaps/tibia-kill-stats-from-2022-08-23-to-2025-12-04.git
+summon_identification,"not identifiable from the source: TibiaWiki has no category marking a kill-statistics entry as a summoned creature, so summon double-counting can be neither confirmed nor excluded"
+training_identification,"training creatures are matched by title only; Tibia's training targets are objects rather than kill-statistics races, so no match is expected"

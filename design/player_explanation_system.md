@@ -1,3 +1,7 @@
+<!-- Terminology follows the Market window in the client: Sell Offers, Buy Offers, Amount,
+     Piece Price, Total Price, Ends At, Fee. Earlier revisions used Buy TC / Sell TC /
+     demand depth / supply depth, none of which appear in the game. -->
+
 # Player-First Explanation System
 
 **Status:** canonical editorial specification
@@ -63,17 +67,17 @@ classification; one compact visible key should carry the shared definitions.
 | TC | Tibia Coins | The premium currency sold by CipSoft |
 | GP/TC | Price of one TC in GP | How many gold pieces are needed to buy 1 TC |
 | Market index | Typical price across worlds | A combined line showing the general TC price across the tracked worlds |
-| Buy TC | Buy TC — what you pay for 1 TC | The cheapest sell offer open in that world's Market right now |
-| Sell TC | Sell TC — what you receive for 1 TC | The highest buy offer open in that world's Market right now |
+| Sell Offers | Sell Offers — what you pay for 1 TC | The cheapest sell offer open in that world's Market right now |
+| Buy Offers | Buy Offers — what you receive for 1 TC | The highest buy offer open in that world's Market right now |
 | Mid / reference mid | Mid — halfway between the two prices | A reference price between the two; nobody is obliged to trade there |
 | Executed midpoint | Executed midpoint — daily average price | The average of what players actually paid and received that day |
-| Quoted spread | Spread — gap between buying and selling | How much is lost buying and selling immediately, before the Market fee |
-| Demand depth | Demand depth — TC players want to buy | How much TC the open buy offers would absorb |
-| Supply depth | Supply depth — TC offered for sale | How much TC the open sell offers would supply |
-| Book snapshot | Book snapshot — when the offer list was read | The time of the offer list this page is showing |
+| Spread | Spread — gap between buying and selling | How much is lost buying and selling immediately, before the Market fee |
+| Amount, Buy Offers | Amount, Buy Offers — TC players want to buy | How much TC the open buy offers would absorb |
+| Amount, Sell Offers | Amount, Sell Offers — TC offered for sale | How much TC the open sell offers would supply |
+| Offers read at | Offers read at — when the offer list was read | The time of the offer list this page is showing |
 | Total return | Total return — price change over the period | How much the price rose or fell since the first available day |
 
-Use the in-game Market vocabulary — buy offer, sell offer, demand depth, supply
+Use the in-game Market vocabulary — buy offer, sell offer, Amount, Buy Offers, supply
 depth — on the visible labels of this product. Bid, ask, best bid and best ask
 belong to the data definitions in `AGENTS.md`, not to the interface.
 | Cross-world dispersion | Dispersion — difference between world prices | Whether worlds are selling TC at similar or very different prices |
@@ -132,8 +136,8 @@ Never leave these unexpanded in the default player layer:
 The technical term may appear in parentheses after the plain label.
 
 Explaining is not the same as substituting. The canonical term stays on the
-label; the plain sentence sits next to it. Never delete `Buy TC`, `Sell TC`,
-`Mid`, `Spread`, `Demand depth`, `Supply depth`, `Deviation`, `Predicted 7d`,
+label; the plain sentence sits next to it. Never delete `Sell Offers`, `Buy Offers`,
+`Mid`, `Spread`, `Amount, Buy Offers`, `Amount, Sell Offers`, `Deviation`, `Predicted 7d`,
 `Signal`, `Convergent`, `Divergent`, `Inside band`, `Dispersion`, `RMSE`,
 `Holdout` or `Total return` and leave only a paraphrase in its place. A reader
 who knows finance must still be able to scan the interface, and a reader who

@@ -147,8 +147,8 @@ def main() -> None:
     assert "function sortRows(tableKey, rows)" in html
     assert 'href="tibia_coin_market_report.pdf"' in html
     assert 'data-mode="mid" title="Mid — the average of the buy and sell sides">Mid</button>' in html
-    assert 'data-mode="buy" title="What players paid to buy TC">Buy TC</button>' in html
-    assert 'data-mode="sell" title="What players received for selling TC">Sell TC</button>' in html
+    assert 'data-mode="buy" title="Daily average Piece Price on the Sell Offers">Sell Offers</button>' in html
+    assert 'data-mode="sell" title="Daily average Piece Price on the Buy Offers">Buy Offers</button>' in html
     assert (
         'data-mode="return" title="Return — price change since the first day in '
         'the period">Return (%)</button>'
@@ -158,32 +158,35 @@ def main() -> None:
     assert '$("#worldStart").value=$("#overviewStart").value' in html
     assert '$("#overviewStart").value=$("#worldStart").value' in html
     assert 'const start=$("#worldStart").value,end=$("#worldEnd").value' in html
-    assert "Buy TC — what players paid, on average, to buy one TC each day." in html
+    assert "Sell Offers — the average Piece Price accepted each day." in html
     assert "How these numbers are calculated" in html
     # The product's canonical Market terms stay on the labels, each paired with
     # a visible plain explanation rather than replaced by one.
     assert "Executable prices now" in html
+    # The live-book table uses the Market window's own column names: Sell Offers, Buy Offers,
+    # Piece Price, Amount. "Buy TC", "Sell TC", "demand depth" and "supply depth" appear nowhere
+    # in the client and are not shown to a reader as if they did.
     for term, explanation in (
-        ("Buy TC", "Lowest Piece Price in Sell Offers"),
-        ("Sell TC", "Highest Piece Price in Buy Offers"),
+        ("Sell Offers", "Lowest Piece Price"),
+        ("Buy Offers", "Highest Piece Price"),
         ("Mid", "Between the two Piece Prices"),
         ("Spread", "Gap between the two Piece Prices"),
-        ("Demand depth", "Amount in Buy Offers"),
-        ("Supply depth", "Amount in Sell Offers"),
+        ("Demand", "TC on the Buy Offers"),
+        ("Supply", "TC on the Sell Offers"),
     ):
         assert f"<th>{term}<span class=\"term-help\">{explanation}</span></th>" in html
     for term, explanation in (
-        ("Buy TC now", "the cheapest sell offer open right now"),
-        ("Sell TC now", "the highest buy offer open right now"),
-        ("Reference mid", "halfway between the two; may not be executable"),
-        ("Quoted spread", "gap between buying and selling, before the Market fee"),
-        ("Demand / supply depth", "TC players want to buy / TC offered for sale"),
-        ("Book snapshot", "when this offer list was read"),
+        ("Sell Offers", "lowest Piece Price open right now"),
+        ("Buy Offers", "highest Piece Price open right now"),
+        ("Mid", "calculated: halfway between the two Piece Prices"),
+        ("Spread", "calculated: gap between the two Piece Prices, before the Fee"),
+        ("Demand / Supply", "TC on the Buy Offers / on the Sell Offers"),
+        ("Offers read at", "when this offer list was read"),
+        ("Latest midpoint", "calculated from that day’s accepted Piece Prices"),
         (
-            "Latest executed midpoint",
-            "average of what players paid and received that day",
+            "Latest accepted Piece Price, Sell / Buy Offers",
+            "on the most recent day with trades",
         ),
-        ("Latest executed buy / sell", "what players actually paid / received that day"),
         ("Total return", "price change across all available history"),
         ("7-day prediction", "model estimate of the change versus other worlds"),
     ):
@@ -249,7 +252,7 @@ def main() -> None:
     assert "It does not show a trade available right now." in html
     assert "Minimum unusual price difference" in html
     assert (
-        "<th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th>"
+        "<th>Price (GP/TC)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th>"
         in html
     )
     assert "Dispersion" in html
