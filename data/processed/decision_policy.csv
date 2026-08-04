@@ -3,7 +3,7 @@ Havera,2026-07-21,39096.5,-0.606,-0.431,-2.377,1.515,7,Abstain,none,price is 9 d
 Lutabra,2026-07-12,38006.0,-1.185,-0.8,-2.747,1.146,7,Abstain,none,price is 18 days old; no current price to act on,1.0.0
 Retalia,2026-07-22,36875.0,-4.463,-0.303,-2.249,1.644,7,Abstain,none,price is 8 days old; no current price to act on,1.0.0
 Monstera,2026-07-22,36667.5,-6.252,0.65,-1.296,2.597,7,Abstain,none,price is 8 days old; no current price to act on,1.0.0
-Tempestera,2026-07-24,36871.5,-10.389,1.406,-0.54,3.352,7,Buy,low,"deviation -10.39% clears the 9.89% cutoff the holdout was validated at (+1.73% net over 33 effective episodes, t=4.6); 80% range spans zero, so the size of the move is not established",1.0.0
+Tempestera,2026-07-24,36871.5,-10.389,1.406,-0.54,3.352,7,Buy TC,low,"deviation -10.39% clears the 9.89% cutoff the holdout was validated at (+1.73% net over 33 effective episodes, t=4.6); 80% range spans zero, so the size of the move is not established",1.0.0
 Kalibra,2026-07-29,43513.0,7.834,-0.678,-2.625,1.268,7,Hold,medium,deviation +7.83% clears the 1.83% band but not the 9.89% cutoff the holdout was validated at,1.0.0
 Celebra,2026-07-27,43811.5,7.509,-0.694,-2.641,1.252,7,Hold,medium,deviation +7.51% clears the 1.83% band but not the 9.89% cutoff the holdout was validated at,1.0.0
 Menera,2026-07-28,43492.0,7.171,-0.887,-2.833,1.059,7,Hold,medium,deviation +7.17% clears the 1.83% band but not the 9.89% cutoff the holdout was validated at,1.0.0

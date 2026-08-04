@@ -661,9 +661,9 @@ __EMISSION_STYLE__
         </article>
         <div class="split">
           <article class="panel">
-            <div class="panel-heading"><div><h2>Compare worlds</h2><p id="overviewTableCount"></p><details class="claim-details"><summary>Method and limitations</summary><p>Signal compares the absolute Deviation now with its model-implied value after seven days. Predicted 7d is a change in Deviation, not a forecast of the TC price. Liquidity is not included.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price (GP/TC)</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
+            <div class="panel-heading"><div><h2>Compare worlds</h2><p id="overviewTableCount"></p><details class="claim-details"><summary>Method and limitations</summary><p>Signal compares the absolute Deviation now with its model-implied value after seven days. Predicted 7d is a change in Deviation, not a forecast of the TC price. Liquidity is not included.</p></details></div><div class="table-tools"><input id="overviewSearch" type="search" placeholder="Search worlds…" aria-label="Search worlds"><select id="overviewSort" aria-label="Sort worlds"><option value="prediction">Predicted 7d</option><option value="price">Price</option><option value="deviation">Deviation</option><option value="world">World name</option></select></div></div>
             <p class="terminology-key"><span><strong>Deviation</strong>: price vs other worlds</span><span><strong>Predicted 7d</strong>: expected change in Deviation</span><span><strong>Signal</strong>: Convergent shrinks, Divergent grows, Inside band is too small to classify</span></p>
-            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP/TC)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
+            <div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th></tr></thead><tbody id="overviewTable"></tbody></table></div>
           </article>
           <aside class="panel signal">
             <div class="signal-block"><h2>Signal</h2><p class="signal-note">How to read the model result, after costs and evidence checks.</p><span class="signal-value positive" id="signalNet">—</span><small id="signalNote">—</small></div>
@@ -693,7 +693,7 @@ __EMISSION_STYLE__
           <article class="panel chart-panel"><div class="panel-heading"><div><h2 id="forecastChartTitle">Forecast fan</h2><p>Median and 80% simulated range. A wide band is uncertainty, not opportunity.</p></div></div><div class="chart-wrap"><svg id="forecastChart" class="chart" role="img" aria-labelledby="forecastChartTitle"></svg><div id="forecastTooltip" class="chart-tooltip"></div></div></article>
           <aside id="forecastSummary" class="panel forecast-summary"></aside>
         </div>
-        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day model output for each world's position versus the cross-world mean.</p></div></div><p class="terminology-key"><span><strong>Deviation</strong>: price vs other worlds</span><span><strong>Predicted 7d</strong>: expected change in Deviation</span><span><strong>Signal</strong>: Convergent shrinks, Divergent grows, Inside band is too small to classify</span><span><strong>80% interval</strong>: likely range, not a guarantee</span></p><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP/TC)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th><th>80% interval</th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
+        <article class="panel" style="margin-top:16px"><div class="panel-heading"><div><h2>Relative-value ranking</h2><p>Seven-day model output for each world's position versus the cross-world mean.</p></div></div><p class="terminology-key"><span><strong>Deviation</strong>: price vs other worlds</span><span><strong>Predicted 7d</strong>: expected change in Deviation</span><span><strong>Signal</strong>: Convergent shrinks, Divergent grows, Inside band is too small to classify</span><span><strong>80% interval</strong>: likely range, not a guarantee</span></p><div class="table-wrap"><table class="data-table"><thead><tr><th>World</th><th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th><th>80% interval</th></tr></thead><tbody id="predictionTable"></tbody></table></div></article>
       </section>
 
       <section id="view-models" class="view" hidden>
@@ -963,7 +963,7 @@ function sortableCellValue(cell){
   // Strip the unit before testing for a number. Depth cells read "18.6K TC", and leaving the
   // unit on meant the numeric test failed, the column was classified as text, and localeCompare
   // ordered it by the leading digits alone: 1.2M TC sorted below 18.6K TC, which sorted below
-  // 842.4K TC. Sorting by demand or supply depth was therefore always wrong.
+  // 842.4K TC. Sorting by Demand or Supply was therefore always wrong.
   const cleaned=text.replace(/[,+%×]/g,"").replace(/[—–]/g,"")
     .replace(/\s*(?:TC|GP)\b\.?$/i,"").trim();
   if(cleaned&&/^[-+]?\d+(?:\.\d+)?(?:[KMBT])?$/i.test(cleaned)){
@@ -1338,10 +1338,10 @@ function renderWorldChart(){
   const start=$("#worldStart").value,end=$("#worldEnd").value;
   const fixedWindow=start&&end?`${isoDate(start)} to ${isoDate(end)}`:"invalid date range";
   const descriptions={
-    mid:`Midpoint — halfway between the two accepted Piece Prices each day. Period: ${fixedWindow}. Days without data stay empty.`,
+    mid:`Executed midpoint — the average of what players paid when buying and received when selling TC each day. Period: ${fixedWindow}. Days without data stay empty.`,
     buy:`Sell Offers — the average Piece Price accepted each day. Period: ${fixedWindow}. Days without data stay empty.`,
     sell:`Buy Offers — the average Piece Price accepted each day. Period: ${fixedWindow}. Days without data stay empty.`,
-    return:`Return — how much the midpoint rose or fell since the first available day. Period: ${fixedWindow}. 0% means no change.`
+    return:`Return — how much the executed midpoint rose or fell since the first available day. Period: ${fixedWindow}. 0% means no change.`
   };
   $("#worldChartDescription").textContent=descriptions[selectedWorldChartMode];
   $("#worldLegend").innerHTML=`<span class="legend-item"><i class="legend-line"></i>${escapeHtml(worldA)}</span><span class="legend-item"><i class="legend-line" style="border-color:${COLORS.gold}"></i>${escapeHtml(worldB)}</span>`;
@@ -1469,9 +1469,9 @@ function renderWorldFacts(){
     <div class="fact"><span><b>Mid</b><small>calculated: halfway between the two Piece Prices</small></span><strong>${book.mid?fmt.format(book.mid)+" GP":"—"}</strong></div>
     <div class="fact"><span><b>Spread</b><small>calculated: gap between the two Piece Prices, before the Fee</small></span><strong>${book.quoted_spread_pct!==null&&book.quoted_spread_pct!==undefined?num(book.quoted_spread_pct).toFixed(1)+"%":"—"}</strong></div>
     <div class="fact"><span><b>Demand / Supply</b><small>TC on the Buy Offers / on the Sell Offers</small></span><strong>${book.bid_depth_tc?compact(book.bid_depth_tc)+" TC":"—"} / ${book.ask_depth_tc?compact(book.ask_depth_tc)+" TC":"—"}</strong></div>
-    <div class="fact"><span><b>Offers read at</b><small>when this offer list was read</small></span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
-    <div class="fact"><span><b>Latest midpoint</b><small>calculated from that day’s accepted Piece Prices</small></span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
-    <div class="fact"><span><b>Latest accepted Piece Price, Sell / Buy Offers</b><small>on the most recent day with trades</small></span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>
+    <div class="fact"><span><b>Book snapshot</b><small>when this offer list was read</small></span><strong>${book.update_time?isoTimestamp(new Date(num(book.update_time)*1000)):"—"}</strong></div>
+    <div class="fact"><span><b>Latest executed midpoint</b><small>average of what players paid and received that day</small></span><strong>${row.px_last?fmt.format(row.px_last)+" GP":"—"}</strong></div>
+    <div class="fact"><span><b>Latest executed buy / sell</b><small>what players actually paid / received that day</small></span><strong>${row.buy_tc_gp?fmt.format(row.buy_tc_gp):"—"} / ${row.sell_tc_gp?fmt.format(row.sell_tc_gp):"—"} GP</strong></div>
     <div class="fact"><span><b>Total return</b><small>price change across all available history</small></span><strong class="${num(row.total_ret_pct)>=0?"positive":"negative"}">${signed(row.total_ret_pct,1)}</strong></div>
     <div class="fact"><span><b>7-day prediction</b><small>model estimate of the change versus other worlds</small></span><strong class="${num(prediction?.predicted_change_pct)>=0?"positive":"negative"}">${prediction?signed(prediction.predicted_change_pct):"No model"}</strong></div>`;
 }
@@ -1695,7 +1695,7 @@ function renderModelSensitivity(){
    design separates what was observed, what was fitted, and what is advised, because the fitted
    change is not a forecast anyone should trade: it loses to a random walk at every horizon. */
 const ACTION_TONE = {
-  "Buy": "good", "Sell": "good", "Hold": "neutral",
+  "Buy TC": "good", "Sell TC": "good", "Hold": "neutral",
   "Avoid": "bad", "Investigate": "warn", "Abstain": "neutral"
 };
 
@@ -1711,7 +1711,7 @@ function renderDecision(){
   if(!select.options.length){
     const ordered = [...rows].sort((a,b)=>a.world.localeCompare(b.world));
     select.innerHTML = ordered.map(row=>`<option value="${escapeHtml(row.world)}">${escapeHtml(row.world)}</option>`).join("");
-    const preferred = rows.find(row=>row.action==="Buy"||row.action==="Sell");
+    const preferred = rows.find(row=>row.action==="Buy TC"||row.action==="Sell TC");
     if(preferred) select.value = preferred.world;
     select.addEventListener("change", ()=>{renderDecisionCard();updateURL();});
   }

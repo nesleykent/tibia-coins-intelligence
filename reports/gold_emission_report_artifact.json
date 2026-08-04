@@ -5,7 +5,7 @@
   "surface": "report",
   "title": "Reconstructing Gold Emission from Tibia Kill Statistics",
   "description": "Technical reconstruction of direct, potential, and realization-adjusted GP emission.",
-  "generatedAt": "2026-08-03T17:45:40.968349+00:00",
+  "generatedAt": "2026-08-04T17:58:01.509233+00:00",
   "sources": [
    {
     "id": "src_daily",
@@ -147,7 +147,7 @@
    {
     "id": "summary",
     "type": "markdown",
-    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 98.2% of non-boss deaths across 90,701 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.14% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
+    "body": "## Technical summary\n\n**The monetary reconstruction is usable and materially more precise than raw kill counts, but it does not overturn the original economic conclusion.** Reliable loot models cover 98.3% of non-boss deaths across 90,701 world-days. Matched fixed-effects coefficients are indistinguishable from zero at the 1-, 7-, and 30-day headline specifications, and the best holdout result improves random-walk RMSE by only 0.14% (Raw kill count, 1 day).\n\n**Interpretation must preserve three labels.** Coins are an estimate of direct emission; NPC-valued loot is potential emission until sold; scenario-adjusted totals are realized emission estimates. Player-to-player Market prices never enter gold creation.",
     "sourceId": "src_models"
    },
    {
@@ -455,11 +455,11 @@
  "snapshot": {
   "version": 1,
   "status": "ready",
-  "generatedAt": "2026-08-03T17:45:40.968349+00:00",
+  "generatedAt": "2026-08-04T17:58:01.509233+00:00",
   "datasets": {
    "metrics": [
     {
-     "coverage": 0.9816206288000456,
+     "coverage": 0.982594785224248,
      "coverage_threshold": 0.8,
      "world_days": 90701,
      "low_quality_days": 0,
@@ -2120,9 +2120,9 @@
      "date": "2026-08-03",
      "worlds": 93.0,
      "coverage": 0.9811343985,
-     "online": 6578.6666666667,
+     "online": 8929.0,
      "series": "Direct GP",
-     "gp_per_average_online_player": null
+     "gp_per_average_online_player": 6063578.2160181515
     },
     {
      "date": "2022-08-22",
@@ -3650,7 +3650,7 @@
      "coverage": 0.9816164221,
      "online": 12491.1428571429,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 4273009.766327969
+     "gp_per_average_online_player": 4273009.76632797
     },
     {
      "date": "2026-04-20",
@@ -3658,7 +3658,7 @@
      "coverage": 0.9810624301,
      "online": 12028.2857142857,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": 4394444.228418727
+     "gp_per_average_online_player": 4394444.2284187265
     },
     {
      "date": "2026-04-27",
@@ -3776,9 +3776,9 @@
      "date": "2026-08-03",
      "worlds": 93.0,
      "coverage": 0.9811343985,
-     "online": 6578.6666666667,
+     "online": 8929.0,
      "series": "Realized GP estimate (50%)",
-     "gp_per_average_online_player": null
+     "gp_per_average_online_player": 10366128.38803341
     }
    ],
    "headline_models": [

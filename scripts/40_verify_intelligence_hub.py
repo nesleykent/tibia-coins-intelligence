@@ -181,12 +181,9 @@ def main() -> None:
         ("Mid", "calculated: halfway between the two Piece Prices"),
         ("Spread", "calculated: gap between the two Piece Prices, before the Fee"),
         ("Demand / Supply", "TC on the Buy Offers / on the Sell Offers"),
-        ("Offers read at", "when this offer list was read"),
-        ("Latest midpoint", "calculated from that day’s accepted Piece Prices"),
-        (
-            "Latest accepted Piece Price, Sell / Buy Offers",
-            "on the most recent day with trades",
-        ),
+        ("Book snapshot", "when this offer list was read"),
+        ("Latest executed midpoint", "average of what players paid and received that day"),
+        ("Latest executed buy / sell", "what players actually paid / received that day"),
         ("Total return", "price change across all available history"),
         ("7-day prediction", "model estimate of the change versus other worlds"),
     ):
@@ -252,7 +249,7 @@ def main() -> None:
     assert "It does not show a trade available right now." in html
     assert "Minimum unusual price difference" in html
     assert (
-        "<th>Price (GP/TC)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th>"
+        "<th>Price (GP)</th><th>Deviation</th><th>Predicted 7d</th><th>Signal</th>"
         in html
     )
     assert "Dispersion" in html

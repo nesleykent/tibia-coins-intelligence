@@ -1,7 +1,5 @@
 """Map validated evidence to Buy / Sell / Hold / Avoid / Investigate, or abstain.
 
-Buy and Sell name the two sides of the client's Create Offer panel.
-
 The report establishes findings; nothing turned them into an action under stated rules, so the
 site risked reading a forecast as a recommendation. This is that missing layer, and most of its
 work is refusing to act.
@@ -141,7 +139,7 @@ def decide(row: pd.Series, rules: dict, horizon: dict, book: pd.Series | None,
     predicted = float(row.predicted_change_pct)
     conflict = (deviation > 0 and predicted > 0) or (deviation < 0 and predicted < 0)
 
-    action = "Sell" if deviation > 0 else "Buy"
+    action = "Sell TC" if deviation > 0 else "Buy TC"
     confidence = "medium"
     if conflict:
         return {"action": "Investigate", "confidence": "low",
@@ -220,7 +218,7 @@ def main() -> None:
         "rules": rules,
         "horizons": horizons,
         "horizon_used_days": chosen,
-        "actions": ["Buy", "Sell", "Hold", "Avoid", "Investigate", "Abstain"],
+        "actions": ["Buy TC", "Sell TC", "Hold", "Avoid", "Investigate", "Abstain"],
         "signal_admitted": "cross-world relative deviation",
         "signals_refused": {
             "absolute price forecast": (
